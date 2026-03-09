@@ -60,6 +60,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - packages/google_fonts/fonts/
     - assets/fonts/
     - assets/images/avatar.png
     - assets/collection/Epic/
