@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import '../models/collection_state.dart';
 import '../theme/app_colors.dart';
+import '../widgets/swipe_to_pop.dart';
 
 // ── Entry screen — album list ─────────────────────────────────────────────────
 
@@ -22,7 +23,7 @@ class CollectionScreen extends StatelessWidget {
         final unlocked = CollectionState.instance.unlockedCount;
         final total    = CollectionState.instance.items.length;
 
-        return Scaffold(
+        return SwipeToPop(child: Scaffold(
           backgroundColor: bg,
           body: SafeArea(
             child: Column(
@@ -88,7 +89,7 @@ class CollectionScreen extends StatelessWidget {
               ],
             ),
           ),
-        );
+        ));
       },
     );
   }
@@ -302,7 +303,7 @@ class _AlbumDetailScreen extends StatelessWidget {
         final unlocked = items.where((i) => i.isUnlocked).length;
         final complete = cs.isAlbumComplete(album);
 
-        return Scaffold(
+        return SwipeToPop(child: Scaffold(
           backgroundColor: bg,
           body: SafeArea(
             child: Column(
@@ -394,7 +395,7 @@ class _AlbumDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-        );
+        ));
       },
     );
   }

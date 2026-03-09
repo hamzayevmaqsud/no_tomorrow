@@ -1,6 +1,6 @@
 ﻿import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +9,7 @@ import '../models/task.dart';
 import '../models/game_state.dart';
 import '../models/collection_state.dart';
 import '../theme/app_colors.dart';
+import '../widgets/swipe_to_pop.dart';
 
 // ── In-memory store ───────────────────────────────────────────────────────────
 
@@ -249,16 +250,16 @@ class _TasksScreenState extends State<TasksScreen> {
         ? 'assets/collection/Tasks menu/Work.jpg'
         : 'assets/collection/Tasks menu/Live.jpg';
 
-    return Scaffold(
+    return SwipeToPop(child: Scaffold(
       backgroundColor: _bg(isDark),
       body: Stack(
         children: [
-          // ── Blurred category background ──────────────────────────────────
+          // ── Blurred category background ──────────────────────────────
           Positioned.fill(
             child: ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              imageFilter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Opacity(
-                opacity: 0.13,
+                opacity: 0.15,
                 child: Image.asset(bgImage, fit: BoxFit.cover),
               ),
             ),
@@ -425,7 +426,7 @@ class _TasksScreenState extends State<TasksScreen> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

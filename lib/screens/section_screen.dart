@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/section.dart';
 import '../theme/app_colors.dart';
+import '../widgets/swipe_to_pop.dart';
 
 class SectionScreen extends StatelessWidget {
   final AppSection section;
@@ -12,7 +13,7 @@ class SectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return SwipeToPop(child: Scaffold(
       backgroundColor: isDark ? AppColors.darkBg : AppColors.lightBg,
       body: SafeArea(
         child: Column(
@@ -115,6 +116,6 @@ class SectionScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }

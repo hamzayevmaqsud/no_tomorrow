@@ -197,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen>
           Positioned(
             top: 0, left: 0, right: 0,
             height: size.height * 0.30,
-            child: DecoratedBox(
+            child: IgnorePointer(child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -205,14 +205,14 @@ class _HomeScreenState extends State<HomeScreen>
                   colors: [Colors.black.withAlpha(200), Colors.transparent],
                 ),
               ),
-            ),
+            )),
           ),
 
           // ── Gradient bottom ───────────────────────────────────────────────
           Positioned(
             bottom: 0, left: 0, right: 0,
             height: size.height * 0.40,
-            child: DecoratedBox(
+            child: IgnorePointer(child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
@@ -220,14 +220,14 @@ class _HomeScreenState extends State<HomeScreen>
                   colors: [Colors.black.withAlpha(220), Colors.transparent],
                 ),
               ),
-            ),
+            )),
           ),
 
           // ── Gradient left ─────────────────────────────────────────────────
           Positioned(
             top: 0, bottom: 0, left: 0,
             width: size.width * 0.40,
-            child: DecoratedBox(
+            child: IgnorePointer(child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.centerLeft,
@@ -235,14 +235,14 @@ class _HomeScreenState extends State<HomeScreen>
                   colors: [Colors.black.withAlpha(210), Colors.transparent],
                 ),
               ),
-            ),
+            )),
           ),
 
           // ── Gradient right ────────────────────────────────────────────────
           Positioned(
             top: 0, bottom: 0, right: 0,
             width: size.width * 0.40,
-            child: DecoratedBox(
+            child: IgnorePointer(child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.centerRight,
@@ -250,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen>
                   colors: [Colors.black.withAlpha(210), Colors.transparent],
                 ),
               ),
-            ),
+            )),
           ),
 
           // ── Comic overlay (speed lines + halftone) ────────────────────────

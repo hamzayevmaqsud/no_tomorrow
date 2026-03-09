@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_colors.dart';
+import '../widgets/swipe_to_pop.dart';
 
 class SettingsScreen extends StatelessWidget {
   final VoidCallback onToggleTheme;
@@ -20,7 +21,7 @@ class SettingsScreen extends StatelessWidget {
     final text = isDark ? AppColors.darkText : AppColors.lightText;
     final sub = isDark ? AppColors.darkTextSub : AppColors.lightTextSub;
 
-    return Scaffold(
+    return SwipeToPop(child: Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: Column(
@@ -125,7 +126,7 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 
