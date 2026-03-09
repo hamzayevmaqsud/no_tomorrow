@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
@@ -23,25 +23,17 @@ class TaskStore {
 
 Color _pColor(TaskPriority p) {
   switch (p) {
-    case TaskPriority.high:   return const Color(0xFFFF1744);  // vivid red
-    case TaskPriority.medium: return const Color(0xFFFFD600);  // vivid yellow
-    case TaskPriority.low:    return const Color(0xFF00E676);  // vivid green
-  }
-}
-
-String _pBadge(TaskPriority p) {
-  switch (p) {
-    case TaskPriority.high:   return 'P1';
-    case TaskPriority.medium: return 'P2';
-    case TaskPriority.low:    return 'P3';
+    case TaskPriority.high:   return const Color(0xFFFF1744);
+    case TaskPriority.medium: return const Color(0xFFFFD600);
+    case TaskPriority.low:    return const Color(0xFF00E676);
   }
 }
 
 String _pLabel(TaskPriority p) {
   switch (p) {
-    case TaskPriority.high:   return 'CRITICAL';
-    case TaskPriority.medium: return 'NORMAL';
-    case TaskPriority.low:    return 'LIGHT';
+    case TaskPriority.high:   return 'Critical';
+    case TaskPriority.medium: return 'Normal';
+    case TaskPriority.low:    return 'Light';
   }
 }
 
@@ -55,12 +47,12 @@ int _pXp(TaskPriority p) {
 
 // ── Theme helpers ─────────────────────────────────────────────────────────────
 
-Color _bg(bool dark)         => dark ? const Color(0xFF0D0D16) : const Color(0xFFBEC1DC);
-Color _cardBg(bool dark)     => dark ? AppColors.darkCard      : const Color(0xFFFFFFFF);
-Color _cardBorder(bool dark) => dark ? AppColors.darkBorder    : const Color(0xFFB8BACD);
-Color _textPrimary(bool dark)=> dark ? AppColors.darkText      : AppColors.lightText;
-Color _textSub(bool dark)    => dark ? AppColors.darkTextSub   : AppColors.lightTextSub;
-Color _divider(bool dark)    => dark ? AppColors.darkBorder    : const Color(0xFFDDDDEE);
+Color _bg(bool dark)          => dark ? const Color(0xFF0D0D16) : const Color(0xFFBEC1DC);
+Color _cardBg(bool dark)      => dark ? AppColors.darkCard      : const Color(0xFFFFFFFF);
+Color _cardBorder(bool dark)  => dark ? AppColors.darkBorder    : const Color(0xFFB8BACD);
+Color _textPrimary(bool dark) => dark ? AppColors.darkText      : AppColors.lightText;
+Color _textSub(bool dark)     => dark ? AppColors.darkTextSub   : AppColors.lightTextSub;
+Color _divider(bool dark)     => dark ? AppColors.darkBorder    : const Color(0xFFDDDDEE);
 
 // ── Time / date formatters ────────────────────────────────────────────────────
 
@@ -86,10 +78,21 @@ class TasksScreen extends StatefulWidget {
 }
 
 class _TasksScreenState extends State<TasksScreen> {
-  TaskPriority? _filter;
+  DateTime? _selectedDate;
+  bool _showDashboard = false;
 
   List<Task> get _tasks =>
       TaskStore.tasks.where((t) => t.category == widget.category).toList();
+
+  List<Task> get _filteredTasks {
+    if (_selectedDate == null) return _tasks;
+    return _tasks.where((t) {
+      if (t.dueDate == null) return false;
+      return t.dueDate!.year == _selectedDate!.year &&
+             t.dueDate!.month == _selectedDate!.month &&
+             t.dueDate!.day == _selectedDate!.day;
+    }).toList();
+  }
 
   Future<void> _complete(Task task) async {
     if (task.isCompleted) return;
@@ -117,7 +120,6 @@ class _TasksScreenState extends State<TasksScreen> {
           if (!mounted) return;
         }
       }
-      // show carry-over XP for new level
       if (GameState.instance.levelProgress > 0) {
         _showXp(0, color,
             fromProgress: 0.0,
@@ -177,6 +179,25 @@ class _TasksScreenState extends State<TasksScreen> {
     return completer.future;
   }
 
+  void _showDetail(Task task) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _TaskDetailSheet(
+        task: task,
+        onComplete: () {
+          Navigator.pop(context);
+          _complete(task);
+        },
+        onDelete: () {
+          Navigator.pop(context);
+          _delete(task.id);
+        },
+      ),
+    );
+  }
+
   void _showAdd() {
     showModalBottomSheet(
       context: context,
@@ -189,62 +210,41 @@ class _TasksScreenState extends State<TasksScreen> {
           Navigator.pop(context);
         },
         nextId: '${TaskStore.nextId++}',
+        preselectedDate: _selectedDate,
       ),
     );
   }
 
   Widget _dismissible(Task task, bool isDark) => Dismissible(
-    key: ValueKey(task.id),
+    key: ValueKey('${task.id}_${task.isCompleted}'),
     direction: DismissDirection.endToStart,
     onDismissed: (_) => _delete(task.id),
     background: Container(
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: 18),
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.red.withAlpha(isDark ? 15 : 25),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: const Icon(Icons.delete_outline_rounded,
-          color: Colors.red, size: 16),
+      child: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 16),
     ),
     child: _TaskCard(
       key: ValueKey('k_${task.id}'),
       task: task,
       onComplete: () => _complete(task),
+      onTap: () => _showDetail(task),
     ),
   );
-
-  List<Widget> _buildGroups(bool isDark) {
-    final all = _tasks;
-    final widgets = <Widget>[];
-    final priorities = _filter != null ? [_filter!] : TaskPriority.values;
-
-    for (final p in priorities) {
-      final group = all.where((t) => !t.isCompleted && t.priority == p).toList();
-      if (group.isEmpty) continue;
-      widgets.add(_SectionBand(priority: p));
-      widgets.addAll(group.map((t) => _dismissible(t, isDark)));
-    }
-
-    final done = _filter != null
-        ? all.where((t) => t.isCompleted && t.priority == _filter).toList()
-        : all.where((t) => t.isCompleted).toList();
-
-    if (done.isNotEmpty) {
-      widgets.add(_DoneDivider(count: done.length));
-      widgets.addAll(done.map((t) => _dismissible(t, isDark)));
-    }
-
-    return widgets;
-  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final total = _tasks.length;
-    final done = _tasks.where((t) => t.isCompleted).length;
-    final groups = _buildGroups(isDark);
+    final total  = _tasks.length;
+    final done   = _tasks.where((t) => t.isCompleted).length;
+    final filtered = _filteredTasks;
+    final pending   = filtered.where((t) => !t.isCompleted).toList();
+    final completed = filtered.where((t) => t.isCompleted).toList();
 
     final bgImage = widget.category == TaskCategory.work
         ? 'assets/collection/Tasks menu/Work.jpg'
@@ -254,22 +254,23 @@ class _TasksScreenState extends State<TasksScreen> {
       backgroundColor: _bg(isDark),
       body: Stack(
         children: [
-          // ── Blurred category background ──────────────────────────────
+          // ── Blurred bg ──────────────────────────────────────────────────
           Positioned.fill(
             child: ImageFiltered(
               imageFilter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Opacity(
-                opacity: 0.15,
+                opacity: 0.12,
                 child: Image.asset(bgImage, fit: BoxFit.cover),
               ),
             ),
           ),
+
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // ── Header ──────────────────────────────────────────────────
+                // ── Header ──────────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
@@ -280,7 +281,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           width: 34, height: 34,
                           decoration: BoxDecoration(
                             border: Border.all(color: _cardBorder(isDark)),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.arrow_back_rounded,
                               size: 15, color: _textPrimary(isDark)),
@@ -299,8 +300,7 @@ class _TasksScreenState extends State<TasksScreen> {
                             if (total > 0)
                               Text('$done of $total done',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
-                                  color: _textSub(isDark),
+                                  fontSize: 9, color: _textSub(isDark),
                                 )),
                           ],
                         ),
@@ -309,7 +309,7 @@ class _TasksScreenState extends State<TasksScreen> {
                   ),
                 ),
 
-                // ── Progress bar ─────────────────────────────────────────────
+                // ── Progress bar ─────────────────────────────────────────
                 const SizedBox(height: 14),
                 Stack(children: [
                   Container(height: 1, color: _divider(isDark)),
@@ -322,106 +322,65 @@ class _TasksScreenState extends State<TasksScreen> {
                     ),
                 ]),
 
-                // ── Filters ───────────────────────────────────────────────────
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-                  child: Row(
-                    children: [
-                      _FilterChip(
-                        label: 'ALL',
-                        count: _tasks.length,
-                        active: _filter == null,
-                        color: AppColors.tasks,
-                        onTap: () => setState(() => _filter = null),
-                      ),
-                      const SizedBox(width: 6),
-                      for (final p in TaskPriority.values) ...[
-                        _FilterChip(
-                          label: _pBadge(p),
-                          count: _tasks.where((t) => t.priority == p).length,
-                          active: _filter == p,
-                          color: _pColor(p),
-                          onTap: () => setState(() => _filter = p),
-                        ),
-                        if (p != TaskPriority.low) const SizedBox(width: 6),
-                      ],
-                    ],
-                  ),
+                const SizedBox(height: 16),
+
+                // ── Calendar strip ───────────────────────────────────────
+                _CalendarStrip(
+                  selectedDate: _selectedDate,
+                  onDateSelected: (d) => setState(() {
+                    _selectedDate = (_selectedDate != null &&
+                        _selectedDate!.day == d.day &&
+                        _selectedDate!.month == d.month &&
+                        _selectedDate!.year == d.year)
+                        ? null
+                        : d;
+                  }),
+                  accentColor: AppColors.tasks,
+                  isDark: isDark,
                 ),
 
                 const SizedBox(height: 12),
 
-                // ── List ─────────────────────────────────────────────────────
+                // ── Dashboard panel ───────────────────────────────────────
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutCubic,
+                  child: _showDashboard
+                      ? _DashboardPanel(
+                          tasks: _tasks,
+                          isDark: isDark,
+                          accentColor: AppColors.tasks,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+
+                // ── Task list ─────────────────────────────────────────────
                 Expanded(
-                  child: groups.isEmpty
-                      ? _Empty(isDark: isDark)
+                  child: pending.isEmpty && completed.isEmpty
+                      ? _Empty(isDark: isDark, hasDateFilter: _selectedDate != null)
                       : ListView(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                          children: groups,
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                          children: [
+                            ...pending.map((t) => _dismissible(t, isDark)),
+                            if (completed.isNotEmpty) ...[
+                              _DoneDivider(count: completed.length),
+                              ...completed.map((t) => _dismissible(t, isDark)),
+                            ],
+                          ],
                         ),
                 ),
               ],
             ),
           ),
 
-          // ── FAB ─────────────────────────────────────────────────────────
+          // ── Bottom bar ───────────────────────────────────────────────
           Positioned(
-            right: 24,
-            bottom: 32,
-            child: _AddFab(onTap: _showAdd),
-          ),
-
-          // ── TEMP: +500 XP test button ────────────────────────────────────
-          Positioned(
-            left: 24,
-            bottom: 32,
-            child: GestureDetector(
-              onTap: () async {
-                final fromProgress = GameState.instance.levelProgress;
-                final fromLevel = GameState.instance.level;
-                final didLevelUp = GameState.instance.addXp(500);
-                final toProgress = didLevelUp ? 1.0 : GameState.instance.levelProgress;
-                _showXp(500, Colors.orange,
-                    fromProgress: fromProgress,
-                    toProgress: toProgress,
-                    level: fromLevel);
-                await Future.delayed(const Duration(milliseconds: 800));
-                if (!mounted) return;
-                if (didLevelUp) {
-                  final levelsGained = GameState.instance.level - fromLevel;
-                  await Future.delayed(const Duration(milliseconds: 1500));
-                  if (!mounted) return;
-                  await _showLevelUp(GameState.instance.level);
-                  if (!mounted) return;
-                  for (int i = 0; i < levelsGained; i++) {
-                    final dropped = CollectionState.instance.onLevelUp();
-                    if (dropped != null && mounted) {
-                      await _showCollectibleDrop(dropped);
-                      if (!mounted) return;
-                    }
-                  }
-                  if (GameState.instance.levelProgress > 0) {
-                    _showXp(0, Colors.orange,
-                        fromProgress: 0.0,
-                        toProgress: GameState.instance.levelProgress,
-                        level: GameState.instance.level);
-                  }
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withAlpha(30),
-                  border: Border.all(color: Colors.orange.withAlpha(180), width: 1.5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text('DEBUG +500 XP',
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 10, fontWeight: FontWeight.w700,
-                    color: Colors.orange, letterSpacing: 1,
-                  )),
-              ),
+            left: 0, right: 0, bottom: 0,
+            child: _BottomBar(
+              onAdd: _showAdd,
+              isDark: isDark,
+              dashboardActive: _showDashboard,
+              onDashboard: () => setState(() => _showDashboard = !_showDashboard),
             ),
           ),
         ],
@@ -430,60 +389,323 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 }
 
-// ── Section band ─────────────────────────────────────────────────────────────
+// ── Calendar strip ────────────────────────────────────────────────────────────
 
-class _SectionBand extends StatelessWidget {
-  final TaskPriority priority;
-  const _SectionBand({required this.priority});
+class _CalendarStrip extends StatelessWidget {
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
+  final Color accentColor;
+  final bool isDark;
+
+  const _CalendarStrip({
+    required this.selectedDate,
+    required this.onDateSelected,
+    required this.accentColor,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = _pColor(priority);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8, top: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withAlpha(isDark ? 35 : 55),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withAlpha(isDark ? 120 : 160), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: color.withAlpha(isDark ? 50 : 40),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
+    final today = DateTime.now();
+    final days  = List.generate(21, (i) => today.add(Duration(days: i - 3)));
+    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+    return SizedBox(
+      height: 74,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: days.length,
+        itemBuilder: (_, i) {
+          final day = days[i];
+          final isToday = day.day == today.day &&
+              day.month == today.month &&
+              day.year == today.year;
+          final isSelected = selectedDate != null &&
+              selectedDate!.day == day.day &&
+              selectedDate!.month == day.month &&
+              selectedDate!.year == day.year;
+          final dayName = dayNames[(day.weekday - 1) % 7];
+
+          return GestureDetector(
+            onTap: () => onDateSelected(day),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 52,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? accentColor
+                    : isToday
+                        ? accentColor.withAlpha(isDark ? 38 : 30)
+                        : _cardBg(isDark),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isSelected
+                      ? accentColor
+                      : isToday
+                          ? accentColor.withAlpha(130)
+                          : _cardBorder(isDark),
+                  width: 1.2,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(dayName,
+                    style: GoogleFonts.inter(
+                      fontSize: 9, fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                      color: isSelected
+                          ? Colors.white.withAlpha(180)
+                          : isToday
+                              ? accentColor
+                              : _textSub(isDark),
+                    )),
+                  const SizedBox(height: 4),
+                  Text('${day.day}',
+                    style: GoogleFonts.inter(
+                      fontSize: 20, fontWeight: FontWeight.w700,
+                      height: 1,
+                      color: isSelected
+                          ? Colors.white
+                          : isToday
+                              ? accentColor
+                              : _textPrimary(isDark),
+                    )),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ── Bottom bar ────────────────────────────────────────────────────────────────
+
+class _BottomBar extends StatelessWidget {
+  final VoidCallback onAdd;
+  final VoidCallback onDashboard;
+  final bool isDark;
+  final bool dashboardActive;
+
+  const _BottomBar({
+    required this.onAdd,
+    required this.onDashboard,
+    required this.isDark,
+    required this.dashboardActive,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(52, 0, 52, 36),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(40),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            height: 68,
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withAlpha(18)
+                  : Colors.black.withAlpha(195),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(
+                color: Colors.white.withAlpha(isDark ? 28 : 18),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                GestureDetector(
+                  onTap: onDashboard,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: dashboardActive
+                          ? AppColors.tasks.withAlpha(50)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.bar_chart_rounded,
+                        color: dashboardActive
+                            ? AppColors.tasks
+                            : Colors.white.withAlpha(140),
+                        size: 22),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: onAdd,
+                  child: Container(
+                    width: 46, height: 46,
+                    decoration: BoxDecoration(
+                      color: AppColors.tasks,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.tasks.withAlpha(130),
+                          blurRadius: 18,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.add_rounded,
+                        color: Colors.white, size: 26),
+                  ),
+                ),
+                Icon(Icons.checklist_rounded,
+                    color: Colors.white.withAlpha(140), size: 22),
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Dashboard panel ───────────────────────────────────────────────────────────
+
+class _DashboardPanel extends StatelessWidget {
+  final List<Task> tasks;
+  final bool isDark;
+  final Color accentColor;
+
+  const _DashboardPanel({
+    required this.tasks,
+    required this.isDark,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final total     = tasks.length;
+    final done      = tasks.where((t) => t.isCompleted).length;
+    final pending   = total - done;
+    final xpEarned  = tasks.where((t) => t.isCompleted).fold(0, (s, t) => s + _pXp(t.priority));
+    final critical  = tasks.where((t) => !t.isCompleted && t.priority == TaskPriority.high).length;
+    final progress  = total == 0 ? 0.0 : done / total;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardBg(isDark),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withAlpha(60), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('OVERVIEW',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  letterSpacing: 2, color: accentColor,
+                )),
+              const Spacer(),
+              Text('LVL ${GameState.instance.level}',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  letterSpacing: 1, color: _textSub(isDark),
+                )),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _StatBox(label: 'TOTAL',   value: '$total',   color: accentColor,              isDark: isDark),
+              const SizedBox(width: 8),
+              _StatBox(label: 'DONE',    value: '$done',    color: AppColors.success,        isDark: isDark),
+              const SizedBox(width: 8),
+              _StatBox(label: 'PENDING', value: '$pending', color: const Color(0xFFFFD600),  isDark: isDark),
+              const SizedBox(width: 8),
+              _StatBox(label: 'XP',      value: '+$xpEarned', color: const Color(0xFFFF1744), isDark: isDark),
+            ],
+          ),
+          if (critical > 0) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  width: 6, height: 6,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFF1744), shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 6),
+                Text('$critical critical mission${critical > 1 ? 's' : ''} remaining',
+                  style: GoogleFonts.inter(
+                    fontSize: 11, fontWeight: FontWeight.w600,
+                    color: const Color(0xFFFF1744),
+                  )),
+              ],
+            ),
+          ],
+          const SizedBox(height: 10),
+          Stack(children: [
+            Container(height: 4, decoration: BoxDecoration(
+              color: _divider(isDark), borderRadius: BorderRadius.circular(2))),
+            AnimatedFractionallySizedBox(
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOutCubic,
+              widthFactor: progress,
+              child: Container(height: 4, decoration: BoxDecoration(
+                color: accentColor,
+                borderRadius: BorderRadius.circular(2),
+                boxShadow: [BoxShadow(color: accentColor.withAlpha(120), blurRadius: 6)],
+              )),
+            ),
+          ]),
+          const SizedBox(height: 4),
+          Text('${(progress * 100).round()}% complete',
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 9, color: _textSub(isDark).withAlpha(140))),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 8, height: 8,
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: color.withAlpha(180), blurRadius: 6)],
-            ),
-          ),
-          Text(_pLabel(priority),
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 12, fontWeight: FontWeight.w700,
-              letterSpacing: 2, color: color,
-            )),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: color.withAlpha(isDark ? 45 : 65),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: color.withAlpha(isDark ? 130 : 170), width: 1),
-            ),
-            child: Text('+${_pXp(priority)} XP each',
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final bool isDark;
+
+  const _StatBox({
+    required this.label, required this.value,
+    required this.color, required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withAlpha(isDark ? 20 : 15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withAlpha(isDark ? 60 : 50), width: 1),
+        ),
+        child: Column(
+          children: [
+            Text(value,
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w700,
-                color: color,
-              )),
-          ),
-        ],
+                fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+            const SizedBox(height: 2),
+            Text(label,
+              style: GoogleFonts.inter(
+                fontSize: 8, fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+                color: color.withAlpha(isDark ? 160 : 180))),
+          ],
+        ),
       ),
     );
   }
@@ -499,145 +721,34 @@ class _DoneDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: 8),
+      padding: const EdgeInsets.only(top: 14, bottom: 10),
       child: Row(
         children: [
-          Expanded(child: Container(height: 0.5, color: _divider(isDark))),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text('DONE  $count',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 9,
-                color: _textSub(isDark).withAlpha(140),
-                letterSpacing: 1,
-              )),
-          ),
-          Expanded(child: Container(height: 0.5, color: _divider(isDark))),
-        ],
-      ),
-    );
-  }
-}
-
-// ── FAB ───────────────────────────────────────────────────────────────────────
-
-class _AddFab extends StatefulWidget {
-  final VoidCallback onTap;
-  const _AddFab({required this.onTap});
-
-  @override
-  State<_AddFab> createState() => _AddFabState();
-}
-
-class _AddFabState extends State<_AddFab> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 110));
-    _scale = Tween(begin: 1.0, end: 0.87)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _ctrl.forward(),
-      onTapUp: (_) { _ctrl.reverse(); widget.onTap(); },
-      onTapCancel: () => _ctrl.reverse(),
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          width: 58, height: 58,
-          decoration: BoxDecoration(
-            color: AppColors.tasks,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: AppColors.tasks.withAlpha(110),
-                  blurRadius: 22, offset: const Offset(0, 4)),
-              BoxShadow(color: AppColors.tasks.withAlpha(45),
-                  blurRadius: 44, spreadRadius: 6),
-            ],
-          ),
-          child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Filter chip ───────────────────────────────────────────────────────────────
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final int count;
-  final bool active;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label, required this.count, required this.active,
-    required this.color, required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-        decoration: BoxDecoration(
-          color: active ? color : color.withAlpha(isDark ? 28 : 38),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(
-            color: active ? color : color.withAlpha(isDark ? 90 : 130),
-            width: 1.5,
-          ),
-          boxShadow: active ? [
-            BoxShadow(
-              color: color.withAlpha(100),
-              blurRadius: 14,
-              offset: const Offset(0, 3),
+          Expanded(child: Container(height: 1, color: AppColors.success.withAlpha(40))),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.success.withAlpha(isDark ? 22 : 18),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.success.withAlpha(80), width: 1),
             ),
-          ] : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(label,
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 12, fontWeight: FontWeight.w700,
-                color: active ? Colors.white : color,
-              )),
-            if (count > 0) ...[
-              const SizedBox(width: 6),
-              Container(
-                width: 20, height: 20,
-                decoration: BoxDecoration(
-                  color: active
-                      ? Colors.white.withAlpha(55)
-                      : color.withAlpha(isDark ? 55 : 70),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text('$count',
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w700,
-                      color: active ? Colors.white : color,
-                    )),
-                ),
-              ),
-            ],
-          ],
-        ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle_outline_rounded,
+                    size: 11, color: AppColors.success),
+                const SizedBox(width: 5),
+                Text('COMPLETED  $count',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9, fontWeight: FontWeight.w700,
+                    letterSpacing: 1, color: AppColors.success,
+                  )),
+              ],
+            ),
+          ),
+          Expanded(child: Container(height: 1, color: AppColors.success.withAlpha(40))),
+        ],
       ),
     );
   }
@@ -648,233 +759,437 @@ class _FilterChip extends StatelessWidget {
 class _TaskCard extends StatelessWidget {
   final Task task;
   final VoidCallback onComplete;
+  final VoidCallback onTap;
 
-  const _TaskCard({super.key, required this.task, required this.onComplete});
+  const _TaskCard({
+    super.key,
+    required this.task,
+    required this.onComplete,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = _pColor(task.priority);
-    final done = task.isCompleted;
+    final color  = _pColor(task.priority);
+    final done   = task.isCompleted;
+    final catLabel = task.category == TaskCategory.work ? 'WORK' : 'LIVE';
 
-    return AnimatedOpacity(
-      duration: const Duration(milliseconds: 350),
-      opacity: done ? 0.38 : 1.0,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: _cardBg(isDark),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: done
-                ? _cardBorder(isDark).withAlpha(100)
-                : _cardBorder(isDark),
-            width: isDark ? 0.8 : 1,
-          ),
-          boxShadow: isDark ? null : [
-            BoxShadow(
-              color: Colors.black.withAlpha(12),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 350),
+        opacity: done ? 0.45 : 1.0,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: _cardBg(isDark),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: done
+                  ? _cardBorder(isDark).withAlpha(60)
+                  : color.withAlpha(isDark ? 55 : 70),
+              width: done ? 0.8 : 1.2,
             ),
-          ],
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Priority bar
-              Container(
-                width: 3,
-                decoration: BoxDecoration(
-                  color: done ? _cardBorder(isDark) : color,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    bottomLeft: Radius.circular(10),
-                  ),
-                ),
-              ),
-
-              // Content
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                if (!done) ...[
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: color.withAlpha(isDark ? 20 : 30),
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                          color: color.withAlpha(isDark ? 60 : 90),
-                                          width: 0.8),
-                                    ),
-                                    child: Text(_pBadge(task.priority),
-                                      style: GoogleFonts.jetBrainsMono(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.w700,
-                                        color: color,
-                                      )),
-                                  ),
-                                  const SizedBox(width: 7),
-                                ],
-                                Expanded(
-                                  child: Text(task.title,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.2,
-                                      color: done
-                                          ? _textSub(isDark)
-                                          : _textPrimary(isDark),
-                                      decoration: done
-                                          ? TextDecoration.lineThrough
-                                          : TextDecoration.none,
-                                      decorationColor:
-                                          _textSub(isDark).withAlpha(150),
-                                    )),
-                                ),
-                              ],
-                            ),
-
-                            if (task.description.isNotEmpty && !done) ...[
-                              const SizedBox(height: 5),
-                              Text(task.description,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 13, height: 1.4,
-                                  color: _textSub(isDark),
-                                )),
-                            ],
-
-                            if (!done) ...[
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  if (task.dueDate != null) ...[
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.tasks.withAlpha(
-                                            isDark ? 30 : 25),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: AppColors.tasks.withAlpha(
-                                              isDark ? 80 : 70),
-                                          width: 0.8),
-                                      ),
-                                      child: Row(children: [
-                                        Icon(Icons.calendar_today_rounded,
-                                            size: 10,
-                                            color: AppColors.tasks),
-                                        const SizedBox(width: 4),
-                                        Text(_fmtDate(task.dueDate!),
-                                          style: GoogleFonts.jetBrainsMono(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.tasks,
-                                          )),
-                                      ]),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  if (task.dueTime != null) ...[
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.tasks.withAlpha(
-                                            isDark ? 30 : 25),
-                                        borderRadius: BorderRadius.circular(6),
-                                        border: Border.all(
-                                          color: AppColors.tasks.withAlpha(
-                                              isDark ? 80 : 70),
-                                          width: 0.8),
-                                      ),
-                                      child: Row(children: [
-                                        Icon(Icons.access_time_rounded,
-                                            size: 11,
-                                            color: AppColors.tasks),
-                                        const SizedBox(width: 4),
-                                        Text(_fmt24(task.dueTime!),
-                                          style: GoogleFonts.jetBrainsMono(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.tasks,
-                                          )),
-                                      ]),
-                                    ),
-                                    const SizedBox(width: 6),
-                                  ],
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: color.withAlpha(isDark ? 28 : 35),
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(
-                                        color: color.withAlpha(isDark ? 70 : 100),
-                                        width: 0.8,
-                                      ),
-                                    ),
-                                    child: Text('+${_pXp(task.priority)} XP',
-                                      style: GoogleFonts.jetBrainsMono(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        color: color,
-                                      )),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      GestureDetector(
-                        onTap: done ? null : onComplete,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          width: 24, height: 24,
-                          decoration: BoxDecoration(
-                            color: done ? AppColors.success : Colors.transparent,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: done
-                                  ? AppColors.success
-                                  : color.withAlpha(isDark ? 120 : 180),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: done
-                              ? const Icon(Icons.check_rounded,
-                                  size: 12, color: Colors.white)
-                              : null,
-                        ),
+            boxShadow: done
+                ? null
+                : [
+                    BoxShadow(
+                      color: color.withAlpha(isDark ? 30 : 20),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Colored left accent bar ──────────────────────────
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: done ? _cardBorder(isDark).withAlpha(80) : color,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                    ),
+                    boxShadow: done ? null : [
+                      BoxShadow(
+                        color: color.withAlpha(isDark ? 160 : 120),
+                        blurRadius: 8,
+                        spreadRadius: 1,
                       ),
                     ],
                   ),
                 ),
+
+                // ── Content ──────────────────────────────────────────
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        // Top row: category + priority pill + complete btn
+                        Row(
+                          children: [
+                            // Category tag
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: AppColors.tasks.withAlpha(isDark ? 28 : 22),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(catLabel,
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                  color: AppColors.tasks.withAlpha(isDark ? 200 : 180),
+                                )),
+                            ),
+                            const SizedBox(width: 6),
+                            // Priority pill
+                            if (!done)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: color.withAlpha(isDark ? 30 : 22),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                      color: color.withAlpha(isDark ? 100 : 80),
+                                      width: 0.8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 5, height: 5,
+                                      decoration: BoxDecoration(
+                                          color: color, shape: BoxShape.circle,
+                                          boxShadow: [BoxShadow(
+                                              color: color.withAlpha(200),
+                                              blurRadius: 4)]),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(_pLabel(task.priority),
+                                      style: GoogleFonts.inter(
+                                        fontSize: 9, fontWeight: FontWeight.w700,
+                                        color: color,
+                                      )),
+                                  ],
+                                ),
+                              ),
+                            const Spacer(),
+                            // Complete button
+                            GestureDetector(
+                              onTap: done ? null : onComplete,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 220),
+                                width: 26, height: 26,
+                                decoration: BoxDecoration(
+                                  color: done ? AppColors.success : color.withAlpha(isDark ? 30 : 22),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: done ? AppColors.success : color.withAlpha(isDark ? 120 : 100),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: done ? [BoxShadow(
+                                      color: AppColors.success.withAlpha(120),
+                                      blurRadius: 8)] : null,
+                                ),
+                                child: done
+                                    ? const Icon(Icons.check_rounded,
+                                        size: 13, color: Colors.white)
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 9),
+
+                        // Title
+                        Text(task.title,
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                            color: done ? _textSub(isDark) : _textPrimary(isDark),
+                            decoration: done
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                            decorationColor: _textSub(isDark).withAlpha(150),
+                          )),
+
+                        // Description
+                        if (task.description.isNotEmpty && !done) ...[
+                          const SizedBox(height: 5),
+                          Text(task.description,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 12, height: 1.4,
+                              color: _textSub(isDark),
+                            )),
+                        ],
+
+                        const SizedBox(height: 10),
+
+                        // Bottom row: date/time + XP
+                        Row(
+                          children: [
+                            if (task.dueDate != null) ...[
+                              Icon(Icons.calendar_today_rounded,
+                                  size: 10,
+                                  color: _textSub(isDark).withAlpha(180)),
+                              const SizedBox(width: 3),
+                              Text(_fmtDate(task.dueDate!),
+                                style: GoogleFonts.inter(
+                                  fontSize: 11, fontWeight: FontWeight.w500,
+                                  color: _textSub(isDark),
+                                )),
+                              const SizedBox(width: 8),
+                            ],
+                            if (task.dueTime != null) ...[
+                              Icon(Icons.access_time_rounded,
+                                  size: 10,
+                                  color: _textSub(isDark).withAlpha(180)),
+                              const SizedBox(width: 3),
+                              Text(_fmt24(task.dueTime!),
+                                style: GoogleFonts.inter(
+                                  fontSize: 11, fontWeight: FontWeight.w500,
+                                  color: _textSub(isDark),
+                                )),
+                            ],
+                            const Spacer(),
+                            // XP badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: done
+                                    ? _cardBorder(isDark).withAlpha(50)
+                                    : color.withAlpha(isDark ? 28 : 22),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                done ? '✓ ${_pXp(task.priority)} XP' : '+${_pXp(task.priority)} XP',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 10, fontWeight: FontWeight.w700,
+                                  color: done
+                                      ? _textSub(isDark).withAlpha(120)
+                                      : color,
+                                )),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Task detail sheet ─────────────────────────────────────────────────────────
+
+class _TaskDetailSheet extends StatelessWidget {
+  final Task task;
+  final VoidCallback onComplete;
+  final VoidCallback onDelete;
+
+  const _TaskDetailSheet({
+    required this.task,
+    required this.onComplete,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark   = Theme.of(context).brightness == Brightness.dark;
+    final color    = _pColor(task.priority);
+    final sheetBg  = isDark ? AppColors.darkCard : const Color(0xFFFFFFFF);
+    final done     = task.isCompleted;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: sheetBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+          24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle
+          Center(
+            child: Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: _cardBorder(isDark),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Top row: priority tag + delete
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(isDark ? 28 : 35),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: color.withAlpha(isDark ? 90 : 120), width: 1),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.flag_rounded, size: 12, color: color),
+                    const SizedBox(width: 5),
+                    Text('${_pLabel(task.priority)} priority',
+                      style: GoogleFonts.inter(
+                        fontSize: 11, fontWeight: FontWeight.w600,
+                        color: color,
+                      )),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: onDelete,
+                child: Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withAlpha(isDark ? 20 : 15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: Colors.red.withAlpha(isDark ? 60 : 50)),
+                  ),
+                  child: const Icon(Icons.delete_outline_rounded,
+                      size: 15, color: Colors.red),
+                ),
               ),
             ],
           ),
-        ),
+
+          const SizedBox(height: 16),
+
+          // XP label
+          Text('+${_pXp(task.priority)} XP',
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 11, fontWeight: FontWeight.w700,
+              color: color.withAlpha(180),
+            )),
+
+          const SizedBox(height: 6),
+
+          // Title
+          Text(task.title,
+            style: GoogleFonts.inter(
+              fontSize: 26, fontWeight: FontWeight.w800,
+              height: 1.2,
+              color: done ? _textSub(isDark) : _textPrimary(isDark),
+              decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
+              decorationColor: _textSub(isDark).withAlpha(150),
+            )),
+
+          // Date / time
+          if (task.dueDate != null || task.dueTime != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                if (task.dueTime != null)
+                  Text(_fmt24(task.dueTime!),
+                    style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w500,
+                      color: _textSub(isDark),
+                    )),
+                if (task.dueDate != null) ...[
+                  if (task.dueTime != null)
+                    Text(' • ',
+                      style: GoogleFonts.inter(
+                          fontSize: 14, color: _textSub(isDark))),
+                  Text('due ${_fmtDate(task.dueDate!)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w500,
+                      color: _textSub(isDark),
+                    )),
+                ],
+              ],
+            ),
+          ],
+
+          // Description
+          if (task.description.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text('Description',
+              style: GoogleFonts.inter(
+                fontSize: 11, fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+                color: _textSub(isDark).withAlpha(150),
+              )),
+            const SizedBox(height: 6),
+            Text(task.description,
+              style: GoogleFonts.inter(
+                fontSize: 15, height: 1.55,
+                color: _textSub(isDark),
+              )),
+          ],
+
+          const SizedBox(height: 28),
+
+          // Complete button
+          if (!done)
+            GestureDetector(
+              onTap: onComplete,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white : Colors.black,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (isDark ? Colors.white : Colors.black)
+                          .withAlpha(30),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Complete mission',
+                      style: GoogleFonts.inter(
+                        fontSize: 15, fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.black : Colors.white,
+                      )),
+                    const SizedBox(width: 10),
+                    Text('+${_pXp(task.priority)} XP',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        color: color,
+                      )),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -884,7 +1199,8 @@ class _TaskCard extends StatelessWidget {
 
 class _Empty extends StatelessWidget {
   final bool isDark;
-  const _Empty({required this.isDark});
+  final bool hasDateFilter;
+  const _Empty({required this.isDark, this.hasDateFilter = false});
 
   @override
   Widget build(BuildContext context) {
@@ -902,13 +1218,15 @@ class _Empty extends StatelessWidget {
                 size: 22, color: _cardBorder(isDark)),
           ),
           const SizedBox(height: 16),
-          Text('no tasks yet',
+          Text(hasDateFilter ? 'no tasks this day' : 'no tasks yet',
             style: GoogleFonts.inter(
               fontSize: 14, fontWeight: FontWeight.w600,
               color: _textSub(isDark),
             )),
           const SizedBox(height: 4),
-          Text('tap the circle below to add one',
+          Text(hasDateFilter
+              ? 'tap another day or add a task'
+              : 'tap + below to add one',
             style: GoogleFonts.inter(
               fontSize: 11,
               color: _textSub(isDark).withAlpha(120),
@@ -924,7 +1242,12 @@ class _Empty extends StatelessWidget {
 class _AddSheet extends StatefulWidget {
   final void Function(Task) onAdd;
   final String nextId;
-  const _AddSheet({required this.onAdd, required this.nextId});
+  final DateTime? preselectedDate;
+  const _AddSheet({
+    required this.onAdd,
+    required this.nextId,
+    this.preselectedDate,
+  });
 
   @override
   State<_AddSheet> createState() => _AddSheetState();
@@ -935,7 +1258,13 @@ class _AddSheetState extends State<_AddSheet> {
   final _descCtrl  = TextEditingController();
   TaskPriority _priority = TaskPriority.medium;
   TimeOfDay? _time;
-  DateTime? _date;
+  late DateTime? _date;
+
+  @override
+  void initState() {
+    super.initState();
+    _date = widget.preselectedDate;
+  }
 
   @override
   void dispose() {
@@ -994,19 +1323,18 @@ class _AddSheetState extends State<_AddSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = _pColor(_priority);
-    final sheetBg = isDark ? AppColors.darkCard : const Color(0xFFFFFFFF);
-    final fieldBg = isDark ? AppColors.darkBg : const Color(0xFFE8E8F8);
+    final isDark      = Theme.of(context).brightness == Brightness.dark;
+    final accent      = _pColor(_priority);
+    final sheetBg     = isDark ? AppColors.darkCard : const Color(0xFFFFFFFF);
+    final fieldBg     = isDark ? AppColors.darkBg   : const Color(0xFFE8E8F8);
     final fieldBorder = isDark ? AppColors.darkBorder : const Color(0xFFDDDDEE);
 
     return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: BoxDecoration(
           color: sheetBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.fromLTRB(24, 10, 24, 28),
         child: Column(
@@ -1053,7 +1381,8 @@ class _AddSheetState extends State<_AddSheet> {
                   final isActive = _priority == p;
                   final c = _pColor(p);
                   return Padding(
-                    padding: EdgeInsets.only(right: p != TaskPriority.low ? 6 : 0),
+                    padding: EdgeInsets.only(
+                        right: p != TaskPriority.low ? 6 : 0),
                     child: GestureDetector(
                       onTap: () => setState(() => _priority = p),
                       child: AnimatedContainer(
@@ -1070,11 +1399,24 @@ class _AddSheetState extends State<_AddSheet> {
                             width: isActive ? 1.5 : 1,
                           ),
                         ),
-                        child: Text(_pBadge(p),
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 11, fontWeight: FontWeight.w700,
-                            color: isActive ? c : _textSub(isDark),
-                          )),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6, height: 6,
+                              decoration: BoxDecoration(
+                                color: isActive ? c : _textSub(isDark),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(_pLabel(p),
+                              style: GoogleFonts.inter(
+                                fontSize: 11, fontWeight: FontWeight.w600,
+                                color: isActive ? c : _textSub(isDark),
+                              )),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -1110,7 +1452,7 @@ class _AddSheetState extends State<_AddSheet> {
                         if (_date != null) ...[
                           const SizedBox(width: 5),
                           Text(_fmtDate(_date!),
-                            style: GoogleFonts.jetBrainsMono(
+                            style: GoogleFonts.inter(
                               fontSize: 11, color: AppColors.tasks,
                             )),
                           const SizedBox(width: 4),
@@ -1156,7 +1498,7 @@ class _AddSheetState extends State<_AddSheet> {
                         if (_time != null) ...[
                           const SizedBox(width: 5),
                           Text(_fmt24(_time!),
-                            style: GoogleFonts.jetBrainsMono(
+                            style: GoogleFonts.inter(
                               fontSize: 11, color: AppColors.tasks,
                             )),
                           const SizedBox(width: 4),
@@ -1183,7 +1525,7 @@ class _AddSheetState extends State<_AddSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
                   color: accent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: accent.withAlpha(70),
@@ -1195,7 +1537,7 @@ class _AddSheetState extends State<_AddSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('ADD TASK',
+                    Text('ADD MISSION',
                       style: GoogleFonts.inter(
                         fontSize: 13, fontWeight: FontWeight.w700,
                         letterSpacing: 0.8,
@@ -1290,7 +1632,7 @@ class _Field extends StatelessWidget {
   }
 }
 
-// ── XP bar overlay (Hearthstone style) ───────────────────────────────────────
+// ── XP bar overlay ────────────────────────────────────────────────────────────
 
 class _XpBarOverlay extends StatefulWidget {
   final int xp;
@@ -1315,27 +1657,24 @@ class _XpBarOverlay extends StatefulWidget {
 class _XpBarOverlayState extends State<_XpBarOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
-  late final Animation<double> _slideY;   // panel slides in from bottom
-  late final Animation<double> _fill;     // bar fills up
-  late final Animation<double> _labelY;  // "+XP" text bounces up
+  late final Animation<double> _slideY;
+  late final Animation<double> _fill;
+  late final Animation<double> _labelY;
   late final Animation<double> _labelOp;
   late final Animation<double> _panelOp;
 
   @override
   void initState() {
     super.initState();
-    // total: 2000 ms
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 2200));
 
-    // 0–10%: slide panel in
     _slideY = Tween(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(parent: _ctrl,
           curve: const Interval(0.0, 0.12, curve: Curves.easeOutCubic)));
 
-    // 12–75%: fill bar from real fromProgress to real toProgress with slight overshoot
-    final from = widget.fromProgress;
-    final to   = widget.toProgress;
+    final from      = widget.fromProgress;
+    final to        = widget.toProgress;
     final overshoot = ((to - from) * 0.06).clamp(0.0, 0.04);
     _fill = TweenSequence([
       TweenSequenceItem(
@@ -1350,7 +1689,6 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
     ]).animate(CurvedAnimation(parent: _ctrl,
         curve: const Interval(0.12, 0.78)));
 
-    // 15–45%: label bounces up from bar
     _labelY = TweenSequence([
       TweenSequenceItem(
         tween: Tween(begin: 0.0, end: -28.0)
@@ -1370,7 +1708,6 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
     ]).animate(CurvedAnimation(parent: _ctrl,
         curve: const Interval(0.12, 0.80)));
 
-    // 82–100%: panel fades + slides out
     _panelOp = TweenSequence([
       TweenSequenceItem(tween: ConstantTween(1.0), weight: 75),
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0)
@@ -1411,46 +1748,44 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Floating "+XP" label above bar
                     if (widget.xp > 0)
-                    Transform.translate(
-                      offset: Offset(0, _labelY.value),
-                      child: Opacity(
-                        opacity: _labelOp.value.clamp(0.0, 1.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: widget.color,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: widget.color.withAlpha(160),
-                                    blurRadius: 20,
-                                    spreadRadius: 2,
-                                  ),
-                                ],
+                      Transform.translate(
+                        offset: Offset(0, _labelY.value),
+                        child: Opacity(
+                          opacity: _labelOp.value.clamp(0.0, 1.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: widget.color,
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: widget.color.withAlpha(160),
+                                      blurRadius: 20,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Text('+${widget.xp} XP',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 15, fontWeight: FontWeight.w700,
+                                    letterSpacing: 1.5,
+                                    color: widget.color == const Color(0xFFFFD600)
+                                        ? Colors.black
+                                        : Colors.white,
+                                  )),
                               ),
-                              child: Text('+${widget.xp} XP',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 15, fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.5,
-                                  color: widget.color == const Color(0xFFFFD600)
-                                      ? Colors.black
-                                      : Colors.white,
-                                )),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
                     const SizedBox(height: 10),
 
-                    // XP row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1469,20 +1804,17 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
 
                     const SizedBox(height: 6),
 
-                    // The bar
                     Stack(
                       children: [
-                        // Track
                         Container(
                           height: 16,
                           decoration: BoxDecoration(
                             color: Colors.white.withAlpha(18),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: Colors.white.withAlpha(12), width: 1),
+                                color: Colors.white.withAlpha(12), width: 1),
                           ),
                         ),
-                        // Fill
                         FractionallySizedBox(
                           widthFactor: _fill.value.clamp(0.0, 1.0),
                           child: Container(
@@ -1506,7 +1838,6 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                             ),
                           ),
                         ),
-                        // Shine at fill edge
                         if (_fill.value > 0.02)
                           FractionallySizedBox(
                             widthFactor: _fill.value.clamp(0.0, 1.0),
@@ -1600,7 +1931,9 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: sel ? 38 : 24,
                   fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                  color: sel ? AppColors.tasks : _textSub(isDark).withAlpha(100),
+                  color: sel
+                      ? AppColors.tasks
+                      : _textSub(isDark).withAlpha(100),
                 ),
               ),
             );
@@ -1622,9 +1955,7 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border(
-          top: BorderSide(color: border, width: 1),
-        ),
+        border: Border(top: BorderSide(color: border, width: 1)),
       ),
       padding: const EdgeInsets.fromLTRB(28, 14, 28, 36),
       child: Column(
@@ -1652,13 +1983,15 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
                   decoration: BoxDecoration(
                     color: AppColors.tasks.withAlpha(isDark ? 28 : 22),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.tasks.withAlpha(80), width: 1.2),
+                    border: Border.all(
+                        color: AppColors.tasks.withAlpha(80), width: 1.2),
                   ),
                 ),
                 Row(
                   children: [
                     _drum(count: 24, selected: _hour, ctrl: _hourCtrl,
-                        onChanged: (i) => setState(() => _hour = i), isDark: isDark),
+                        onChanged: (i) => setState(() => _hour = i),
+                        isDark: isDark),
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Text(':',
@@ -1667,7 +2000,8 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
                           color: AppColors.tasks.withAlpha(200))),
                     ),
                     _drum(count: 60, selected: _minute, ctrl: _minCtrl,
-                        onChanged: (i) => setState(() => _minute = i), isDark: isDark),
+                        onChanged: (i) => setState(() => _minute = i),
+                        isDark: isDark),
                   ],
                 ),
               ],
@@ -1675,7 +2009,8 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
           ),
           const SizedBox(height: 20),
           GestureDetector(
-            onTap: () => Navigator.pop(context, TimeOfDay(hour: _hour, minute: _minute)),
+            onTap: () => Navigator.pop(
+                context, TimeOfDay(hour: _hour, minute: _minute)),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1702,7 +2037,7 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
   }
 }
 
-// ── Level-up overlay (neon arcade style) ────────────────────────────────────
+// ── Level-up overlay ──────────────────────────────────────────────────────────
 
 class _LevelUpOverlay extends StatefulWidget {
   final int level;
@@ -1718,8 +2053,8 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
   late final AnimationController _ctrl;
   bool _waitingForTap = false;
 
-  static const _cyan   = Color(0xFF00EEFF);
-  static const _pink   = Color(0xFFFF2D9B);
+  static const _cyan = Color(0xFF00EEFF);
+  static const _pink = Color(0xFFFF2D9B);
 
   @override
   void initState() {
@@ -1727,12 +2062,13 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
     HapticFeedback.heavyImpact();
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 3800));
-    // play intro then wait — do NOT use addStatusListener (fires on animateTo too)
     _ctrl
         .animateTo(0.74,
             duration: const Duration(milliseconds: 2600),
             curve: Curves.linear)
-        .then((_) { if (mounted) setState(() => _waitingForTap = true); });
+        .then((_) {
+      if (mounted) setState(() => _waitingForTap = true);
+    });
   }
 
   @override
@@ -1759,34 +2095,21 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
       builder: (ctx, _) {
         final t = _ctrl.value;
 
-        // bg fade (0-8%)
-        final bgOp = (t < 0.08 ? t / 0.08 : t > 0.80 ? 1-(t-0.80)/0.20 : 1.0).clamp(0.0, 1.0);
-
-        // white flash (0-6%)
+        final bgOp    = (t < 0.08 ? t / 0.08 : t > 0.80 ? 1 - (t - 0.80) / 0.20 : 1.0).clamp(0.0, 1.0);
         final flashOp = (t < 0.06 ? 1 - t / 0.06 : 0.0).clamp(0.0, 1.0);
-
-        // avatar drops in from top (8-22%)
-        final avT  = Curves.easeOutBack.transform(((t-0.08)/0.14).clamp(0.0,1.0));
-        final avY  = (1 - avT) * -180.0;
-        final avOp = (t < 0.08 ? 0.0 : t > 0.80 ? 1-(t-0.80)/0.20 : 1.0).clamp(0.0, 1.0);
-
-        // ring pulse (0.22+)
-        final ring = t > 0.22 ? (0.55 + 0.45*sin(t * 2 * pi * 3.5)).clamp(0.0,1.0) : 0.0;
-
-        // "LEVEL" neon on (22-38%) with flicker
-        final lvlT   = ((t-0.22)/0.16).clamp(0.0,1.0);
-        final lvlFlk = lvlT < 1 ? (lvlT + 0.25*sin(lvlT*pi*10)*(1-lvlT)).clamp(0.0,1.2) : 1.0;
-        final lvlOp  = (t < 0.22 ? 0.0 : t > 0.80 ? 1-(t-0.80)/0.20 : lvlFlk).clamp(0.0,1.0);
-
-        // "UP" neon on (34-52%)
-        final upT    = ((t-0.34)/0.18).clamp(0.0,1.0);
-        final upFlk  = upT < 1 ? (upT + 0.25*sin(upT*pi*10)*(1-upT)).clamp(0.0,1.2) : 1.0;
-        final upOp   = (t < 0.34 ? 0.0 : t > 0.80 ? 1-(t-0.80)/0.20 : upFlk).clamp(0.0,1.0);
-
-        // level badge bounces in (55-70%)
-        final bdT    = Curves.elasticOut.transform(((t-0.55)/0.15).clamp(0.0,1.0));
-        final bdSc   = (t < 0.55 ? 0.0 : bdT).clamp(0.0, 2.5);
-        final bdOp   = (t < 0.55 ? 0.0 : t > 0.80 ? 1-(t-0.80)/0.20 : 1.0).clamp(0.0,1.0);
+        final avT     = Curves.easeOutBack.transform(((t - 0.08) / 0.14).clamp(0.0, 1.0));
+        final avY     = (1 - avT) * -180.0;
+        final avOp    = (t < 0.08 ? 0.0 : t > 0.80 ? 1 - (t - 0.80) / 0.20 : 1.0).clamp(0.0, 1.0);
+        final ring    = t > 0.22 ? (0.55 + 0.45 * sin(t * 2 * pi * 3.5)).clamp(0.0, 1.0) : 0.0;
+        final lvlT    = ((t - 0.22) / 0.16).clamp(0.0, 1.0);
+        final lvlFlk  = lvlT < 1 ? (lvlT + 0.25 * sin(lvlT * pi * 10) * (1 - lvlT)).clamp(0.0, 1.2) : 1.0;
+        final lvlOp   = (t < 0.22 ? 0.0 : t > 0.80 ? 1 - (t - 0.80) / 0.20 : lvlFlk).clamp(0.0, 1.0);
+        final upT     = ((t - 0.34) / 0.18).clamp(0.0, 1.0);
+        final upFlk   = upT < 1 ? (upT + 0.25 * sin(upT * pi * 10) * (1 - upT)).clamp(0.0, 1.2) : 1.0;
+        final upOp    = (t < 0.34 ? 0.0 : t > 0.80 ? 1 - (t - 0.80) / 0.20 : upFlk).clamp(0.0, 1.0);
+        final bdT     = Curves.elasticOut.transform(((t - 0.55) / 0.15).clamp(0.0, 1.0));
+        final bdSc    = (t < 0.55 ? 0.0 : bdT).clamp(0.0, 2.5);
+        final bdOp    = (t < 0.55 ? 0.0 : t > 0.80 ? 1 - (t - 0.80) / 0.20 : 1.0).clamp(0.0, 1.0);
 
         return Positioned.fill(
           child: GestureDetector(
@@ -1818,22 +2141,19 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                 child: Stack(
                   clipBehavior: Clip.hardEdge,
                   children: [
-
-                    // white flash
-                    if (flashOp > 0) Positioned.fill(
-                      child: IgnorePointer(child: Opacity(
-                        opacity: flashOp,
-                        child: Container(color: Colors.white),
-                      )),
-                    ),
-
-                    // ── center content ────────────────────────────────────
+                    if (flashOp > 0)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: Opacity(
+                            opacity: flashOp,
+                            child: Container(color: Colors.white),
+                          ),
+                        ),
+                      ),
                     Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-
-                          // avatar with pulsing neon ring
                           Transform.translate(
                             offset: Offset(0, avY),
                             child: Opacity(
@@ -1841,26 +2161,26 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                               child: Stack(
                                 alignment: Alignment.center,
                                 children: [
-                                  // outer glow ring
                                   Container(
                                     width: 152 + ring * 10,
                                     height: 152 + ring * 10,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: _cyan.withAlpha((80 + ring * 175).round()),
+                                        color: _cyan.withAlpha(
+                                            (80 + ring * 175).round()),
                                         width: 2.5 + ring * 2,
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: _cyan.withAlpha((ring * 160).round()),
+                                          color: _cyan.withAlpha(
+                                              (ring * 160).round()),
                                           blurRadius: 20 + ring * 28,
                                           spreadRadius: ring * 5,
                                         ),
                                       ],
                                     ),
                                   ),
-                                  // avatar circle
                                   ClipOval(
                                     child: Image.asset(
                                       'assets/images/avatar.png',
@@ -1872,18 +2192,10 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 28),
-
-                          // "LEVEL" neon
                           Opacity(opacity: lvlOp, child: _neon('LEVEL', _cyan, 56)),
-
-                          // "UP" neon (bigger, pink)
-                          Opacity(opacity: upOp, child: _neon('UP', _pink, 82)),
-
+                          Opacity(opacity: upOp,  child: _neon('UP', _pink, 82)),
                           const SizedBox(height: 22),
-
-                          // level number badge
                           Opacity(
                             opacity: bdOp,
                             child: Transform.scale(
@@ -1911,9 +2223,7 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                               ),
                             ),
                           ),
-
                           const SizedBox(height: 64),
-
                           Opacity(
                             opacity: t > 0.65 ? bdOp : 0.0,
                             child: Text('PRESS  ANY  KEY',
@@ -1943,14 +2253,15 @@ class _CollectibleDropOverlay extends StatefulWidget {
   const _CollectibleDropOverlay({required this.item, required this.onDone});
 
   @override
-  State<_CollectibleDropOverlay> createState() => _CollectibleDropOverlayState();
+  State<_CollectibleDropOverlay> createState() =>
+      _CollectibleDropOverlayState();
 }
 
 class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   VideoPlayerController? _vpc;
-  bool _mediaReady = false;
+  bool _mediaReady    = false;
   bool _waitingForTap = false;
 
   Color get _rarityColor => Color(widget.item.rarity.color);
@@ -1964,11 +2275,13 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
         .animateTo(0.80,
             duration: const Duration(milliseconds: 1800),
             curve: Curves.easeOut)
-        .then((_) { if (mounted) setState(() => _waitingForTap = true); });
+        .then((_) {
+      if (mounted) setState(() => _waitingForTap = true);
+    });
     if (widget.item.isVideo) {
       _initVideo();
     } else {
-      _mediaReady = true; // images don't need async init
+      _mediaReady = true;
     }
   }
 
@@ -1996,9 +2309,10 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (ctx, _) {
-        final t = _ctrl.value;
-        final bgOp = (t / 0.12).clamp(0.0, 1.0);
-        final cardT = Curves.easeOutBack.transform(((t - 0.20) / 0.35).clamp(0.0, 1.0));
+        final t      = _ctrl.value;
+        final bgOp   = (t / 0.12).clamp(0.0, 1.0);
+        final cardT  = Curves.easeOutBack
+            .transform(((t - 0.20) / 0.35).clamp(0.0, 1.0));
         final labelT = ((t - 0.55) / 0.20).clamp(0.0, 1.0);
 
         return Positioned.fill(
@@ -2027,8 +2341,6 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-
-                      // "NEW COLLECTIBLE" label
                       Opacity(
                         opacity: Curves.easeOut.transform(labelT),
                         child: Text('NEW  COLLECTIBLE',
@@ -2036,12 +2348,12 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                             fontSize: 11, fontWeight: FontWeight.w700,
                             letterSpacing: 4,
                             color: rc.withAlpha(200),
-                            shadows: [Shadow(color: rc.withAlpha(160), blurRadius: 12)],
+                            shadows: [
+                              Shadow(color: rc.withAlpha(160), blurRadius: 12)
+                            ],
                           )),
                       ),
-
                       const SizedBox(height: 6),
-
                       Opacity(
                         opacity: Curves.easeOut.transform(labelT),
                         child: Text('UNLOCKED',
@@ -2056,19 +2368,20 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                             ],
                           )),
                       ),
-
                       const SizedBox(height: 32),
-
-                      // Card
                       Transform.scale(
                         scale: cardT,
                         child: Container(
                           width: 200, height: 300,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: rc.withAlpha(200), width: 2),
+                            border: Border.all(
+                                color: rc.withAlpha(200), width: 2),
                             boxShadow: [
-                              BoxShadow(color: rc.withAlpha(100), blurRadius: 30, spreadRadius: 2),
+                              BoxShadow(
+                                  color: rc.withAlpha(100),
+                                  blurRadius: 30,
+                                  spreadRadius: 2),
                             ],
                           ),
                           child: ClipRRect(
@@ -2088,35 +2401,39 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, e, s) => Container(
                                           color: const Color(0xFF0A0A14),
-                                          child: Center(child: Text(
-                                            e.toString(),
-                                            style: const TextStyle(color: Color(0xFFFF5252), fontSize: 9),
-                                            textAlign: TextAlign.center,
-                                          )),
+                                          child: Center(
+                                            child: Text(e.toString(),
+                                              style: const TextStyle(
+                                                  color: Color(0xFFFF5252),
+                                                  fontSize: 9),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ),
                                         ),
                                       ))
                                 : Container(
                                     color: const Color(0xFF0A0A14),
                                     child: Center(
                                       child: CircularProgressIndicator(
-                                          color: rc.withAlpha(180), strokeWidth: 1.5),
+                                          color: rc.withAlpha(180),
+                                          strokeWidth: 1.5),
                                     ),
                                   ),
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      // Card name + rarity
                       Opacity(
-                        opacity: Curves.easeOut.transform(((t - 0.65) / 0.20).clamp(0.0, 1.0)),
+                        opacity: Curves.easeOut.transform(
+                            ((t - 0.65) / 0.20).clamp(0.0, 1.0)),
                         child: Column(children: [
                           Text(widget.item.name,
                             style: GoogleFonts.jetBrainsMono(
                               fontSize: 12, fontWeight: FontWeight.w700,
                               letterSpacing: 3, color: rc,
-                              shadows: [Shadow(color: rc.withAlpha(180), blurRadius: 8)],
+                              shadows: [
+                                Shadow(color: rc.withAlpha(180), blurRadius: 8)
+                              ],
                             )),
                           const SizedBox(height: 4),
                           Text(widget.item.rarity.label,
@@ -2126,10 +2443,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                             )),
                         ]),
                       ),
-
                       const SizedBox(height: 48),
-
-                      // Hint
                       Opacity(
                         opacity: _waitingForTap ? 1.0 : 0.0,
                         child: Text('PRESS  ANY  KEY',
