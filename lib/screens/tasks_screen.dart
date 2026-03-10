@@ -199,18 +199,27 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   void _showAdd() {
-    showModalBottomSheet(
+    showGeneralDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _AddSheet(
+      barrierDismissible: true,
+      barrierLabel: 'dismiss',
+      barrierColor: Colors.black.withAlpha(140),
+      transitionDuration: const Duration(milliseconds: 340),
+      pageBuilder: (ctx, _, __) => _AddSheet(
         onAdd: (task) {
           task.category = widget.category;
           setState(() => TaskStore.tasks.insert(0, task));
-          Navigator.pop(context);
+          Navigator.of(ctx).pop();
         },
         nextId: '${TaskStore.nextId++}',
         preselectedDate: _selectedDate,
+      ),
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(-1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+        child: child,
       ),
     );
   }
@@ -409,79 +418,93 @@ class _CalendarStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final days  = List.generate(21, (i) => today.add(Duration(days: i - 3)));
+    final today  = DateTime.now();
+    // Always Mon–Sun of the current week
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final days   = List.generate(7, (i) => monday.add(Duration(days: i)));
     const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const months   = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
+                      'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 
-    return SizedBox(
-      height: 74,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: days.length,
-        itemBuilder: (_, i) {
-          final day = days[i];
-          final isToday = day.day == today.day &&
-              day.month == today.month &&
-              day.year == today.year;
-          final isSelected = selectedDate != null &&
-              selectedDate!.day == day.day &&
-              selectedDate!.month == day.month &&
-              selectedDate!.year == day.year;
-          final dayName = dayNames[(day.weekday - 1) % 7];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Month label
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          child: Text(months[today.month - 1],
+            style: GoogleFonts.inter(
+              fontSize: 10, fontWeight: FontWeight.w700,
+              letterSpacing: 2.5,
+              color: accentColor.withAlpha(180),
+            )),
+        ),
+        // 7-day row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: List.generate(7, (i) {
+              final day        = days[i];
+              final isToday    = day.day == today.day && day.month == today.month;
+              final isSelected = selectedDate != null &&
+                  selectedDate!.day == day.day &&
+                  selectedDate!.month == day.month;
 
-          return GestureDetector(
-            onTap: () => onDateSelected(day),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 52,
-              margin: const EdgeInsets.only(right: 8),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? accentColor
-                    : isToday
-                        ? accentColor.withAlpha(isDark ? 38 : 30)
-                        : _cardBg(isDark),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isSelected
-                      ? accentColor
-                      : isToday
-                          ? accentColor.withAlpha(130)
-                          : _cardBorder(isDark),
-                  width: 1.2,
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => onDateSelected(day),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    margin: EdgeInsets.only(right: i < 6 ? 5 : 0),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? accentColor
+                          : isToday
+                              ? accentColor.withAlpha(40)
+                              : Colors.white.withAlpha(8),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? accentColor
+                            : isToday
+                                ? accentColor.withAlpha(140)
+                                : Colors.white.withAlpha(18),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(dayNames[i],
+                          style: GoogleFonts.inter(
+                            fontSize: 8, fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                            color: isSelected
+                                ? Colors.white70
+                                : isToday
+                                    ? accentColor
+                                    : Colors.white38,
+                          )),
+                        const SizedBox(height: 4),
+                        Text('${day.day}',
+                          style: GoogleFonts.inter(
+                            fontSize: 16, fontWeight: FontWeight.w700,
+                            height: 1,
+                            color: isSelected
+                                ? Colors.white
+                                : isToday
+                                    ? accentColor
+                                    : Colors.white60,
+                          )),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(dayName,
-                    style: GoogleFonts.inter(
-                      fontSize: 9, fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                      color: isSelected
-                          ? Colors.white.withAlpha(180)
-                          : isToday
-                              ? accentColor
-                              : _textSub(isDark),
-                    )),
-                  const SizedBox(height: 4),
-                  Text('${day.day}',
-                    style: GoogleFonts.inter(
-                      fontSize: 20, fontWeight: FontWeight.w700,
-                      height: 1,
-                      color: isSelected
-                          ? Colors.white
-                          : isToday
-                              ? accentColor
-                              : _textPrimary(isDark),
-                    )),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+              );
+            }),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1462,254 +1485,317 @@ class _AddSheetState extends State<_AddSheet> {
     ));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark      = Theme.of(context).brightness == Brightness.dark;
-    final accent      = _pColor(_priority);
-    final sheetBg     = isDark ? AppColors.darkCard : const Color(0xFFFFFFFF);
-    final fieldBg     = isDark ? AppColors.darkBg   : const Color(0xFFE8E8F8);
-    final fieldBorder = isDark ? AppColors.darkBorder : const Color(0xFFDDDDEE);
+  // Pantone palette
+  static const _kNavy        = Color(0xFF002D4E); // 2965 C
+  static const _kDarkNavy    = Color(0xFF001828); // darker bg
+  static const _kRedInferno  = Color(0xFF4E0000); // 4975 C
+  static const _kPastelYellow= Color(0xFFF2E6B1); // 11-0616 TCX
+  static const _kReseda      = Color(0xFFA1AD8C); // 15-6414 TCX
+  static const _kChive       = Color(0xFF4E5226); // 19-0323 TCX
+  static const _kCocoa       = Color(0xFF594536); // 19-1119 TCX
+  static const _kCoconutMilk = Color(0xFFF0EDE5); // 11-0608 TPG
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: sheetBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 10, 24, 28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _tableRow({
+    required String label,
+    required Widget content,
+    bool topBorder = true,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (topBorder)
+        Divider(height: 1, thickness: 1, color: _kNavy.withAlpha(200)),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            Center(
-              child: Container(
-                width: 36, height: 3,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: fieldBorder,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+            SizedBox(
+              width: 72,
+              child: Text(label,
+                style: GoogleFonts.inter(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                  color: _kPastelYellow.withAlpha(160),
+                )),
             ),
-
-            _Field(
-              controller: _titleCtrl,
-              hint: 'What needs to be done?',
-              autofocus: true,
-              fontSize: 16,
-              bold: true,
-              isDark: isDark,
-              fieldBg: fieldBg,
-              fieldBorder: fieldBorder,
-              onSubmit: (_) => _submit(),
-            ),
-            const SizedBox(height: 10),
-            _Field(
-              controller: _descCtrl,
-              hint: 'Notes (optional)',
-              fontSize: 13,
-              isDark: isDark,
-              fieldBg: fieldBg,
-              fieldBorder: fieldBorder,
-            ),
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                ...TaskPriority.values.map((p) {
-                  final isActive = _priority == p;
-                  final c = _pColor(p);
-                  return Padding(
-                    padding: EdgeInsets.only(
-                        right: p != TaskPriority.low ? 6 : 0),
-                    child: GestureDetector(
-                      onTap: () => setState(() => _priority = p),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 120),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? c.withAlpha(isDark ? 22 : 35)
-                              : fieldBg,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isActive ? c : fieldBorder,
-                            width: isActive ? 1.5 : 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6, height: 6,
-                              decoration: BoxDecoration(
-                                color: isActive ? c : _textSub(isDark),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(_pLabel(p),
-                              style: GoogleFonts.inter(
-                                fontSize: 11, fontWeight: FontWeight.w600,
-                                color: isActive ? c : _textSub(isDark),
-                              )),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-
-                const Spacer(),
-
-                // Date button
-                GestureDetector(
-                  onTap: _pickDate,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _date != null
-                          ? AppColors.tasks.withAlpha(isDark ? 22 : 30)
-                          : fieldBg,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _date != null ? AppColors.tasks : fieldBorder,
-                        width: _date != null ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.calendar_today_rounded,
-                            size: 13,
-                            color: _date != null
-                                ? AppColors.tasks
-                                : _textSub(isDark)),
-                        if (_date != null) ...[
-                          const SizedBox(width: 5),
-                          Text(_fmtDate(_date!),
-                            style: GoogleFonts.inter(
-                              fontSize: 11, color: AppColors.tasks,
-                            )),
-                          const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () => setState(() => _date = null),
-                            child: Icon(Icons.close_rounded,
-                                size: 11,
-                                color: AppColors.tasks.withAlpha(160)),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 6),
-
-                // Time button
-                GestureDetector(
-                  onTap: _pickTime,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _time != null
-                          ? AppColors.tasks.withAlpha(isDark ? 22 : 30)
-                          : fieldBg,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _time != null ? AppColors.tasks : fieldBorder,
-                        width: _time != null ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.access_time_rounded,
-                            size: 13,
-                            color: _time != null
-                                ? AppColors.tasks
-                                : _textSub(isDark)),
-                        if (_time != null) ...[
-                          const SizedBox(width: 5),
-                          Text(_fmt24(_time!),
-                            style: GoogleFonts.inter(
-                              fontSize: 11, color: AppColors.tasks,
-                            )),
-                          const SizedBox(width: 4),
-                          GestureDetector(
-                            onTap: () => setState(() => _time = null),
-                            child: Icon(Icons.close_rounded,
-                                size: 11,
-                                color: AppColors.tasks.withAlpha(160)),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            GestureDetector(
-              onTap: _submit,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                decoration: BoxDecoration(
-                  color: accent,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withAlpha(70),
-                      blurRadius: 18,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('ADD MISSION',
-                      style: GoogleFonts.inter(
-                        fontSize: 13, fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                        color: _priority == TaskPriority.medium
-                            ? Colors.black
-                            : Colors.white,
-                      )),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withAlpha(30),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text('+${_pXp(_priority)} XP',
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 9, fontWeight: FontWeight.w700,
-                          color: _priority == TaskPriority.medium
-                              ? Colors.black.withAlpha(160)
-                              : Colors.white.withAlpha(200),
-                        )),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const SizedBox(width: 12),
+            Expanded(child: content),
           ],
         ),
       ),
-    );
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: sw * 0.84,
+        height: double.infinity,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: _kDarkNavy,
+              boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 32, offset: Offset(8, 0))],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                // ── Header ───────────────────────────────────────────────
+                Container(
+                  color: _kChive,
+                  padding: const EdgeInsets.fromLTRB(20, 52, 20, 18),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: _kRedInferno,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.add_rounded,
+                            color: _kCoconutMilk, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('NEW MISSION',
+                            style: GoogleFonts.inter(
+                              fontSize: 13, fontWeight: FontWeight.w800,
+                              letterSpacing: 2,
+                              color: _kCoconutMilk,
+                            )),
+                          Text('+${_pXp(_priority)} XP',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 10, fontWeight: FontWeight.w600,
+                              color: _kPastelYellow.withAlpha(200),
+                            )),
+                        ],
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Icon(Icons.close_rounded,
+                            color: _kCoconutMilk.withAlpha(120), size: 20),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Form rows ─────────────────────────────────────────────
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                        bottom: MediaQuery.of(context).viewInsets.bottom + 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        _tableRow(
+                          label: 'TITLE',
+                          topBorder: false,
+                          content: TextField(
+                            controller: _titleCtrl,
+                            autofocus: true,
+                            style: GoogleFonts.inter(
+                              fontSize: 15, fontWeight: FontWeight.w600,
+                              color: _kCoconutMilk,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'What needs to be done?',
+                              hintStyle: GoogleFonts.inter(
+                                fontSize: 15,
+                                color: _kReseda.withAlpha(130),
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onSubmitted: (_) => _submit(),
+                          ),
+                        ),
+
+                        _tableRow(
+                          label: 'NOTES',
+                          content: TextField(
+                            controller: _descCtrl,
+                            maxLines: 3,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: _kCoconutMilk.withAlpha(200),
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Optional notes…',
+                              hintStyle: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: _kReseda.withAlpha(100),
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+
+                        _tableRow(
+                          label: 'PRIORITY',
+                          content: Row(
+                            children: TaskPriority.values.map((p) {
+                              final isActive = _priority == p;
+                              const pColors = {
+                                TaskPriority.high:   Color(0xFF4E0000), // Red Inferno
+                                TaskPriority.medium: Color(0xFF4E5226), // Chive
+                                TaskPriority.low:    Color(0xFF002D4E), // Navy
+                              };
+                              final c = pColors[p]!;
+                              return GestureDetector(
+                                onTap: () => setState(() => _priority = p),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 140),
+                                  margin: const EdgeInsets.only(right: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 7),
+                                  decoration: BoxDecoration(
+                                    color: isActive ? c : c.withAlpha(40),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isActive
+                                          ? _kPastelYellow.withAlpha(160)
+                                          : _kReseda.withAlpha(60),
+                                      width: isActive ? 1.5 : 1,
+                                    ),
+                                  ),
+                                  child: Text(_pLabel(p),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10, fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.5,
+                                      color: isActive
+                                          ? _kPastelYellow
+                                          : _kReseda.withAlpha(160),
+                                    )),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+
+                        _tableRow(
+                          label: 'DATE',
+                          content: GestureDetector(
+                            onTap: _pickDate,
+                            child: Row(
+                              children: [
+                                Icon(Icons.calendar_today_rounded,
+                                    size: 14, color: _kReseda),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _date != null ? _fmtDate(_date!) : 'Pick a date',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: _date != null
+                                        ? _kPastelYellow
+                                        : _kReseda.withAlpha(130),
+                                  )),
+                                if (_date != null) ...[
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => setState(() => _date = null),
+                                    child: Icon(Icons.close_rounded,
+                                        size: 13, color: _kReseda.withAlpha(160)),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        _tableRow(
+                          label: 'TIME',
+                          content: GestureDetector(
+                            onTap: _pickTime,
+                            child: Row(
+                              children: [
+                                Icon(Icons.access_time_rounded,
+                                    size: 14, color: _kReseda),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _time != null ? _fmt24(_time!) : 'Pick a time',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: _time != null
+                                        ? _kPastelYellow
+                                        : _kReseda.withAlpha(130),
+                                  )),
+                                if (_time != null) ...[
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () => setState(() => _time = null),
+                                    child: Icon(Icons.close_rounded,
+                                        size: 13, color: _kReseda.withAlpha(160)),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // ── Submit button ────────────────────────────────────
+                        Divider(height: 1, thickness: 1, color: _kNavy.withAlpha(200)),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                          child: GestureDetector(
+                            onTap: _submit,
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                color: _kRedInferno,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: _kPastelYellow.withAlpha(60)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _kRedInferno.withAlpha(120),
+                                    blurRadius: 20, offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('ADD MISSION',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13, fontWeight: FontWeight.w800,
+                                      letterSpacing: 1.5,
+                                      color: _kCoconutMilk,
+                                    )),
+                                  const SizedBox(width: 10),
+                                  Text('+${_pXp(_priority)} XP',
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 10, fontWeight: FontWeight.w700,
+                                      color: _kPastelYellow.withAlpha(200),
+                                    )),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
   }
 }
 
