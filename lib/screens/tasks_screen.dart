@@ -285,36 +285,53 @@ class _TasksScreenState extends State<TasksScreen> {
                 // ── Header ──────────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Row(
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: 34, height: 34,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: _cardBorder(isDark)),
-                            borderRadius: BorderRadius.circular(10),
+                      // Centred title
+                      Column(
+                        children: [
+                          Text(
+                            isWork ? 'WORK  TASKS' : 'LIVE  TASKS',
+                            style: TextStyle(
+                              fontFamily: 'BebasNeue',
+                              fontSize: 28,
+                              letterSpacing: 4,
+                              color: isWork
+                                  ? const Color(0xFFABA38F)   // Grullo
+                                  : const Color(0xFF8BBCAA),  // muted sage
+                              height: 1,
+                            ),
                           ),
-                          child: Icon(Icons.arrow_back_rounded,
-                              size: 15, color: _textPrimary(isDark)),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('MISSIONS',
+                          const SizedBox(height: 3),
+                          if (total > 0)
+                            Text('$done / $total completed',
                               style: GoogleFonts.inter(
-                                fontSize: 20, fontWeight: FontWeight.w700,
-                                letterSpacing: 1.5, color: AppColors.tasks,
+                                fontSize: 10, fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5,
+                                color: Colors.white.withAlpha(55),
                               )),
-                            if (total > 0)
-                              Text('$done of $total done',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9, color: _textSub(isDark),
-                                )),
-                          ],
+                        ],
+                      ),
+                      // Back button — pinned left
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(10),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.white.withAlpha(22)),
+                            ),
+                            child: const Icon(
+                              Icons.chevron_left_rounded,
+                              size: 22,
+                              color: Colors.white60,
+                            ),
+                          ),
                         ),
                       ),
                     ],
