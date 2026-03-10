@@ -29,6 +29,31 @@ Color _pColor(TaskPriority p) {
   }
 }
 
+// Earthy card palette matching _AddSheet priority buttons
+Color _pCardBg(TaskPriority p) {
+  switch (p) {
+    case TaskPriority.high:   return const Color(0xFF4E0000); // Red Inferno
+    case TaskPriority.medium: return const Color(0xFFF2E6B1); // Pastel Yellow
+    case TaskPriority.low:    return const Color(0xFF4E5226); // Chive
+  }
+}
+
+Color _pCardText(TaskPriority p) {
+  switch (p) {
+    case TaskPriority.high:   return const Color(0xFFF0EDE5); // cream on dark
+    case TaskPriority.medium: return const Color(0xFF3A2E10); // dark on yellow
+    case TaskPriority.low:    return const Color(0xFFE8E4D0); // cream on olive
+  }
+}
+
+Color _pCardSub(TaskPriority p) {
+  switch (p) {
+    case TaskPriority.high:   return const Color(0xFFB07070);
+    case TaskPriority.medium: return const Color(0xFF8A7040);
+    case TaskPriority.low:    return const Color(0xFFAAAD8C);
+  }
+}
+
 String _pLabel(TaskPriority p) {
   switch (p) {
     case TaskPriority.high:   return 'Critical';
@@ -955,228 +980,178 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color  = _pColor(task.priority);
-    final done   = task.isCompleted;
-    final catLabel = task.category == TaskCategory.work ? 'WORK' : 'LIVE';
+    final done      = task.isCompleted;
+    final accentBg  = done ? const Color(0xFFCCCAC4) : _pCardBg(task.priority);
+    final accentTxt = done ? const Color(0xFF8A8880) : _pCardText(task.priority);
+    final cardBg    = const Color(0xFFF5F2EB);
+    const textCol   = Color(0xFF2A2318);
+    const subCol    = Color(0xFF8A8070);
+    final catLabel  = task.category == TaskCategory.work ? 'WORK' : 'LIVE';
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 350),
-        opacity: done ? 0.45 : 1.0,
+        duration: const Duration(milliseconds: 300),
+        opacity: done ? 0.55 : 1.0,
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: _cardBg(isDark),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: done
-                  ? _cardBorder(isDark).withAlpha(60)
-                  : color.withAlpha(isDark ? 55 : 70),
-              width: done ? 0.8 : 1.2,
-            ),
-            boxShadow: done
-                ? null
-                : [
-                    BoxShadow(
-                      color: color.withAlpha(isDark ? 30 : 20),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+            color: cardBg,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(20),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // ── Colored left accent bar ──────────────────────────
-                Container(
-                  width: 4,
-                  decoration: BoxDecoration(
-                    color: done ? _cardBorder(isDark).withAlpha(80) : color,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      bottomLeft: Radius.circular(16),
-                    ),
-                    boxShadow: done ? null : [
-                      BoxShadow(
-                        color: color.withAlpha(isDark ? 160 : 120),
-                        blurRadius: 8,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Left: main content ──────────────────────────────
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Category tag
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: textCol.withAlpha(10),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: textCol.withAlpha(25), width: 0.8),
+                            ),
+                            child: Text(catLabel,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9, fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                                color: textCol.withAlpha(130),
+                              )),
+                          ),
 
-                // ── Content ──────────────────────────────────────────
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                          const SizedBox(height: 10),
 
-                        // Top row: category + priority pill + complete btn
-                        Row(
-                          children: [
-                            // Category tag
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.tasks.withAlpha(isDark ? 28 : 22),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(catLabel,
+                          // Title
+                          Text(task.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              fontStyle: FontStyle.italic,
+                              height: 1.15,
+                              color: textCol,
+                              decoration: done
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                              decorationColor: textCol.withAlpha(100),
+                            )),
+
+                          // Description
+                          if (task.description.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(task.description,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 12, height: 1.3, color: subCol,
+                              )),
+                          ],
+
+                          const SizedBox(height: 10),
+
+                          // Bottom: date/time + XP
+                          Row(
+                            children: [
+                              if (task.dueDate != null) ...[
+                                Icon(Icons.calendar_today_rounded,
+                                    size: 10, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(_fmtDate(task.dueDate!),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10, fontWeight: FontWeight.w500,
+                                    color: subCol,
+                                  )),
+                                const SizedBox(width: 8),
+                              ],
+                              if (task.dueTime != null) ...[
+                                Icon(Icons.access_time_rounded,
+                                    size: 10, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(_fmt24(task.dueTime!),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10, fontWeight: FontWeight.w500,
+                                    color: subCol,
+                                  )),
+                              ],
+                              const Spacer(),
+                              Text(
+                                done
+                                    ? '✓ ${_pXp(task.priority)} XP'
+                                    : '+${_pXp(task.priority)} XP',
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 9, fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                  color: AppColors.tasks.withAlpha(isDark ? 200 : 180),
+                                  color: subCol,
                                 )),
-                            ),
-                            const SizedBox(width: 6),
-                            // Priority pill
-                            if (!done)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: color.withAlpha(isDark ? 30 : 22),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                      color: color.withAlpha(isDark ? 100 : 80),
-                                      width: 0.8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 5, height: 5,
-                                      decoration: BoxDecoration(
-                                          color: color, shape: BoxShape.circle,
-                                          boxShadow: [BoxShadow(
-                                              color: color.withAlpha(200),
-                                              blurRadius: 4)]),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(_pLabel(task.priority),
-                                      style: GoogleFonts.inter(
-                                        fontSize: 9, fontWeight: FontWeight.w700,
-                                        color: color,
-                                      )),
-                                  ],
-                                ),
-                              ),
-                            const Spacer(),
-                            // Complete button
-                            GestureDetector(
-                              onTap: done ? null : onComplete,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 220),
-                                width: 26, height: 26,
-                                decoration: BoxDecoration(
-                                  color: done ? AppColors.success : color.withAlpha(isDark ? 30 : 22),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: done ? AppColors.success : color.withAlpha(isDark ? 120 : 100),
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: done ? [BoxShadow(
-                                      color: AppColors.success.withAlpha(120),
-                                      blurRadius: 8)] : null,
-                                ),
-                                child: done
-                                    ? const Icon(Icons.check_rounded,
-                                        size: 13, color: Colors.white)
-                                    : null,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 9),
-
-                        // Title
-                        Text(task.title,
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            height: 1.25,
-                            color: done ? _textSub(isDark) : _textPrimary(isDark),
-                            decoration: done
-                                ? TextDecoration.lineThrough
-                                : TextDecoration.none,
-                            decorationColor: _textSub(isDark).withAlpha(150),
-                          )),
-
-                        // Description
-                        if (task.description.isNotEmpty && !done) ...[
-                          const SizedBox(height: 5),
-                          Text(task.description,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              fontSize: 12, height: 1.4,
-                              color: _textSub(isDark),
-                            )),
+                            ],
+                          ),
                         ],
+                      ),
+                    ),
+                  ),
 
-                        const SizedBox(height: 10),
-
-                        // Bottom row: date/time + XP
-                        Row(
-                          children: [
-                            if (task.dueDate != null) ...[
-                              Icon(Icons.calendar_today_rounded,
-                                  size: 10,
-                                  color: _textSub(isDark).withAlpha(180)),
-                              const SizedBox(width: 3),
-                              Text(_fmtDate(task.dueDate!),
-                                style: GoogleFonts.inter(
-                                  fontSize: 11, fontWeight: FontWeight.w500,
-                                  color: _textSub(isDark),
-                                )),
-                              const SizedBox(width: 8),
-                            ],
-                            if (task.dueTime != null) ...[
-                              Icon(Icons.access_time_rounded,
-                                  size: 10,
-                                  color: _textSub(isDark).withAlpha(180)),
-                              const SizedBox(width: 3),
-                              Text(_fmt24(task.dueTime!),
-                                style: GoogleFonts.inter(
-                                  fontSize: 11, fontWeight: FontWeight.w500,
-                                  color: _textSub(isDark),
-                                )),
-                            ],
-                            const Spacer(),
-                            // XP badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: done
-                                    ? _cardBorder(isDark).withAlpha(50)
-                                    : color.withAlpha(isDark ? 28 : 22),
-                                borderRadius: BorderRadius.circular(8),
+                  // ── Right: priority accent block (~1/4 width) ───────
+                  Container(
+                    width: 68,
+                    color: accentBg,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Complete button
+                        GestureDetector(
+                          onTap: done ? null : onComplete,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            width: 30, height: 30,
+                            decoration: BoxDecoration(
+                              color: accentTxt.withAlpha(done ? 50 : 25),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: accentTxt.withAlpha(done ? 110 : 70),
+                                width: 1.5,
                               ),
-                              child: Text(
-                                done ? '✓ ${_pXp(task.priority)} XP' : '+${_pXp(task.priority)} XP',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 10, fontWeight: FontWeight.w700,
-                                  color: done
-                                      ? _textSub(isDark).withAlpha(120)
-                                      : color,
-                                )),
                             ),
-                          ],
+                            child: done
+                                ? Icon(Icons.check_rounded,
+                                    size: 14,
+                                    color: accentTxt.withAlpha(210))
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Priority label rotated
+                        RotatedBox(
+                          quarterTurns: 1,
+                          child: Text(_pLabel(task.priority).toUpperCase(),
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 8, fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                              color: accentTxt.withAlpha(150),
+                            )),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
