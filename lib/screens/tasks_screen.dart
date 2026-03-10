@@ -259,8 +259,8 @@ class _TasksScreenState extends State<TasksScreen> {
     final bgImage = isWork
         ? 'assets/collection/Tasks menu/Work.jpg'
         : 'assets/collection/Tasks menu/Live.jpg';
-    final categoryBg   = isWork ? const Color(0xFF24201D) : const Color(0xFF080F0C);
-    final bgImgOpacity = isWork ? 0.15 : 0.26;
+    final categoryBg   = isWork ? const Color(0xFF1A1410) : const Color(0xFF060C09);
+    final bgImgOpacity = isWork ? 0.38 : 0.44;
 
     return SwipeToPop(child: Scaffold(
       backgroundColor: isDark ? categoryBg : _bg(isDark),
@@ -1394,27 +1394,28 @@ class _Empty extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 52, height: 52,
+            width: 60, height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: _cardBorder(isDark), width: 1.5),
+              color: Colors.white.withAlpha(18),
+              border: Border.all(color: Colors.white.withAlpha(80), width: 1.5),
             ),
             child: Icon(Icons.checklist_rounded,
-                size: 22, color: _cardBorder(isDark)),
+                size: 26, color: Colors.white.withAlpha(180)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Text(hasDateFilter ? 'no tasks this day' : 'no tasks yet',
             style: GoogleFonts.inter(
-              fontSize: 14, fontWeight: FontWeight.w600,
-              color: _textSub(isDark),
+              fontSize: 15, fontWeight: FontWeight.w600,
+              color: Colors.white.withAlpha(200),
             )),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(hasDateFilter
               ? 'tap another day or add a task'
               : 'tap + below to add one',
             style: GoogleFonts.inter(
-              fontSize: 11,
-              color: _textSub(isDark).withAlpha(120),
+              fontSize: 12,
+              color: Colors.white.withAlpha(110),
             )),
         ],
       ),
