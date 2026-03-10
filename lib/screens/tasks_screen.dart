@@ -1485,15 +1485,19 @@ class _AddSheetState extends State<_AddSheet> {
     ));
   }
 
-  // Pantone palette
+  // Pantone palette (light version)
   static const _kNavy        = Color(0xFF002D4E); // 2965 C
-  static const _kDarkNavy    = Color(0xFF001828); // darker bg
+  static const _kDarkNavy    = Color(0xFF001828); // darker bg (unused in light)
   static const _kRedInferno  = Color(0xFF4E0000); // 4975 C
   static const _kPastelYellow= Color(0xFFF2E6B1); // 11-0616 TCX
   static const _kReseda      = Color(0xFFA1AD8C); // 15-6414 TCX
   static const _kChive       = Color(0xFF4E5226); // 19-0323 TCX
   static const _kCocoa       = Color(0xFF594536); // 19-1119 TCX
   static const _kCoconutMilk = Color(0xFFF0EDE5); // 11-0608 TPG
+  // derived light tones
+  static const _kSheetBg     = Color(0xFFF5F1E8); // warm off-white
+  static const _kRowBg       = Color(0xFFEFEBE0); // slightly darker row
+  static const _kDivider     = Color(0xFFDDD8CB); // soft divider
 
   Widget _tableRow({
     required String label,
@@ -1503,9 +1507,9 @@ class _AddSheetState extends State<_AddSheet> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       if (topBorder)
-        Divider(height: 1, thickness: 1, color: _kNavy.withAlpha(200)),
+        Divider(height: 1, thickness: 1, color: _kDivider),
       Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 22),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1515,7 +1519,7 @@ class _AddSheetState extends State<_AddSheet> {
                 style: GoogleFonts.inter(
                   fontSize: 10, fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
-                  color: _kPastelYellow.withAlpha(160),
+                  color: _kCocoa.withAlpha(140),
                 )),
             ),
             const SizedBox(width: 12),
@@ -1538,9 +1542,12 @@ class _AddSheetState extends State<_AddSheet> {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            decoration: const BoxDecoration(
-              color: _kDarkNavy,
-              boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 32, offset: Offset(8, 0))],
+            decoration: BoxDecoration(
+              color: _kSheetBg,
+              boxShadow: [BoxShadow(
+                color: Colors.black.withAlpha(60),
+                blurRadius: 40, offset: const Offset(10, 0),
+              )],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1548,41 +1555,48 @@ class _AddSheetState extends State<_AddSheet> {
 
                 // ── Header ───────────────────────────────────────────────
                 Container(
-                  color: _kChive,
-                  padding: const EdgeInsets.fromLTRB(20, 52, 20, 18),
+                  color: _kReseda.withAlpha(80),
+                  padding: const EdgeInsets.fromLTRB(22, 54, 22, 20),
                   child: Row(
                     children: [
                       Container(
-                        width: 36, height: 36,
+                        width: 40, height: 40,
                         decoration: BoxDecoration(
-                          color: _kRedInferno,
-                          borderRadius: BorderRadius.circular(10),
+                          color: _kCocoa,
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         child: const Icon(Icons.add_rounded,
-                            color: _kCoconutMilk, size: 20),
+                            color: _kCoconutMilk, size: 22),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 14),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('NEW MISSION',
                             style: GoogleFonts.inter(
-                              fontSize: 13, fontWeight: FontWeight.w800,
-                              letterSpacing: 2,
-                              color: _kCoconutMilk,
+                              fontSize: 14, fontWeight: FontWeight.w800,
+                              letterSpacing: 1.8,
+                              color: _kCocoa,
                             )),
                           Text('+${_pXp(_priority)} XP',
                             style: GoogleFonts.jetBrainsMono(
                               fontSize: 10, fontWeight: FontWeight.w600,
-                              color: _kPastelYellow.withAlpha(200),
+                              color: _kCocoa.withAlpha(160),
                             )),
                         ],
                       ),
                       const Spacer(),
                       GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
-                        child: Icon(Icons.close_rounded,
-                            color: _kCoconutMilk.withAlpha(120), size: 20),
+                        child: Container(
+                          width: 32, height: 32,
+                          decoration: BoxDecoration(
+                            color: _kDivider,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.close_rounded,
+                              color: _kCocoa.withAlpha(160), size: 16),
+                        ),
                       ),
                     ],
                   ),
@@ -1605,13 +1619,13 @@ class _AddSheetState extends State<_AddSheet> {
                             autofocus: true,
                             style: GoogleFonts.inter(
                               fontSize: 15, fontWeight: FontWeight.w600,
-                              color: _kCoconutMilk,
+                              color: _kCocoa,
                             ),
                             decoration: InputDecoration(
                               hintText: 'What needs to be done?',
                               hintStyle: GoogleFonts.inter(
                                 fontSize: 15,
-                                color: _kReseda.withAlpha(130),
+                                color: _kCocoa.withAlpha(80),
                               ),
                               border: InputBorder.none,
                               isDense: true,
@@ -1628,13 +1642,13 @@ class _AddSheetState extends State<_AddSheet> {
                             maxLines: 3,
                             style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: _kCoconutMilk.withAlpha(200),
+                              color: _kCocoa.withAlpha(200),
                             ),
                             decoration: InputDecoration(
                               hintText: 'Optional notes…',
                               hintStyle: GoogleFonts.inter(
                                 fontSize: 13,
-                                color: _kReseda.withAlpha(100),
+                                color: _kCocoa.withAlpha(70),
                               ),
                               border: InputBorder.none,
                               isDense: true,
@@ -1649,9 +1663,9 @@ class _AddSheetState extends State<_AddSheet> {
                             children: TaskPriority.values.map((p) {
                               final isActive = _priority == p;
                               const pColors = {
-                                TaskPriority.high:   Color(0xFF4E0000), // Red Inferno
-                                TaskPriority.medium: Color(0xFF4E5226), // Chive
-                                TaskPriority.low:    Color(0xFF002D4E), // Navy
+                                TaskPriority.high:   Color(0xFF4E0000),
+                                TaskPriority.medium: Color(0xFF4E5226),
+                                TaskPriority.low:    Color(0xFF002D4E),
                               };
                               final c = pColors[p]!;
                               return GestureDetector(
@@ -1660,24 +1674,26 @@ class _AddSheetState extends State<_AddSheet> {
                                   duration: const Duration(milliseconds: 140),
                                   margin: const EdgeInsets.only(right: 8),
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 7),
+                                      horizontal: 14, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: isActive ? c : c.withAlpha(40),
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: isActive
+                                        ? c.withAlpha(220)
+                                        : _kRowBg,
+                                    borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                       color: isActive
-                                          ? _kPastelYellow.withAlpha(160)
-                                          : _kReseda.withAlpha(60),
+                                          ? c
+                                          : _kDivider,
                                       width: isActive ? 1.5 : 1,
                                     ),
                                   ),
                                   child: Text(_pLabel(p),
                                     style: GoogleFonts.inter(
-                                      fontSize: 10, fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5,
+                                      fontSize: 11, fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
                                       color: isActive
-                                          ? _kPastelYellow
-                                          : _kReseda.withAlpha(160),
+                                          ? _kCoconutMilk
+                                          : _kCocoa.withAlpha(140),
                                     )),
                                 ),
                               );
@@ -1692,22 +1708,22 @@ class _AddSheetState extends State<_AddSheet> {
                             child: Row(
                               children: [
                                 Icon(Icons.calendar_today_rounded,
-                                    size: 14, color: _kReseda),
+                                    size: 14, color: _kCocoa.withAlpha(160)),
                                 const SizedBox(width: 8),
                                 Text(
                                   _date != null ? _fmtDate(_date!) : 'Pick a date',
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
                                     color: _date != null
-                                        ? _kPastelYellow
-                                        : _kReseda.withAlpha(130),
+                                        ? _kCocoa
+                                        : _kCocoa.withAlpha(100),
                                   )),
                                 if (_date != null) ...[
                                   const SizedBox(width: 8),
                                   GestureDetector(
                                     onTap: () => setState(() => _date = null),
                                     child: Icon(Icons.close_rounded,
-                                        size: 13, color: _kReseda.withAlpha(160)),
+                                        size: 13, color: _kCocoa.withAlpha(120)),
                                   ),
                                 ],
                               ],
@@ -1722,22 +1738,22 @@ class _AddSheetState extends State<_AddSheet> {
                             child: Row(
                               children: [
                                 Icon(Icons.access_time_rounded,
-                                    size: 14, color: _kReseda),
+                                    size: 14, color: _kCocoa.withAlpha(160)),
                                 const SizedBox(width: 8),
                                 Text(
                                   _time != null ? _fmt24(_time!) : 'Pick a time',
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
                                     color: _time != null
-                                        ? _kPastelYellow
-                                        : _kReseda.withAlpha(130),
+                                        ? _kCocoa
+                                        : _kCocoa.withAlpha(100),
                                   )),
                                 if (_time != null) ...[
                                   const SizedBox(width: 8),
                                   GestureDetector(
                                     onTap: () => setState(() => _time = null),
                                     child: Icon(Icons.close_rounded,
-                                        size: 13, color: _kReseda.withAlpha(160)),
+                                        size: 13, color: _kCocoa.withAlpha(120)),
                                   ),
                                 ],
                               ],
@@ -1745,24 +1761,22 @@ class _AddSheetState extends State<_AddSheet> {
                           ),
                         ),
 
-                        // ── Submit button ────────────────────────────────────
-                        Divider(height: 1, thickness: 1, color: _kNavy.withAlpha(200)),
+                        // ── Submit button ─────────────────────────────────
+                        Divider(height: 1, thickness: 1, color: _kDivider),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                          padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
                           child: GestureDetector(
                             onTap: _submit,
                             child: Container(
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               decoration: BoxDecoration(
-                                color: _kRedInferno,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                    color: _kPastelYellow.withAlpha(60)),
+                                color: _kCocoa,
+                                borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _kRedInferno.withAlpha(120),
-                                    blurRadius: 20, offset: const Offset(0, 4),
+                                    color: _kCocoa.withAlpha(80),
+                                    blurRadius: 16, offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
@@ -1778,8 +1792,8 @@ class _AddSheetState extends State<_AddSheet> {
                                   const SizedBox(width: 10),
                                   Text('+${_pXp(_priority)} XP',
                                     style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 10, fontWeight: FontWeight.w700,
-                                      color: _kPastelYellow.withAlpha(200),
+                                      fontSize: 10, fontWeight: FontWeight.w600,
+                                      color: _kPastelYellow.withAlpha(220),
                                     )),
                                 ],
                               ),
