@@ -246,12 +246,15 @@ class _TasksScreenState extends State<TasksScreen> {
     final pending   = filtered.where((t) => !t.isCompleted).toList();
     final completed = filtered.where((t) => t.isCompleted).toList();
 
-    final bgImage = widget.category == TaskCategory.work
+    final isWork = widget.category == TaskCategory.work;
+    final bgImage = isWork
         ? 'assets/collection/Tasks menu/Work.jpg'
         : 'assets/collection/Tasks menu/Live.jpg';
+    final categoryBg   = isWork ? const Color(0xFF24201D) : const Color(0xFF080F0C);
+    final bgImgOpacity = isWork ? 0.15 : 0.26;
 
     return SwipeToPop(child: Scaffold(
-      backgroundColor: _bg(isDark),
+      backgroundColor: isDark ? categoryBg : _bg(isDark),
       body: Stack(
         children: [
           // ── Blurred bg ──────────────────────────────────────────────────
@@ -259,7 +262,7 @@ class _TasksScreenState extends State<TasksScreen> {
             child: ImageFiltered(
               imageFilter: ui.ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Opacity(
-                opacity: 0.12,
+                opacity: bgImgOpacity,
                 child: Image.asset(bgImage, fit: BoxFit.cover),
               ),
             ),
@@ -485,7 +488,7 @@ class _CalendarStrip extends StatelessWidget {
 
 // ── Bottom bar ────────────────────────────────────────────────────────────────
 
-class _BottomBar extends StatelessWidget {
+class _BottomBar extends StatefulWidget {
   final VoidCallback onAdd;
   final VoidCallback onDashboard;
   final bool isDark;
@@ -499,6 +502,43 @@ class _BottomBar extends StatelessWidget {
   });
 
   @override
+  State<_BottomBar> createState() => _BottomBarState();
+}
+
+class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
+  late final AnimationController _pulseCtrl;
+  late final AnimationController _rotCtrl;
+  late final AnimationController _tapCtrl;
+  late final AnimationController _burstCtrl;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1600))
+      ..repeat(reverse: true);
+    _rotCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 3200))
+      ..repeat();
+    _tapCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 140));
+    _scale = Tween(begin: 1.0, end: 0.82)
+        .animate(CurvedAnimation(parent: _tapCtrl, curve: Curves.easeOut));
+    _burstCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 460));
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    _rotCtrl.dispose();
+    _tapCtrl.dispose();
+    _burstCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(52, 0, 52, 36),
@@ -509,12 +549,12 @@ class _BottomBar extends StatelessWidget {
           child: Container(
             height: 68,
             decoration: BoxDecoration(
-              color: isDark
+              color: widget.isDark
                   ? Colors.white.withAlpha(18)
                   : Colors.black.withAlpha(195),
               borderRadius: BorderRadius.circular(40),
               border: Border.all(
-                color: Colors.white.withAlpha(isDark ? 28 : 18),
+                color: Colors.white.withAlpha(widget.isDark ? 28 : 18),
                 width: 1,
               ),
             ),
@@ -522,42 +562,116 @@ class _BottomBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 GestureDetector(
-                  onTap: onDashboard,
+                  onTap: widget.onDashboard,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: dashboardActive
+                      color: widget.dashboardActive
                           ? AppColors.tasks.withAlpha(50)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.bar_chart_rounded,
-                        color: dashboardActive
+                        color: widget.dashboardActive
                             ? AppColors.tasks
                             : Colors.white.withAlpha(140),
                         size: 22),
                   ),
                 ),
+
+                // ── Animated add button ──────────────────────────────────
                 GestureDetector(
-                  onTap: onAdd,
-                  child: Container(
-                    width: 46, height: 46,
-                    decoration: BoxDecoration(
-                      color: AppColors.tasks,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.tasks.withAlpha(130),
-                          blurRadius: 18,
-                          spreadRadius: 2,
+                  onTapDown: (_) => _tapCtrl.forward(),
+                  onTapUp: (_) {
+                    _tapCtrl.reverse();
+                    _burstCtrl.forward(from: 0);
+                    widget.onAdd();
+                  },
+                  onTapCancel: () => _tapCtrl.reverse(),
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge([_pulseCtrl, _rotCtrl, _tapCtrl, _burstCtrl]),
+                    builder: (context, _) {
+                      final p     = _pulseCtrl.value;
+                      final burst = _burstCtrl.value;
+                      return SizedBox(
+                        width: 80, height: 80,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Burst particles
+                            for (int i = 0; i < 8; i++)
+                              if (burst > 0 && burst < 1.0)
+                                Positioned(
+                                  left: 40 + cos(i / 8 * 2 * pi) * burst * 30 - 3,
+                                  top:  40 + sin(i / 8 * 2 * pi) * burst * 30 - 3,
+                                  child: Opacity(
+                                    opacity: (1 - burst * 1.4).clamp(0.0, 1.0),
+                                    child: Container(
+                                      width: 6, height: 6,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.tasks,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [BoxShadow(
+                                          color: AppColors.tasks.withAlpha(200),
+                                          blurRadius: 5,
+                                        )],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            // Pulsing glow ring
+                            Container(
+                              width: 58 + p * 8,
+                              height: 58 + p * 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.tasks.withAlpha(35 + (50 * p).round()),
+                                  width: 1.1,
+                                ),
+                                boxShadow: [BoxShadow(
+                                  color: AppColors.tasks.withAlpha(22 + (55 * p).round()),
+                                  blurRadius: 14 + p * 14,
+                                  spreadRadius: p * 2,
+                                )],
+                              ),
+                            ),
+                            // Rotating arc
+                            Transform.rotate(
+                              angle: _rotCtrl.value * 2 * pi,
+                              child: CustomPaint(
+                                size: const Size(64, 64),
+                                painter: _ArcPainter(color: AppColors.tasks),
+                              ),
+                            ),
+                            // Main circle button
+                            ScaleTransition(
+                              scale: _scale,
+                              child: Container(
+                                width: 46, height: 46,
+                                decoration: BoxDecoration(
+                                  color: AppColors.tasks,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.tasks.withAlpha(110 + (65 * p).round()),
+                                      blurRadius: 16 + p * 10,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(Icons.add_rounded,
+                                    color: Colors.white, size: 26),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Icon(Icons.add_rounded,
-                        color: Colors.white, size: 26),
+                      );
+                    },
                   ),
                 ),
+
                 Icon(Icons.checklist_rounded,
                     color: Colors.white.withAlpha(140), size: 22),
               ],
@@ -567,6 +681,33 @@ class _BottomBar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ArcPainter extends CustomPainter {
+  final Color color;
+  const _ArcPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Rect.fromLTWH(0, 0, size.width, size.height);
+    canvas.drawArc(r, -pi / 2, pi * 1.15, false,
+      Paint()
+        ..color = color.withAlpha(190)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawArc(r, pi * 0.73, pi * 0.52, false,
+      Paint()
+        ..color = color.withAlpha(60)
+        ..strokeWidth = 1.3
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ArcPainter old) => old.color != color;
 }
 
 // ── Dashboard panel ───────────────────────────────────────────────────────────
