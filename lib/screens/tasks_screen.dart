@@ -450,15 +450,19 @@ class _CalendarStrip extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Month label — Red Inferno
+        // Month label — centered, beige, Outfit
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
-          child: Text(months[today.month - 1],
-            style: GoogleFonts.inter(
-              fontSize: 11, fontWeight: FontWeight.w800,
-              letterSpacing: 3,
-              color: kRed,
-            )),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: Center(
+            child: Text(months[today.month - 1],
+              style: const TextStyle(
+                fontFamily: 'Outfit',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 5,
+                color: Color(0xFFE8E0D0),
+              )),
+          ),
         ),
         // 7-day row — circular cells
         Padding(
