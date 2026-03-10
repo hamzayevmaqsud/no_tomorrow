@@ -443,22 +443,26 @@ class _CalendarStrip extends StatelessWidget {
     const months   = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
                       'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 
+    const kRed    = Color(0xFF4E0000); // Pantone Red Inferno
+    const kBeige  = Color(0xFFE8E0D0); // soft beige cell bg
+    const kBeigeS = Color(0xFFD4C9B4); // beige selected/today border
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Month label
+        // Month label — Red Inferno
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
           child: Text(months[today.month - 1],
             style: GoogleFonts.inter(
-              fontSize: 10, fontWeight: FontWeight.w700,
-              letterSpacing: 2.5,
-              color: accentColor.withAlpha(180),
+              fontSize: 11, fontWeight: FontWeight.w800,
+              letterSpacing: 3,
+              color: kRed,
             )),
         ),
-        // 7-day row
+        // 7-day row — circular cells
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: List.generate(7, (i) {
               final day        = days[i];
@@ -472,35 +476,31 @@ class _CalendarStrip extends StatelessWidget {
                   onTap: () => onDateSelected(day),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    margin: EdgeInsets.only(right: i < 6 ? 5 : 0),
+                    margin: EdgeInsets.only(right: i < 6 ? 6 : 0),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      color: isSelected
-                          ? accentColor
-                          : isToday
-                              ? accentColor.withAlpha(40)
-                              : Colors.white.withAlpha(8),
-                      borderRadius: BorderRadius.circular(12),
+                      color: isSelected || isToday
+                          ? kBeige
+                          : kBeige.withAlpha(28),
+                      borderRadius: BorderRadius.circular(40),
                       border: Border.all(
                         color: isSelected
-                            ? accentColor
+                            ? kRed
                             : isToday
-                                ? accentColor.withAlpha(140)
-                                : Colors.white.withAlpha(18),
-                        width: 1.2,
+                                ? kBeigeS
+                                : kBeige.withAlpha(40),
+                        width: isSelected ? 1.8 : 1.2,
                       ),
                     ),
                     child: Column(
                       children: [
                         Text(dayNames[i],
                           style: GoogleFonts.inter(
-                            fontSize: 8, fontWeight: FontWeight.w600,
+                            fontSize: 8, fontWeight: FontWeight.w700,
                             letterSpacing: 0.3,
-                            color: isSelected
-                                ? Colors.white70
-                                : isToday
-                                    ? accentColor
-                                    : Colors.white38,
+                            color: isSelected || isToday
+                                ? kRed
+                                : kBeige.withAlpha(120),
                           )),
                         const SizedBox(height: 4),
                         Text('${day.day}',
@@ -508,10 +508,10 @@ class _CalendarStrip extends StatelessWidget {
                             fontSize: 16, fontWeight: FontWeight.w700,
                             height: 1,
                             color: isSelected
-                                ? Colors.white
+                                ? kRed
                                 : isToday
-                                    ? accentColor
-                                    : Colors.white60,
+                                    ? kRed.withAlpha(200)
+                                    : kBeige.withAlpha(180),
                           )),
                       ],
                     ),
