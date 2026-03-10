@@ -1555,283 +1555,260 @@ class _AddSheetState extends State<_AddSheet> {
   @override
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
+    final kb = MediaQuery.of(context).viewInsets.bottom;
+
+    // Priority: Critical=Red Inferno, Normal=Pastel Yellow, Light=Chive
+    const pBg = {
+      TaskPriority.high:   Color(0xFF4E0000), // Red Inferno
+      TaskPriority.medium: Color(0xFFF2E6B1), // Pastel Yellow
+      TaskPriority.low:    Color(0xFF4E5226), // Chive
+    };
+    const pText = {
+      TaskPriority.high:   Color(0xFFF0EDE5), // light on dark red
+      TaskPriority.medium: Color(0xFF3A2E10), // dark on yellow
+      TaskPriority.low:    Color(0xFFE8E4D0), // light on olive
+    };
 
     return Align(
       alignment: Alignment.centerLeft,
-      child: SizedBox(
-        width: sw * 0.84,
-        height: double.infinity,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(12, 48, 40, kb > 0 ? kb + 12 : 48),
         child: Material(
           color: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              color: _kSheetBg,
-              boxShadow: [BoxShadow(
-                color: Colors.black.withAlpha(60),
-                blurRadius: 40, offset: const Offset(10, 0),
-              )],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Container(
+              width: sw * 0.82,
+              decoration: BoxDecoration(
+                color: _kSheetBg,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [BoxShadow(
+                  color: Colors.black.withAlpha(80),
+                  blurRadius: 40, offset: const Offset(6, 8),
+                )],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
 
-                // ── Header ───────────────────────────────────────────────
-                Container(
-                  color: _kReseda.withAlpha(80),
-                  padding: const EdgeInsets.fromLTRB(22, 54, 22, 20),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40, height: 40,
-                        decoration: BoxDecoration(
-                          color: _kCocoa,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(Icons.add_rounded,
-                            color: _kCoconutMilk, size: 22),
+                    // ── Header ─────────────────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: _kReseda.withAlpha(60),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(28)),
                       ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                      child: Row(
                         children: [
-                          Text('NEW MISSION',
-                            style: GoogleFonts.inter(
-                              fontSize: 14, fontWeight: FontWeight.w800,
-                              letterSpacing: 1.8,
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
                               color: _kCocoa,
-                            )),
-                          Text('+${_pXp(_priority)} XP',
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 10, fontWeight: FontWeight.w600,
-                              color: _kCocoa.withAlpha(160),
-                            )),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.add_rounded,
+                                color: _kCoconutMilk, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('NEW MISSION',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13, fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.6, color: _kCocoa,
+                                )),
+                              Text('+${_pXp(_priority)} XP',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  color: _kCocoa.withAlpha(140),
+                                )),
+                            ],
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: Container(
+                              width: 28, height: 28,
+                              decoration: BoxDecoration(
+                                color: _kDivider,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(Icons.close_rounded,
+                                  color: _kCocoa.withAlpha(150), size: 14),
+                            ),
+                          ),
                         ],
                       ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          width: 32, height: 32,
-                          decoration: BoxDecoration(
-                            color: _kDivider,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(Icons.close_rounded,
-                              color: _kCocoa.withAlpha(160), size: 16),
+                    ),
+
+                    // ── Form fields ────────────────────────────────────
+                    _tableRow(
+                      label: 'TITLE',
+                      topBorder: false,
+                      content: TextField(
+                        controller: _titleCtrl,
+                        autofocus: true,
+                        style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w600,
+                          color: _kCocoa,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'What needs to be done?',
+                          hintStyle: GoogleFonts.inter(
+                              fontSize: 14, color: _kCocoa.withAlpha(70)),
+                          border: InputBorder.none,
+                          isDense: true, contentPadding: EdgeInsets.zero,
+                        ),
+                        onSubmitted: (_) => _submit(),
+                      ),
+                    ),
+
+                    _tableRow(
+                      label: 'NOTES',
+                      content: TextField(
+                        controller: _descCtrl,
+                        maxLines: 2,
+                        style: GoogleFonts.inter(
+                            fontSize: 12, color: _kCocoa.withAlpha(190)),
+                        decoration: InputDecoration(
+                          hintText: 'Optional notes…',
+                          hintStyle: GoogleFonts.inter(
+                              fontSize: 12, color: _kCocoa.withAlpha(60)),
+                          border: InputBorder.none,
+                          isDense: true, contentPadding: EdgeInsets.zero,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-
-                // ── Form rows ─────────────────────────────────────────────
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewInsets.bottom + 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-
-                        _tableRow(
-                          label: 'TITLE',
-                          topBorder: false,
-                          content: TextField(
-                            controller: _titleCtrl,
-                            autofocus: true,
-                            style: GoogleFonts.inter(
-                              fontSize: 15, fontWeight: FontWeight.w600,
-                              color: _kCocoa,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'What needs to be done?',
-                              hintStyle: GoogleFonts.inter(
-                                fontSize: 15,
-                                color: _kCocoa.withAlpha(80),
-                              ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            onSubmitted: (_) => _submit(),
-                          ),
-                        ),
-
-                        _tableRow(
-                          label: 'NOTES',
-                          content: TextField(
-                            controller: _descCtrl,
-                            maxLines: 3,
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: _kCocoa.withAlpha(200),
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Optional notes…',
-                              hintStyle: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: _kCocoa.withAlpha(70),
-                              ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ),
-
-                        _tableRow(
-                          label: 'PRIORITY',
-                          content: Row(
-                            children: TaskPriority.values.map((p) {
-                              final isActive = _priority == p;
-                              const pColors = {
-                                TaskPriority.high:   Color(0xFF4E0000),
-                                TaskPriority.medium: Color(0xFF4E5226),
-                                TaskPriority.low:    Color(0xFF002D4E),
-                              };
-                              final c = pColors[p]!;
-                              return GestureDetector(
-                                onTap: () => setState(() => _priority = p),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 140),
-                                  margin: const EdgeInsets.only(right: 8),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: isActive
-                                        ? c.withAlpha(220)
-                                        : _kRowBg,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isActive
-                                          ? c
-                                          : _kDivider,
-                                      width: isActive ? 1.5 : 1,
-                                    ),
-                                  ),
-                                  child: Text(_pLabel(p),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11, fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
-                                      color: isActive
-                                          ? _kCoconutMilk
-                                          : _kCocoa.withAlpha(140),
-                                    )),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-
-                        _tableRow(
-                          label: 'DATE',
-                          content: GestureDetector(
-                            onTap: _pickDate,
-                            child: Row(
-                              children: [
-                                Icon(Icons.calendar_today_rounded,
-                                    size: 14, color: _kCocoa.withAlpha(160)),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _date != null ? _fmtDate(_date!) : 'Pick a date',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    color: _date != null
-                                        ? _kCocoa
-                                        : _kCocoa.withAlpha(100),
-                                  )),
-                                if (_date != null) ...[
-                                  const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () => setState(() => _date = null),
-                                    child: Icon(Icons.close_rounded,
-                                        size: 13, color: _kCocoa.withAlpha(120)),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        _tableRow(
-                          label: 'TIME',
-                          content: GestureDetector(
-                            onTap: _pickTime,
-                            child: Row(
-                              children: [
-                                Icon(Icons.access_time_rounded,
-                                    size: 14, color: _kCocoa.withAlpha(160)),
-                                const SizedBox(width: 8),
-                                Text(
-                                  _time != null ? _fmt24(_time!) : 'Pick a time',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    color: _time != null
-                                        ? _kCocoa
-                                        : _kCocoa.withAlpha(100),
-                                  )),
-                                if (_time != null) ...[
-                                  const SizedBox(width: 8),
-                                  GestureDetector(
-                                    onTap: () => setState(() => _time = null),
-                                    child: Icon(Icons.close_rounded,
-                                        size: 13, color: _kCocoa.withAlpha(120)),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // ── Submit button ─────────────────────────────────
-                        Divider(height: 1, thickness: 1, color: _kDivider),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(22, 24, 22, 0),
-                          child: GestureDetector(
-                            onTap: _submit,
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                color: _kCocoa,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _kCocoa.withAlpha(80),
-                                    blurRadius: 16, offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('ADD MISSION',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 13, fontWeight: FontWeight.w800,
-                                      letterSpacing: 1.5,
-                                      color: _kCoconutMilk,
-                                    )),
-                                  const SizedBox(width: 10),
-                                  Text('+${_pXp(_priority)} XP',
-                                    style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 10, fontWeight: FontWeight.w600,
-                                      color: _kPastelYellow.withAlpha(220),
-                                    )),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
-                  ),
+
+                    _tableRow(
+                      label: 'PRIORITY',
+                      content: Row(
+                        children: TaskPriority.values.map((p) {
+                          final isActive = _priority == p;
+                          return GestureDetector(
+                            onTap: () => setState(() => _priority = p),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              margin: const EdgeInsets.only(right: 7),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? pBg[p]!
+                                    : _kRowBg,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: isActive ? pBg[p]! : _kDivider,
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Text(_pLabel(p),
+                                style: GoogleFonts.inter(
+                                  fontSize: 10, fontWeight: FontWeight.w700,
+                                  color: isActive
+                                      ? pText[p]!
+                                      : _kCocoa.withAlpha(130),
+                                )),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                    _tableRow(
+                      label: 'DATE',
+                      content: GestureDetector(
+                        onTap: _pickDate,
+                        child: Row(children: [
+                          Icon(Icons.calendar_today_rounded,
+                              size: 13, color: _kCocoa.withAlpha(150)),
+                          const SizedBox(width: 7),
+                          Text(_date != null ? _fmtDate(_date!) : 'Pick a date',
+                            style: GoogleFonts.inter(fontSize: 12,
+                              color: _date != null
+                                  ? _kCocoa : _kCocoa.withAlpha(90))),
+                          if (_date != null) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () => setState(() => _date = null),
+                              child: Icon(Icons.close_rounded,
+                                  size: 12, color: _kCocoa.withAlpha(110))),
+                          ],
+                        ]),
+                      ),
+                    ),
+
+                    _tableRow(
+                      label: 'TIME',
+                      content: GestureDetector(
+                        onTap: _pickTime,
+                        child: Row(children: [
+                          Icon(Icons.access_time_rounded,
+                              size: 13, color: _kCocoa.withAlpha(150)),
+                          const SizedBox(width: 7),
+                          Text(_time != null ? _fmt24(_time!) : 'Pick a time',
+                            style: GoogleFonts.inter(fontSize: 12,
+                              color: _time != null
+                                  ? _kCocoa : _kCocoa.withAlpha(90))),
+                          if (_time != null) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () => setState(() => _time = null),
+                              child: Icon(Icons.close_rounded,
+                                  size: 12, color: _kCocoa.withAlpha(110))),
+                          ],
+                        ]),
+                      ),
+                    ),
+
+                    // ── Submit ────────────────────────────────────────
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
+                      child: GestureDetector(
+                        onTap: _submit,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: _kCocoa,
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [BoxShadow(
+                              color: _kCocoa.withAlpha(70),
+                              blurRadius: 14, offset: const Offset(0, 4),
+                            )],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('ADD MISSION',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12, fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.4, color: _kCoconutMilk,
+                                )),
+                              const SizedBox(width: 8),
+                              Text('+${_pXp(_priority)} XP',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  color: _kPastelYellow.withAlpha(210),
+                                )),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
+              ),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
 
