@@ -1661,16 +1661,17 @@ class _AddSheetState extends State<_AddSheet> {
 
                     _tableRow(
                       label: 'PRIORITY',
-                      content: Row(
+                      content: Wrap(
+                        spacing: 7,
+                        runSpacing: 6,
                         children: TaskPriority.values.map((p) {
                           final isActive = _priority == p;
                           return GestureDetector(
                             onTap: () => setState(() => _priority = p),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 150),
-                              margin: const EdgeInsets.only(right: 7),
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 7),
+                                  horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
                                 color: isActive
                                     ? pBg[p]!
