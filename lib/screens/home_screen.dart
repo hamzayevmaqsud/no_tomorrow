@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import '../models/section.dart';
 import '../models/game_state.dart';
 import 'section_screen.dart';
@@ -420,6 +421,37 @@ class _HomeScreenState extends State<HomeScreen>
                   key: ValueKey(_currentIndex),
                   section: section,
                 ),
+              ),
+            ),
+          ),
+
+          // ── Section animation (budget: wallet) ───────────────────────────
+          Positioned(
+            top: size.height * 0.36,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                transitionBuilder: (child, anim) => FadeTransition(
+                  opacity: anim,
+                  child: ScaleTransition(
+                    scale: Tween<double>(begin: 0.7, end: 1.0).animate(
+                      CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+                    ),
+                    child: child,
+                  ),
+                ),
+                child: section.id == 'budget'
+                    ? SizedBox(
+                        key: const ValueKey('budget_anim'),
+                        height: 180,
+                        child: Lottie.asset(
+                          'assets/animations/wallet.lottie',
+                          fit: BoxFit.contain,
+                        ),
+                      )
+                    : const SizedBox(key: ValueKey('no_anim')),
               ),
             ),
           ),

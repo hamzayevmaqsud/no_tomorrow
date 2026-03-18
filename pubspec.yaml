@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
   video_player: ^2.9.2
+  lottie: ^3.1.2
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +69,7 @@ flutter:
     - assets/collection/Uncommon/
     - assets/collection/Albums/
     - assets/collection/Tasks menu/
+    - assets/animations/
 
   fonts:
     - family: Outfit
