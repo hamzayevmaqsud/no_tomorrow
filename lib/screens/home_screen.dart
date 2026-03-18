@@ -427,28 +427,47 @@ class _HomeScreenState extends State<HomeScreen>
 
           // ── Section animation (budget: wallet) ───────────────────────────
           Positioned(
-            top: size.height * 0.36,
-            left: 0,
-            right: 0,
+            top: size.height * 0.46,
+            left: size.width * 0.15,
+            right: size.width * 0.15,
             child: IgnorePointer(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 400),
+                duration: const Duration(milliseconds: 500),
                 transitionBuilder: (child, anim) => FadeTransition(
-                  opacity: anim,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.7, end: 1.0).animate(
-                      CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
-                    ),
+                  opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0, 0.15),
+                      end: Offset.zero,
+                    ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
                     child: child,
                   ),
                 ),
                 child: section.id == 'budget'
-                    ? SizedBox(
+                    ? Container(
                         key: const ValueKey('budget_anim'),
-                        height: 180,
-                        child: Lottie.asset(
-                          'assets/animations/wallet.json',
-                          fit: BoxFit.contain,
+                        height: 220,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(32),
+                          color: Colors.black.withAlpha(40),
+                          border: Border.all(
+                            color: Colors.white.withAlpha(18),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: section.color.withAlpha(60),
+                              blurRadius: 40,
+                              spreadRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(32),
+                          child: Lottie.asset(
+                            'assets/animations/wallet.json',
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       )
                     : const SizedBox(key: ValueKey('no_anim')),
