@@ -447,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen>
                         key: const ValueKey('budget_anim'),
                         height: 180,
                         child: Lottie.asset(
-                          'assets/animations/wallet.lottie',
+                          'assets/animations/wallet.json',
                           fit: BoxFit.contain,
                         ),
                       )
