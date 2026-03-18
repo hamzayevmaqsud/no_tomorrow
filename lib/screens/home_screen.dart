@@ -444,9 +444,9 @@ class _HomeScreenState extends State<HomeScreen>
                     child: child,
                   ),
                 ),
-                child: section.id == 'budget'
+                child: section.id == 'budget' || section.id == 'tasks'
                     ? SizedBox(
-                        key: const ValueKey('budget_anim'),
+                        key: ValueKey('${section.id}_anim'),
                         height: 300,
                         child: Stack(
                           alignment: Alignment.bottomCenter,
@@ -470,7 +470,9 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                             ),
                             Lottie.asset(
-                              'assets/animations/wallet.json',
+                              section.id == 'budget'
+                                  ? 'assets/animations/wallet.json'
+                                  : 'assets/animations/tasks.json',
                               fit: BoxFit.contain,
                             ),
                           ],
