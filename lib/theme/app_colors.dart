@@ -17,22 +17,22 @@ class AppColors {
   static const darkText = Color(0xFFF5F7FF);
   static const darkTextSub = Color(0xFF8892B0);
 
-  // Accents
-  static const primary = Color(0xFF4F8EF7);
-  static const primaryDark = Color(0xFF2563EB);
-  static const secondary = Color(0xFF00D4FF);
-  static const danger = Color(0xFFFF4757);
-  static const success = Color(0xFF2ED573);
-  static const warning = Color(0xFFFFD700);
+  // Accents — warm tones
+  static const primary = Color(0xFF8B6E5A);       // warm taupe
+  static const primaryDark = Color(0xFF6B5040);    // deep taupe
+  static const secondary = Color(0xFFC49A6C);      // caramel
+  static const danger = Color(0xFFB85C38);          // terracotta
+  static const success = Color(0xFF5A7C4F);         // olive sage
+  static const warning = Color(0xFFC49A3C);         // warm gold
 
-  // Section colors — vivid & saturated
-  static const tasks       = Color(0xFF2979FF); // vivid blue
-  static const habits      = Color(0xFFAA00FF); // vivid purple
-  static const workouts    = Color(0xFFFF5722); // deep orange
-  static const abstinences = Color(0xFFFF1744); // vivid red
-  static const reading     = Color(0xFF00E676); // vivid green
-  static const budget      = Color(0xFFFFD600); // vivid yellow
-  static const food        = Color(0xFFFF4081); // vivid pink
-  static const collection  = Color(0xFF00E5FF); // vivid cyan
-  static const profile     = Color(0xFF7C4DFF); // vivid violet
+  // Section colors — earthy & warm
+  static const tasks       = Color(0xFF8B6E5A); // warm taupe
+  static const habits      = Color(0xFF7A5C8A); // muted plum
+  static const workouts    = Color(0xFFB85C38); // terracotta
+  static const abstinences = Color(0xFF9E4040); // brick red
+  static const reading     = Color(0xFF5A7C4F); // olive sage
+  static const budget      = Color(0xFFC49A3C); // warm gold
+  static const food        = Color(0xFFB87070); // dusty rose
+  static const collection  = Color(0xFFC49A6C); // caramel
+  static const profile     = Color(0xFF6B5A7A); // muted violet
 }
