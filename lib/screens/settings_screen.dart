@@ -46,9 +46,9 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Text(
                     'SETTINGS',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.playfairDisplay(
                       fontSize: 20,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 3,
                       color: AppColors.primary,
                     ),

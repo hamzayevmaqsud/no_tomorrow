@@ -46,9 +46,9 @@ class SectionScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Text(
                     section.label,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.playfairDisplay(
                       fontSize: 20,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
                       letterSpacing: 2,
                       color: section.color,
                     ),
@@ -81,9 +81,9 @@ class SectionScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     Text(
                       section.label,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.playfairDisplay(
                         fontSize: 28,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: 3,
                         color: isDark ? AppColors.darkText : AppColors.lightText,
                       ),

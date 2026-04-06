@@ -345,10 +345,10 @@ class _TasksScreenState extends State<TasksScreen> {
                         children: [
                           Text(
                             isWork ? 'WORK  TASKS' : 'LIVE  TASKS',
-                            style: TextStyle(
-                              fontFamily: 'BebasNeue',
-                              fontSize: 28,
-                              letterSpacing: 4,
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 3,
                               color: isWork
                                   ? const Color(0xFFABA38F)   // Grullo
                                   : const Color(0xFF8BBCAA),  // muted sage
@@ -1136,11 +1136,11 @@ class _TaskCard extends StatelessWidget {
                           Text(task.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.outfit(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
                               fontStyle: FontStyle.italic,
-                              height: 1.15,
+                              height: 1.2,
                               color: textCol,
                               decoration: done
                                   ? TextDecoration.lineThrough
@@ -1352,8 +1352,8 @@ class _TaskDetailSheet extends StatelessWidget {
 
           // Title
           Text(task.title,
-            style: GoogleFonts.inter(
-              fontSize: 26, fontWeight: FontWeight.w800,
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 24, fontWeight: FontWeight.w700,
               height: 1.2,
               color: done ? _textSub(isDark) : _textPrimary(isDark),
               decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
@@ -1685,9 +1685,9 @@ class _AddSheetState extends State<_AddSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('NEW MISSION',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13, fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.6, color: _kCocoa,
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 14, fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2, color: _kCocoa,
                                 )),
                               Text('+${_pXp(_priority)} XP',
                                 style: GoogleFonts.jetBrainsMono(
@@ -2666,7 +2666,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                       Opacity(
                         opacity: Curves.easeOut.transform(labelT),
                         child: Text('UNLOCKED',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.playfairDisplay(
                             fontSize: 36, fontWeight: FontWeight.w900,
                             fontStyle: FontStyle.italic,
                             color: Colors.white,

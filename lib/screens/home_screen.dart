@@ -510,9 +510,9 @@ class _HomeScreenState extends State<HomeScreen>
                     ),
                     child: Text(
                       'OPEN  ${section.label}',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.playfairDisplay(
                         fontSize: 16,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: 2,
                         color: Colors.white,
                       ),
@@ -571,7 +571,7 @@ class _SectionLabel extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           section.label,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.playfairDisplay(
             fontSize: style.fontSize,
             fontWeight: FontWeight.w900,
             letterSpacing: style.letterSpacing,

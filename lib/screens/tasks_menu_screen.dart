@@ -73,8 +73,8 @@ class TasksMenuScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 14),
                       Text('MISSIONS',
-                        style: GoogleFonts.inter(
-                          fontSize: 20, fontWeight: FontWeight.w700,
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 20, fontWeight: FontWeight.w800,
                           letterSpacing: 1.5, color: AppColors.tasks,
                         )),
                     ],
@@ -212,8 +212,8 @@ class _CategoryCardState extends State<_CategoryCard> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     Text(widget.label,
-                      style: GoogleFonts.outfit(
-                        fontSize: 28, fontWeight: FontWeight.w800,
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 28, fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.italic,
                         color: Colors.white,
                         shadows: [

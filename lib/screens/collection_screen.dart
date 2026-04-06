@@ -56,8 +56,8 @@ class CollectionScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('COLLECTION',
-                              style: GoogleFonts.inter(
-                                fontSize: 20, fontWeight: FontWeight.w700,
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 20, fontWeight: FontWeight.w800,
                                 letterSpacing: 1.5, color: AppColors.collection,
                               )),
                             Text('$unlocked / $total unlocked',
@@ -230,8 +230,8 @@ class _AlbumListCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     // Album title
                     Text(album.title,
-                      style: GoogleFonts.outfit(
-                        fontSize: 24, fontWeight: FontWeight.w800,
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 24, fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.italic,
                         color: Colors.white,
                         shadows: complete ? [
@@ -336,7 +336,7 @@ class _AlbumDetailScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(album.title,
-                              style: GoogleFonts.inter(
+                              style: GoogleFonts.playfairDisplay(
                                 fontSize: 20, fontWeight: FontWeight.w700,
                                 letterSpacing: 1.5, color: c,
                               )),
@@ -464,8 +464,8 @@ class _AlbumBanner extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(album.title,
-                      style: GoogleFonts.outfit(
-                        fontSize: 18, fontWeight: FontWeight.w800,
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 18, fontWeight: FontWeight.w700,
                         fontStyle: FontStyle.italic,
                         color: complete ? Colors.white : Colors.white.withAlpha(55),
                         shadows: complete ? [Shadow(color: c.withAlpha(200), blurRadius: 12)] : null,
