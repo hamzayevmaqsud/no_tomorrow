@@ -45,72 +45,25 @@ class TasksMenuScreen extends StatelessWidget {
             child: ColoredBox(color: overlayColor),
           ),
 
-          // ── Content ───────────────────────────────────────────────────
-          SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // ── Cards — fullscreen side by side ─────────────────────────
+          Positioned.fill(
+            child: Row(
               children: [
-
-                // ── Header ────────────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Container(
-                          width: 34, height: 34,
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: isDark ? AppColors.darkBorder : const Color(0xFFB8BACD),
-                            ),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(Icons.arrow_back_rounded,
-                              size: 15,
-                              color: isDark ? AppColors.darkText : AppColors.lightText),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Text('MISSIONS',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 20, fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5, color: AppColors.tasks,
-                        )),
-                    ],
+                Expanded(
+                  child: _CategoryCard(
+                    category: TaskCategory.work,
+                    label: 'WORK',
+                    imagePath: 'assets/collection/Tasks menu/Work.jpg',
+                    color: const Color(0xFF2979FF),
                   ),
                 ),
-
-                const SizedBox(height: 14),
-                Container(height: 1,
-                    color: isDark ? AppColors.darkBorder : const Color(0xFFB8BACD)),
-                const SizedBox(height: 16),
-
-                // ── Cards — side by side ──────────────────────────────
+                const SizedBox(width: 3),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _CategoryCard(
-                            category: TaskCategory.work,
-                            label: 'WORK',
-                            imagePath: 'assets/collection/Tasks menu/Work.jpg',
-                            color: const Color(0xFF2979FF),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _CategoryCard(
-                            category: TaskCategory.live,
-                            label: 'LIVE',
-                            imagePath: 'assets/collection/Tasks menu/Live.jpg',
-                            color: const Color(0xFF00E676),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: _CategoryCard(
+                    category: TaskCategory.live,
+                    label: 'LIVE',
+                    imagePath: 'assets/collection/Tasks menu/Live.jpg',
+                    color: const Color(0xFF00E676),
                   ),
                 ),
               ],
@@ -178,34 +131,33 @@ class _CategoryCardState extends State<_CategoryCard> {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 120),
         opacity: _pressed ? 0.6 : 1.0,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                widget.imagePath,
-                fit: BoxFit.cover,
-                errorBuilder: (_, e, s) =>
-                    Container(color: const Color(0xFF0D0D18)),
-              ),
-              Container(color: Colors.black.withAlpha(80)),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        widget.color.withAlpha(55),
-                      ],
-                      stops: const [0.4, 1.0],
-                    ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(
+              widget.imagePath,
+              fit: BoxFit.cover,
+              errorBuilder: (_, e, s) =>
+                  Container(color: const Color(0xFF0D0D18)),
+            ),
+            Container(color: Colors.black.withAlpha(80)),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      widget.color.withAlpha(55),
+                    ],
+                    stops: const [0.4, 1.0],
                   ),
                 ),
               ),
-              Padding(
+            ),
+            SafeArea(
+              child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,13 +191,15 @@ class _CategoryCardState extends State<_CategoryCard> {
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+
+
 
 class _PriorityDots extends StatelessWidget {
   final List<Task> pending;
