@@ -10,6 +10,41 @@ import 'section_screen.dart';
 import 'settings_screen.dart';
 import 'tasks_menu_screen.dart';
 import 'collection_screen.dart';
+import 'habits_screen.dart';
+
+const _kQuotes = [
+  '"There is no tomorrow — only today."',
+  '"The quest is the reward."',
+  '"Level up or stay still."',
+  '"Discipline is the bridge between goals and accomplishment."',
+  '"Small daily improvements lead to stunning results."',
+  '"You are one task away from a better version of yourself."',
+  '"Consistency beats intensity."',
+  '"The grind never lies."',
+  '"Your future self is watching."',
+  '"Every rep counts. Every page counts. Every day counts."',
+  '"Comfort is the enemy of progress."',
+  '"Be the hero of your own story."',
+  '"No XP is wasted."',
+  '"The streak is sacred."',
+  '"Rise. Grind. Level up. Repeat."',
+  '"What you do today echoes in eternity."',
+  '"Pain is temporary, glory is forever."',
+  '"The only bad workout is the one that didn\'t happen."',
+  '"Build habits, not wishes."',
+  '"Champions are made when no one is watching."',
+  '"Your potential is infinite — unlock it."',
+  '"One more rep. One more page. One more day."',
+  '"The map is not the territory — explore."',
+  '"Embrace the grind."',
+  '"Yesterday you said tomorrow."',
+  '"Make it happen or make excuses."',
+  '"The best time to start was yesterday. The next best time is now."',
+  '"You didn\'t come this far to only come this far."',
+  '"Trust the process."',
+  '"Hard choices, easy life."',
+  '"Be relentless."',
+];
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -98,9 +133,11 @@ class _HomeScreenState extends State<HomeScreen>
     final section = kSections[_currentIndex];
     final page = section.id == 'tasks'
         ? const TasksMenuScreen()
-        : section.id == 'collect'
-            ? const CollectionScreen()
-            : SectionScreen(section: section);
+        : section.id == 'habits'
+            ? const HabitsScreen()
+            : section.id == 'collect'
+                ? const CollectionScreen()
+                : SectionScreen(section: section);
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -165,6 +202,11 @@ class _HomeScreenState extends State<HomeScreen>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // ── Floating embers ──────────────────────────────────────────────
+          Positioned.fill(
+            child: IgnorePointer(child: _FloatingEmbers()),
+          ),
+
           // ── Pizza wheel ────────────────────────────────────────────────────
           GestureDetector(
             onHorizontalDragUpdate: _onDragUpdate,
@@ -414,6 +456,26 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),        // closes SafeArea
           ),        // closes Positioned (header)
+
+          // ── Daily quote ──────────────────────────────────────────────────
+          Positioned(
+            top: size.height * 0.15,
+            left: 24, right: 24,
+            child: IgnorePointer(
+              child: Center(
+                child: Text(
+                  _kQuotes[DateTime.now().day % _kQuotes.length],
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white.withAlpha(50),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ),
+          ),
 
           // ── Section label ─────────────────────────────────────────────────
           Positioned(
@@ -983,5 +1045,84 @@ class _ComicOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(_ComicOverlayPainter old) =>
       old.sectionColor != sectionColor;
+}
+
+// ── Floating embers (firefly particles) ──────────────────────────────────────
+
+class _FloatingEmbers extends StatefulWidget {
+  const _FloatingEmbers();
+
+  @override
+  State<_FloatingEmbers> createState() => _FloatingEmbersState();
+}
+
+class _FloatingEmbersState extends State<_FloatingEmbers>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(seconds: 12))
+      ..repeat();
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        return CustomPaint(
+          painter: _EmberPainter(time: _ctrl.value),
+          child: const SizedBox.expand(),
+        );
+      },
+    );
+  }
+}
+
+class _EmberPainter extends CustomPainter {
+  final double time;
+  _EmberPainter({required this.time});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+    const count = 18;
+    for (int i = 0; i < count; i++) {
+      final seed = i * 73.7;
+      final t = (time + seed / 360) % 1.0;
+
+      // Slow float upward
+      final x = (sin(seed + t * pi * 2) * 0.3 + 0.5) * size.width +
+          sin(t * pi * 4 + seed) * 20;
+      final y = size.height * (1.0 - t * 0.9) + sin(seed) * 40;
+
+      // Pulse opacity
+      final opacity = (sin(t * pi) * 0.6 + 0.1).clamp(0.0, 0.7);
+
+      // Warm colors
+      final isGold = i % 3 == 0;
+      paint.color = isGold
+          ? Color.fromRGBO(202, 138, 4, opacity)   // gold
+          : Color.fromRGBO(255, 107, 53, opacity);  // orange
+
+      final r = 1.2 + sin(seed * 0.5) * 0.8;
+      canvas.drawCircle(Offset(x, y), r, paint);
+
+      // Glow
+      if (opacity > 0.3) {
+        paint.color = paint.color.withAlpha((opacity * 40).toInt());
+        canvas.drawCircle(Offset(x, y), r * 3, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_EmberPainter old) => true;
 }
 
