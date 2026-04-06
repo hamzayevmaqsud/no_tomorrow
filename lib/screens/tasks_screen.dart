@@ -311,8 +311,11 @@ class _TasksScreenState extends State<TasksScreen> {
     final bgImage = isWork
         ? 'assets/collection/Tasks menu/Work.jpg'
         : 'assets/collection/Tasks menu/Live.jpg';
-    final categoryBg   = isWork ? const Color(0xFF1A1410) : const Color(0xFF060C09);
-    final bgImgOpacity = isWork ? 0.38 : 0.44;
+    final categoryBg   = isWork ? const Color(0xFF12100E) : const Color(0xFF060C09);
+    final bgImgOpacity = isWork ? 0.28 : 0.34;
+
+    // Vivid accent for this screen
+    const vivid = Color(0xFFFF6B35); // bright warm orange
 
     return SwipeToPop(child: Scaffold(
       backgroundColor: isDark ? categoryBg : _bg(isDark),
@@ -359,8 +362,8 @@ class _TasksScreenState extends State<TasksScreen> {
                               fontWeight: FontWeight.w800,
                               letterSpacing: 3,
                               color: isWork
-                                  ? const Color(0xFFABA38F)   // Grullo
-                                  : const Color(0xFF8BBCAA),  // muted sage
+                                  ? const Color(0xFFF0E6D3)   // warm cream
+                                  : const Color(0xFFD0ECDF),  // fresh mint
                               height: 1,
                             ),
                           ),
@@ -399,15 +402,15 @@ class _TasksScreenState extends State<TasksScreen> {
                           child: Container(
                             width: 36, height: 36,
                             decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(10),
+                              color: Colors.white.withAlpha(18),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: Colors.white.withAlpha(22)),
+                                  color: Colors.white.withAlpha(40)),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.chevron_left_rounded,
                               size: 22,
-                              color: Colors.white60,
+                              color: Colors.white.withAlpha(200),
                             ),
                           ),
                         ),
@@ -425,7 +428,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       duration: const Duration(milliseconds: 400),
                       curve: Curves.easeOutCubic,
                       widthFactor: done / total,
-                      child: Container(height: 1, color: AppColors.tasks),
+                      child: Container(height: 1, color: vivid),
                     ),
                 ]),
 
@@ -452,13 +455,13 @@ class _TasksScreenState extends State<TasksScreen> {
                                 horizontal: 14, vertical: 7),
                             decoration: BoxDecoration(
                               color: active
-                                  ? AppColors.tasks.withAlpha(50)
-                                  : Colors.white.withAlpha(10),
+                                  ? vivid.withAlpha(40)
+                                  : Colors.white.withAlpha(14),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: active
-                                    ? AppColors.tasks.withAlpha(160)
-                                    : Colors.white.withAlpha(30),
+                                    ? vivid.withAlpha(180)
+                                    : Colors.white.withAlpha(40),
                                 width: 1,
                               ),
                             ),
@@ -468,8 +471,8 @@ class _TasksScreenState extends State<TasksScreen> {
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1,
                                 color: active
-                                    ? AppColors.tasks
-                                    : Colors.white.withAlpha(160),
+                                    ? vivid
+                                    : Colors.white.withAlpha(180),
                               )),
                           ),
                         ),
@@ -491,7 +494,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         ? null
                         : d;
                   }),
-                  accentColor: AppColors.tasks,
+                  accentColor: vivid,
                   isDark: isDark,
                 ),
 
@@ -505,7 +508,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       ? _DashboardPanel(
                           tasks: _tasks,
                           isDark: isDark,
-                          accentColor: const Color(0xFF594536),
+                          accentColor: vivid,
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -677,7 +680,7 @@ class _BottomBar extends StatefulWidget {
 }
 
 class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
-  static const _addBtnColor = Color(0xFFD4C4A8); // warm beige
+  static const _addBtnColor = Color(0xFFFF6B35); // vivid warm orange
   late final AnimationController _pulseCtrl;
   late final AnimationController _rotCtrl;
   late final AnimationController _tapCtrl;
@@ -722,11 +725,11 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
             height: 68,
             decoration: BoxDecoration(
               color: widget.isDark
-                  ? Colors.white.withAlpha(18)
+                  ? Colors.white.withAlpha(25)
                   : Colors.black.withAlpha(195),
               borderRadius: BorderRadius.circular(40),
               border: Border.all(
-                color: Colors.white.withAlpha(widget.isDark ? 28 : 18),
+                color: Colors.white.withAlpha(widget.isDark ? 45 : 18),
                 width: 1,
               ),
             ),
@@ -740,14 +743,14 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: widget.dashboardActive
-                          ? AppColors.tasks.withAlpha(50)
+                          ? const Color(0xFFFF6B35).withAlpha(50)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.bar_chart_rounded,
                         color: widget.dashboardActive
-                            ? AppColors.tasks
-                            : Colors.white.withAlpha(140),
+                            ? const Color(0xFFFF6B35)
+                            : Colors.white.withAlpha(160),
                         size: 22),
                   ),
                 ),
@@ -834,7 +837,7 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                                   ],
                                 ),
                                 child: const Icon(Icons.edit_note_rounded,
-                                    color: Color(0xFF2A2318), size: 24),
+                                    color: Colors.white, size: 24),
                               ),
                             ),
                           ],
