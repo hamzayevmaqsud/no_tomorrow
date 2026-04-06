@@ -1589,41 +1589,39 @@ class _AddSheetState extends State<_AddSheet> {
   static const _kRowBg       = Color(0xFFEFEBE0); // slightly darker row
   static const _kDivider     = Color(0xFFDDD8CB); // soft divider
 
-  int _rowIndex = 0;
-
   Widget _tableRow({
     required String label,
     required Widget content,
     bool topBorder = true,
-  }) {
-    final isAlt = (_rowIndex++ % 2 == 1);
-    return Container(
-      decoration: BoxDecoration(
-        color: isAlt ? _kRowBg : Colors.transparent,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (topBorder)
+        Divider(height: 1, thickness: 1, color: _kDivider),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 22),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 72,
+              child: Text(label,
+                style: GoogleFonts.inter(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                  color: _kCocoa.withAlpha(140),
+                )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: content),
+          ],
+        ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 22),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 72,
-            child: Text(label,
-              style: GoogleFonts.inter(
-                fontSize: 10, fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
-                color: _kCocoa.withAlpha(140),
-              )),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: content),
-        ],
-      ),
-    );
-  }
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
-    _rowIndex = 0; // reset row alternation each build
     final sw = MediaQuery.of(context).size.width;
     final kb = MediaQuery.of(context).viewInsets.bottom;
 
@@ -1756,19 +1754,34 @@ class _AddSheetState extends State<_AddSheet> {
 
                     _tableRow(
                       label: 'PRIORITY',
-                      content: Row(
+                      content: Wrap(
+                        spacing: 7,
+                        runSpacing: 6,
                         children: TaskPriority.values.map((p) {
                           final isActive = _priority == p;
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 10),
-                            child: GestureDetector(
-                              onTap: () => setState(() => _priority = p),
-                              child: _PrioritySphere(
-                                priority: p,
-                                isActive: isActive,
-                                bg: pBg[p]!,
-                                textColor: pText[p]!,
+                          return GestureDetector(
+                            onTap: () => setState(() => _priority = p),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? pBg[p]!
+                                    : _kRowBg,
+                                borderRadius: BorderRadius.circular(22),
+                                border: Border.all(
+                                  color: isActive ? pBg[p]! : _kDivider,
+                                  width: 1.2,
+                                ),
                               ),
+                              child: Text(_pLabel(p),
+                                style: GoogleFonts.inter(
+                                  fontSize: 10, fontWeight: FontWeight.w700,
+                                  color: isActive
+                                      ? pText[p]!
+                                      : _kCocoa.withAlpha(130),
+                                )),
                             ),
                           );
                         }).toList(),
@@ -1822,7 +1835,7 @@ class _AddSheetState extends State<_AddSheet> {
                     ),
 
                     // ── Submit ────────────────────────────────────────
-                    const SizedBox(height: 6),
+                    Divider(height: 1, thickness: 1, color: _kDivider),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
                       child: GestureDetector(
@@ -1864,130 +1877,6 @@ class _AddSheetState extends State<_AddSheet> {
           ),
         ),
       ),
-    );
-  }
-}
-
-// ── Priority sphere ──────────────────────────────────────────────────────────
-
-class _PrioritySphere extends StatefulWidget {
-  final TaskPriority priority;
-  final bool isActive;
-  final Color bg;
-  final Color textColor;
-
-  const _PrioritySphere({
-    required this.priority,
-    required this.isActive,
-    required this.bg,
-    required this.textColor,
-  });
-
-  @override
-  State<_PrioritySphere> createState() => _PrioritySphereState();
-}
-
-class _PrioritySphereState extends State<_PrioritySphere>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(
-      vsync: this,
-      duration: Duration(
-        milliseconds: widget.priority == TaskPriority.high
-            ? 1000
-            : widget.priority == TaskPriority.medium
-                ? 1600
-                : 2200,
-      ),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  Color get _glowColor {
-    switch (widget.priority) {
-      case TaskPriority.high:   return const Color(0xFFFF1744);
-      case TaskPriority.medium: return const Color(0xFFFFD600);
-      case TaskPriority.low:    return const Color(0xFF00E676);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final glow = _glowColor;
-    final active = widget.isActive;
-
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (context, child) {
-        final p = _pulse.value;
-        final glowAlpha = active ? (80 + (120 * p)).toInt() : 0;
-        final glowSpread = active ? 2.0 + 6.0 * p : 0.0;
-        final glowBlur = active ? 10.0 + 14.0 * p : 0.0;
-        final scale = active ? 1.0 + 0.04 * p : 1.0;
-
-        return Transform.scale(
-          scale: scale,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: active ? widget.bg : const Color(0xFFEFEBE0),
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: active ? glow.withAlpha(180) : const Color(0xFFDDD8CB),
-                width: active ? 1.5 : 1.0,
-              ),
-              boxShadow: active
-                  ? [
-                      BoxShadow(
-                        color: glow.withAlpha(glowAlpha),
-                        blurRadius: glowBlur,
-                        spreadRadius: glowSpread,
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Sphere dot
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: active ? glow : glow.withAlpha(80),
-                    boxShadow: active
-                        ? [BoxShadow(
-                            color: glow.withAlpha((180 * p).toInt()),
-                            blurRadius: 6 + 4 * p,
-                          )]
-                        : [],
-                  ),
-                ),
-                const SizedBox(width: 7),
-                Text(_pLabel(widget.priority),
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: active
-                        ? widget.textColor
-                        : const Color(0xFF594536).withAlpha(130),
-                  )),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
