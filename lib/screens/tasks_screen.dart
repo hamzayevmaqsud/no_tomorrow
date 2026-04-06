@@ -832,8 +832,8 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                                     ),
                                   ],
                                 ),
-                                child: const Icon(Icons.add_rounded,
-                                    color: Colors.white, size: 26),
+                                child: const Icon(Icons.edit_note_rounded,
+                                    color: Colors.white, size: 24),
                               ),
                             ),
                           ],
@@ -903,81 +903,110 @@ class _DashboardPanel extends StatelessWidget {
     final critical  = tasks.where((t) => !t.isCompleted && t.priority == TaskPriority.high).length;
     final progress  = total == 0 ? 0.0 : done / total;
 
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
+    const subCol  = Color(0xFF8A8070);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: _cardBg(isDark),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withAlpha(60), width: 1),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(20),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header row
           Row(
             children: [
               Text('OVERVIEW',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 10, fontWeight: FontWeight.w700,
-                  letterSpacing: 2, color: accentColor,
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 13, fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5, color: textCol,
                 )),
               const Spacer(),
-              Text('LVL ${GameState.instance.level}',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 10, fontWeight: FontWeight.w700,
-                  letterSpacing: 1, color: _textSub(isDark),
-                )),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: accentColor.withAlpha(60)),
+                ),
+                child: Text('LVL ${GameState.instance.level}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9, fontWeight: FontWeight.w700,
+                    letterSpacing: 1, color: accentColor,
+                  )),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
+
+          // Stats row — warm cream cards
           Row(
             children: [
-              _StatBox(label: 'TOTAL',   value: '$total',   color: accentColor,              isDark: isDark),
+              _StatBox(label: 'TOTAL',   value: '$total',      color: textCol,                isDark: false),
               const SizedBox(width: 8),
-              _StatBox(label: 'DONE',    value: '$done',    color: AppColors.success,        isDark: isDark),
+              _StatBox(label: 'DONE',    value: '$done',       color: const Color(0xFF4A8C3F), isDark: false),
               const SizedBox(width: 8),
-              _StatBox(label: 'PENDING', value: '$pending', color: const Color(0xFFFFD600),  isDark: isDark),
+              _StatBox(label: 'PENDING', value: '$pending',    color: const Color(0xFFC49A3C), isDark: false),
               const SizedBox(width: 8),
-              _StatBox(label: 'XP',      value: '+$xpEarned', color: const Color(0xFFFF1744), isDark: isDark),
+              _StatBox(label: 'XP',      value: '+$xpEarned',  color: const Color(0xFFB85C38), isDark: false),
             ],
           ),
+
           if (critical > 0) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Container(
                   width: 6, height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF1744), shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB85C38),
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: const Color(0xFFB85C38).withAlpha(120), blurRadius: 4)],
+                  ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Text('$critical critical mission${critical > 1 ? 's' : ''} remaining',
                   style: GoogleFonts.inter(
                     fontSize: 11, fontWeight: FontWeight.w600,
-                    color: const Color(0xFFFF1744),
+                    color: const Color(0xFFB85C38),
                   )),
               ],
             ),
           ],
-          const SizedBox(height: 10),
+
+          const SizedBox(height: 14),
+
+          // Progress bar — warm style
           Stack(children: [
-            Container(height: 4, decoration: BoxDecoration(
-              color: _divider(isDark), borderRadius: BorderRadius.circular(2))),
+            Container(height: 6, decoration: BoxDecoration(
+              color: textCol.withAlpha(18), borderRadius: BorderRadius.circular(3))),
             AnimatedFractionallySizedBox(
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeOutCubic,
               widthFactor: progress,
-              child: Container(height: 4, decoration: BoxDecoration(
+              child: Container(height: 6, decoration: BoxDecoration(
                 color: accentColor,
-                borderRadius: BorderRadius.circular(2),
-                boxShadow: [BoxShadow(color: accentColor.withAlpha(120), blurRadius: 6)],
+                borderRadius: BorderRadius.circular(3),
+                boxShadow: [BoxShadow(color: accentColor.withAlpha(100), blurRadius: 8)],
               )),
             ),
           ]),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text('${(progress * 100).round()}% complete',
             style: GoogleFonts.jetBrainsMono(
-              fontSize: 9, color: _textSub(isDark).withAlpha(140))),
+              fontSize: 9, fontWeight: FontWeight.w500,
+              color: subCol)),
         ],
       ),
     );
@@ -1001,9 +1030,8 @@ class _StatBox extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withAlpha(isDark ? 20 : 15),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withAlpha(isDark ? 60 : 50), width: 1),
+          color: color.withAlpha(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           children: [
@@ -1015,7 +1043,7 @@ class _StatBox extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 8, fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
-                color: color.withAlpha(isDark ? 160 : 180))),
+                color: color.withAlpha(160))),
           ],
         ),
       ),
