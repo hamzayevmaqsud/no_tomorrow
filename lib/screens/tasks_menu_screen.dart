@@ -56,7 +56,7 @@ class TasksMenuScreen extends StatelessWidget {
                       category: TaskCategory.work,
                       label: 'WORK',
                       imagePath: 'assets/collection/Tasks menu/Work.jpg',
-                      color: const Color(0xFF8B6E5A),
+                      color: const Color(0xFF2979FF),
                     ),
                   ),
                   const SizedBox(width: 8),

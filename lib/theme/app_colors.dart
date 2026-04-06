@@ -26,7 +26,7 @@ class AppColors {
   static const warning = Color(0xFFFFD700);
 
   // Section colors
-  static const tasks       = Color(0xFF8B6E5A); // warm taupe (tasks only)
+  static const tasks       = Color(0xFF2979FF); // vivid blue
   static const habits      = Color(0xFFAA00FF); // vivid purple
   static const workouts    = Color(0xFFFF5722); // deep orange
   static const abstinences = Color(0xFFFF1744); // vivid red
