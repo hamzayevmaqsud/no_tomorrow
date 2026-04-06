@@ -1644,23 +1644,26 @@ class _AddSheetState extends State<_AddSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
-              width: 72,
+              width: 90,
               child: Row(
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 13, color: _kCocoa.withAlpha(120)),
-                    const SizedBox(width: 6),
+                    Icon(icon, size: 12, color: _kCocoa.withAlpha(130)),
+                    const SizedBox(width: 5),
                   ],
-                  Text(label,
-                    style: GoogleFonts.inter(
-                      fontSize: 10, fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                      color: _kCocoa.withAlpha(140),
-                    )),
+                  Flexible(
+                    child: Text(label,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 9, fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: _kCocoa.withAlpha(150),
+                      )),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Expanded(child: content),
           ],
         ),
