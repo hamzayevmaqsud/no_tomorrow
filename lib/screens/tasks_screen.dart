@@ -1073,11 +1073,13 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final done       = task.isCompleted;
-    final accent     = _pColor(task.priority);
-    final cardBg     = const Color(0xFFF5F2EB);
-    const textCol    = Color(0xFF2A2318);
-    const subCol     = Color(0xFF8A8070);
+    final done      = task.isCompleted;
+    final accentBg  = done ? const Color(0xFFCCCAC4) : _pCardBg(task.priority);
+    final accentTxt = done ? const Color(0xFF8A8880) : _pCardText(task.priority);
+    final cardBg    = const Color(0xFFF5F2EB);
+    const textCol   = Color(0xFF2A2318);
+    const subCol    = Color(0xFF8A8070);
+    final catLabel  = task.category == TaskCategory.work ? 'WORK' : 'LIVE';
 
     return GestureDetector(
       onTap: onTap,
@@ -1086,7 +1088,6 @@ class _TaskCard extends StatelessWidget {
         opacity: done ? 0.55 : 1.0,
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(18),
@@ -1098,118 +1099,153 @@ class _TaskCard extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            children: [
-              // ── Left: priority icon circle / check ──────────────
-              GestureDetector(
-                onTap: done ? null : onComplete,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  width: 44, height: 44,
-                  decoration: BoxDecoration(
-                    color: done
-                        ? AppColors.success.withAlpha(30)
-                        : accent.withAlpha(22),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: done
-                          ? AppColors.success.withAlpha(120)
-                          : accent.withAlpha(60),
-                      width: 1.5,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ── Left: main content ──────────────────────────────
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Category tag
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: textCol.withAlpha(10),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: textCol.withAlpha(25), width: 0.8),
+                            ),
+                            child: Text(catLabel,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9, fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                                color: textCol.withAlpha(130),
+                              )),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // Title
+                          Text(task.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.outfit(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              fontStyle: FontStyle.italic,
+                              height: 1.15,
+                              color: textCol,
+                              decoration: done
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                              decorationColor: textCol.withAlpha(100),
+                            )),
+
+                          // Description
+                          if (task.description.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(task.description,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 12, height: 1.3, color: subCol,
+                              )),
+                          ],
+
+                          const SizedBox(height: 10),
+
+                          // Bottom: date/time + XP
+                          Row(
+                            children: [
+                              if (task.dueDate != null) ...[
+                                Icon(Icons.calendar_today_rounded,
+                                    size: 10, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(_fmtDate(task.dueDate!),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10, fontWeight: FontWeight.w500,
+                                    color: subCol,
+                                  )),
+                                const SizedBox(width: 8),
+                              ],
+                              if (task.dueTime != null) ...[
+                                Icon(Icons.access_time_rounded,
+                                    size: 10, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(_fmt24(task.dueTime!),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10, fontWeight: FontWeight.w500,
+                                    color: subCol,
+                                  )),
+                              ],
+                              const Spacer(),
+                              Text(
+                                done
+                                    ? '✓ ${_pXp(task.priority)} XP'
+                                    : '+${_pXp(task.priority)} XP',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w700,
+                                  color: subCol,
+                                )),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: done
-                      ? Icon(Icons.check_rounded,
-                          size: 20, color: AppColors.success)
-                      : Icon(
-                          task.priority == TaskPriority.high
-                              ? Icons.local_fire_department_rounded
-                              : task.priority == TaskPriority.medium
-                                  ? Icons.flag_rounded
-                                  : Icons.eco_rounded,
-                          size: 18,
-                          color: accent.withAlpha(200),
-                        ),
-                ),
-              ),
 
-              const SizedBox(width: 14),
-
-              // ── Center: title + XP info ─────────────────────────
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(task.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        height: 1.2,
-                        color: textCol,
-                        decoration: done
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                        decorationColor: textCol.withAlpha(100),
-                      )),
-                    const SizedBox(height: 3),
-                    Row(
+                  // ── Right: priority accent block (~1/4 width) ───────
+                  Container(
+                    width: 68,
+                    color: accentBg,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          done
-                              ? '✓ ${_pXp(task.priority)} XP'
-                              : '+${_pXp(task.priority)} XP',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 10, fontWeight: FontWeight.w700,
-                            color: accent.withAlpha(180),
-                          )),
-                        const SizedBox(width: 8),
-                        Text('·', style: TextStyle(color: subCol, fontSize: 12)),
-                        const SizedBox(width: 8),
-                        Text(_pLabel(task.priority),
-                          style: GoogleFonts.inter(
-                            fontSize: 10, fontWeight: FontWeight.w500,
-                            color: subCol,
-                          )),
+                        // Complete button
+                        GestureDetector(
+                          onTap: done ? null : onComplete,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            width: 30, height: 30,
+                            decoration: BoxDecoration(
+                              color: accentTxt.withAlpha(done ? 50 : 25),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: accentTxt.withAlpha(done ? 110 : 70),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: done
+                                ? Icon(Icons.check_rounded,
+                                    size: 14,
+                                    color: accentTxt.withAlpha(210))
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        // Priority label rotated
+                        RotatedBox(
+                          quarterTurns: 1,
+                          child: Text(_pLabel(task.priority).toUpperCase(),
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 8, fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                              color: accentTxt.withAlpha(150),
+                            )),
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-
-              // ── Right: time / date ──────────────────────────────
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (task.dueTime != null)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.access_time_rounded,
-                            size: 12, color: subCol),
-                        const SizedBox(width: 4),
-                        Text(_fmt24(task.dueTime!),
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 11, fontWeight: FontWeight.w600,
-                            color: textCol.withAlpha(180),
-                          )),
-                      ],
-                    )
-                  else
-                    Icon(Icons.access_time_rounded,
-                        size: 14, color: subCol.withAlpha(80)),
-                  if (task.dueDate != null) ...[
-                    const SizedBox(height: 4),
-                    Text(_fmtDate(task.dueDate!),
-                      style: GoogleFonts.inter(
-                        fontSize: 9, fontWeight: FontWeight.w500,
-                        color: subCol,
-                      )),
-                  ],
+                  ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),
