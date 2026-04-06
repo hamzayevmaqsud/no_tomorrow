@@ -23,9 +23,9 @@ class TaskStore {
 
 Color _pColor(TaskPriority p) {
   switch (p) {
-    case TaskPriority.high:   return const Color(0xFF9E4040);  // brick red
-    case TaskPriority.medium: return const Color(0xFFC49A3C);  // warm gold
-    case TaskPriority.low:    return const Color(0xFF5A7C4F);  // olive sage
+    case TaskPriority.high:   return const Color(0xFFFF1744);
+    case TaskPriority.medium: return const Color(0xFFFFD600);
+    case TaskPriority.low:    return const Color(0xFF00E676);
   }
 }
 
@@ -2180,7 +2180,7 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                                   style: GoogleFonts.jetBrainsMono(
                                     fontSize: 15, fontWeight: FontWeight.w700,
                                     letterSpacing: 1.5,
-                                    color: widget.color == const Color(0xFFC49A3C)
+                                    color: widget.color == const Color(0xFFFFD600)
                                         ? Colors.black
                                         : Colors.white,
                                   )),

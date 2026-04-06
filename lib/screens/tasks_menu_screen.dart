@@ -65,7 +65,7 @@ class TasksMenuScreen extends StatelessWidget {
                       category: TaskCategory.live,
                       label: 'LIVE',
                       imagePath: 'assets/collection/Tasks menu/Live.jpg',
-                      color: const Color(0xFF5A7C4F),
+                      color: const Color(0xFF00E676),
                     ),
                   ),
                 ],
