@@ -23,9 +23,9 @@ class TaskStore {
 
 Color _pColor(TaskPriority p) {
   switch (p) {
-    case TaskPriority.high:   return const Color(0xFFFF1744);
-    case TaskPriority.medium: return const Color(0xFFFFD600);
-    case TaskPriority.low:    return const Color(0xFF00E676);
+    case TaskPriority.high:   return const Color(0xFFDC2626); // red-600
+    case TaskPriority.medium: return const Color(0xFFF59E0B); // amber-500
+    case TaskPriority.low:    return const Color(0xFF22C55E); // green-500
   }
 }
 
@@ -615,14 +615,14 @@ class _CalendarStrip extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isSelected || isToday
                           ? kBeige
-                          : kBeige.withAlpha(28),
+                          : kBeige.withAlpha(45),
                       borderRadius: BorderRadius.circular(40),
                       border: Border.all(
                         color: isSelected
                             ? kRed
                             : isToday
                                 ? kBeigeS
-                                : kBeige.withAlpha(40),
+                                : kBeige.withAlpha(65),
                         width: isSelected ? 1.8 : 1.2,
                       ),
                     ),
@@ -2491,8 +2491,8 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
   late final AnimationController _ctrl;
   bool _waitingForTap = false;
 
-  static const _cyan = Color(0xFF00EEFF);
-  static const _pink = Color(0xFFFF2D9B);
+  static const _cyan = Color(0xFFCA8A04); // warm gold
+  static const _pink = Color(0xFFF97316); // warm orange
 
   @override
   void initState() {
@@ -2569,9 +2569,9 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                     center: Alignment(0, -0.2),
                     radius: 1.1,
                     colors: [
-                      Color(0xFF1A0040),
-                      Color(0xFF0A001A),
-                      Color(0xFF000008),
+                      Color(0xFF1A1008),
+                      Color(0xFF0A0804),
+                      Color(0xFF050300),
                     ],
                     stops: [0.0, 0.55, 1.0],
                   ),

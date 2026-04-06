@@ -22,7 +22,7 @@ class AppColors {
   static const primaryDark = Color(0xFF2563EB);
   static const secondary = Color(0xFF00D4FF);
   static const danger = Color(0xFFFF4757);
-  static const success = Color(0xFF2ED573);
+  static const success = Color(0xFF22C55E);
   static const warning = Color(0xFFFFD700);
 
   // Section colors
