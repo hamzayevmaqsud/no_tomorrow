@@ -191,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen>
           IgnorePointer(
             child: RepaintBoundary(
               child: CustomPaint(
-                painter: _GlowPainter(color: section.color),
+                painter: _GlowPainter(color: section.color, offset: _angle * 0.08),
                 child: const SizedBox.expand(),
               ),
             ),
@@ -203,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen>
               child: CustomPaint(
                 painter: _CompassRingPainter(
                   color: section.color,
-                  rotation: _angle,
+                  rotation: _angle * 1.15, // parallax — ring moves faster
                 ),
                 child: const SizedBox.expand(),
               ),
@@ -295,38 +295,57 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
                 child: Row(
                   children: [
-                    // Circle avatar with neon glow
+                    // Avatar with XP ring
                     GestureDetector(
                       onTap: () => _goTo(8),
-                      child: Container(
-                        width: 54, height: 54,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF2A1A10), Color(0xFF1A1008)],
-                          ),
-                          border: Border.all(
-                              color: AppColors.action, width: 2.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.action.withAlpha(80),
-                              blurRadius: 14, spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/avatar.png',
-                            width: 54, height: 54,
-                            fit: BoxFit.cover,
-                            errorBuilder: (ctx, err, st) => Center(
-                              child: Text('H', style: GoogleFonts.outfit(
-                                color: Colors.white, fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                              )),
-                            ),
+                      child: ListenableBuilder(
+                        listenable: GameState.instance,
+                        builder: (ctx, _) => SizedBox(
+                          width: 58, height: 58,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // XP progress ring
+                              SizedBox(
+                                width: 58, height: 58,
+                                child: CircularProgressIndicator(
+                                  value: GameState.instance.levelProgress,
+                                  strokeWidth: 2.5,
+                                  backgroundColor: Colors.white.withAlpha(20),
+                                  valueColor: const AlwaysStoppedAnimation(
+                                      AppColors.action),
+                                ),
+                              ),
+                              // Avatar
+                              Container(
+                                width: 48, height: 48,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.action.withAlpha(60),
+                                      blurRadius: 10, spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: ClipOval(
+                                  child: Image.asset(
+                                    'assets/images/avatar.png',
+                                    width: 48, height: 48,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (ctx, err, st) => Container(
+                                      color: const Color(0xFF1A1008),
+                                      child: Center(
+                                        child: Text('H', style: GoogleFonts.outfit(
+                                          color: Colors.white, fontSize: 20,
+                                          fontWeight: FontWeight.w900,
+                                        )),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -361,29 +380,13 @@ class _HomeScreenState extends State<HomeScreen>
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Stack(children: [
-                                    Container(height: 4,
-                                        color: Colors.white.withAlpha(20)),
-                                    FractionallySizedBox(
-                                      widthFactor: GameState.instance.levelProgress,
-                                      child: Container(
-                                          height: 4, color: AppColors.action),
-                                    ),
-                                  ]),
-                                ),
-                                const SizedBox(width: 8),
-                                Text('${GameState.instance.xpInLevel}/${GameState.instance.xpForNextLevel}',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 8, fontWeight: FontWeight.w600,
-                                    letterSpacing: 1,
-                                    color: Colors.white.withAlpha(140),
-                                  )),
-                              ],
-                            ),
+                            const SizedBox(height: 4),
+                            Text('${GameState.instance.xpInLevel} / ${GameState.instance.xpForNextLevel} XP',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9, fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                                color: Colors.white.withAlpha(120),
+                              )),
                           ],
                         ),
                       ),
@@ -838,11 +841,15 @@ class _PizzaPainter extends CustomPainter {
 
 class _GlowPainter extends CustomPainter {
   final Color color;
-  _GlowPainter({required this.color});
+  final double offset;
+  _GlowPainter({required this.color, this.offset = 0.0});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final focal = Offset(size.width / 2, size.height * 0.44);
+    final focal = Offset(
+      size.width / 2 + sin(offset) * 20, // parallax shift
+      size.height * 0.44 + cos(offset) * 10,
+    );
     final paint = Paint()
       ..shader = RadialGradient(
         colors: [
@@ -856,7 +863,7 @@ class _GlowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_GlowPainter old) => old.color != color;
+  bool shouldRepaint(_GlowPainter old) => old.color != color || old.offset != offset;
 }
 
 // ── Compass ring (quest map decoration) ──────────────────────────────────────
