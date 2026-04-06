@@ -1632,6 +1632,7 @@ class _AddSheetState extends State<_AddSheet> {
     required String label,
     required Widget content,
     bool topBorder = true,
+    IconData? icon,
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -1644,12 +1645,20 @@ class _AddSheetState extends State<_AddSheet> {
           children: [
             SizedBox(
               width: 72,
-              child: Text(label,
-                style: GoogleFonts.inter(
-                  fontSize: 10, fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                  color: _kCocoa.withAlpha(140),
-                )),
+              child: Row(
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 13, color: _kCocoa.withAlpha(120)),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(label,
+                    style: GoogleFonts.inter(
+                      fontSize: 10, fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                      color: _kCocoa.withAlpha(140),
+                    )),
+                ],
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(child: content),
@@ -1683,12 +1692,12 @@ class _AddSheetState extends State<_AddSheet> {
         child: Material(
           color: Colors.transparent,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(36),
             child: Container(
               width: sw * 0.82,
               decoration: BoxDecoration(
                 color: _kSheetBg,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(36),
                 boxShadow: [BoxShadow(
                   color: Colors.black.withAlpha(80),
                   blurRadius: 40, offset: const Offset(6, 8),
@@ -1705,7 +1714,7 @@ class _AddSheetState extends State<_AddSheet> {
                       decoration: BoxDecoration(
                         color: _kReseda.withAlpha(60),
                         borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(28)),
+                            top: Radius.circular(36)),
                       ),
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                       child: Row(
@@ -1755,6 +1764,7 @@ class _AddSheetState extends State<_AddSheet> {
                     // ── Form fields ────────────────────────────────────
                     _tableRow(
                       label: 'TITLE',
+                      icon: Icons.edit_rounded,
                       topBorder: false,
                       content: TextField(
                         controller: _titleCtrl,
@@ -1776,6 +1786,7 @@ class _AddSheetState extends State<_AddSheet> {
 
                     _tableRow(
                       label: 'NOTES',
+                      icon: Icons.sticky_note_2_outlined,
                       content: TextField(
                         controller: _descCtrl,
                         maxLines: 2,
@@ -1793,6 +1804,7 @@ class _AddSheetState extends State<_AddSheet> {
 
                     _tableRow(
                       label: 'PRIORITY',
+                      icon: Icons.flag_rounded,
                       content: Wrap(
                         spacing: 7,
                         runSpacing: 6,
@@ -1800,27 +1812,39 @@ class _AddSheetState extends State<_AddSheet> {
                           final isActive = _priority == p;
                           return GestureDetector(
                             onTap: () => setState(() => _priority = p),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? pBg[p]!
-                                    : _kRowBg,
-                                borderRadius: BorderRadius.circular(22),
-                                border: Border.all(
-                                  color: isActive ? pBg[p]! : _kDivider,
-                                  width: 1.2,
-                                ),
-                              ),
-                              child: Text(_pLabel(p),
-                                style: GoogleFonts.inter(
-                                  fontSize: 10, fontWeight: FontWeight.w700,
+                            child: AnimatedScale(
+                              scale: isActive ? 1.1 : 1.0,
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeOutBack,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 7),
+                                decoration: BoxDecoration(
                                   color: isActive
-                                      ? pText[p]!
-                                      : _kCocoa.withAlpha(130),
-                                )),
+                                      ? pBg[p]!
+                                      : _kRowBg,
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                    color: isActive ? pBg[p]! : _kDivider,
+                                    width: isActive ? 1.8 : 1.0,
+                                  ),
+                                  boxShadow: isActive
+                                      ? [BoxShadow(
+                                          color: pBg[p]!.withAlpha(80),
+                                          blurRadius: 10,
+                                          spreadRadius: 1,
+                                        )]
+                                      : [],
+                                ),
+                                child: Text(_pLabel(p),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10, fontWeight: FontWeight.w700,
+                                    color: isActive
+                                        ? pText[p]!
+                                        : _kCocoa.withAlpha(130),
+                                  )),
+                              ),
                             ),
                           );
                         }).toList(),
@@ -1829,6 +1853,7 @@ class _AddSheetState extends State<_AddSheet> {
 
                     _tableRow(
                       label: 'DATE',
+                      icon: Icons.calendar_today_rounded,
                       content: GestureDetector(
                         onTap: _pickDate,
                         child: Row(children: [
@@ -1852,6 +1877,7 @@ class _AddSheetState extends State<_AddSheet> {
 
                     _tableRow(
                       label: 'TIME',
+                      icon: Icons.access_time_rounded,
                       content: GestureDetector(
                         onTap: _pickTime,
                         child: Row(children: [
