@@ -1584,19 +1584,19 @@ class _AddSheetState extends State<_AddSheet> {
     ));
   }
 
-  // Dark chocolate palette
-  static const _kNavy        = Color(0xFF1A0E08); // deep chocolate
-  static const _kDarkNavy    = Color(0xFF0F0804); // darkest
+  // Pantone palette (light version)
+  static const _kNavy        = Color(0xFF002D4E); // 2965 C
+  static const _kDarkNavy    = Color(0xFF001828); // darker bg (unused in light)
   static const _kRedInferno  = Color(0xFF4E0000); // 4975 C
-  static const _kPastelYellow= Color(0xFFE8A94E); // candle gold
-  static const _kReseda      = Color(0xFF8B7355); // warm brown
-  static const _kChive       = Color(0xFF4E3D28); // dark leather
-  static const _kCocoa       = Color(0xFFD4C4A8); // warm cream text
-  static const _kCoconutMilk = Color(0xFF1A0E08); // dark bg for button text
-  // derived dark tones
-  static const _kSheetBg     = Color(0xFF2A1A10); // dark chocolate
-  static const _kRowBg       = Color(0xFF332014); // slightly lighter row
-  static const _kDivider     = Color(0xFF3D2A1A); // warm divider
+  static const _kPastelYellow= Color(0xFFF2E6B1); // 11-0616 TCX
+  static const _kReseda      = Color(0xFFA1AD8C); // 15-6414 TCX
+  static const _kChive       = Color(0xFF4E5226); // 19-0323 TCX
+  static const _kCocoa       = Color(0xFF594536); // 19-1119 TCX
+  static const _kCoconutMilk = Color(0xFFF0EDE5); // 11-0608 TPG
+  // derived light tones
+  static const _kSheetBg     = Color(0xFFF5F1E8); // warm off-white
+  static const _kRowBg       = Color(0xFFEFEBE0); // slightly darker row
+  static const _kDivider     = Color(0xFFDDD8CB); // soft divider
 
   Widget _tableRow({
     required String label,
@@ -1683,11 +1683,11 @@ class _AddSheetState extends State<_AddSheet> {
                           Container(
                             width: 36, height: 36,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD4883C),
+                              color: _kCocoa,
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(Icons.add_rounded,
-                                color: Color(0xFF1A0E08), size: 20),
+                                color: _kCoconutMilk, size: 20),
                           ),
                           const SizedBox(width: 12),
                           Column(
@@ -1853,32 +1853,26 @@ class _AddSheetState extends State<_AddSheet> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFD4883C), // amber
-                                Color(0xFFE8A94E), // candle gold
-                                Color(0xFFD4883C), // amber
-                              ],
-                            ),
+                            color: _kCocoa,
                             borderRadius: BorderRadius.circular(22),
                             boxShadow: [BoxShadow(
-                              color: const Color(0xFFD4883C).withAlpha(100),
-                              blurRadius: 18, offset: const Offset(0, 4),
+                              color: _kCocoa.withAlpha(70),
+                              blurRadius: 14, offset: const Offset(0, 4),
                             )],
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text('ADD MISSION',
-                                style: GoogleFonts.playfairDisplay(
-                                  fontSize: 13, fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.4, color: const Color(0xFF1A0E08),
+                                style: GoogleFonts.inter(
+                                  fontSize: 12, fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.4, color: _kCoconutMilk,
                                 )),
                               const SizedBox(width: 8),
                               Text('+${_pXp(_priority)} XP',
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 9, fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF2A1A10).withAlpha(180),
+                                  color: _kPastelYellow.withAlpha(210),
                                 )),
                             ],
                           ),
@@ -2147,43 +2141,11 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                             fontSize: 9, fontWeight: FontWeight.w600,
                             letterSpacing: 2,
                             color: Colors.white.withAlpha(120))),
-                        // Medal-style LVL badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 3),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFFD4883C),
-                                Color(0xFFE8A94E),
-                                Color(0xFFD4883C),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFD4883C).withAlpha(120),
-                                blurRadius: 8,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.shield_rounded,
-                                  size: 10,
-                                  color: const Color(0xFF1A0E08)),
-                              const SizedBox(width: 3),
-                              Text('LVL ${widget.level}',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9, fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                  color: const Color(0xFF1A0E08),
-                                )),
-                            ],
-                          ),
-                        ),
+                        Text('LVL ${widget.level}',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 9, fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                            color: Colors.white.withAlpha(120))),
                       ],
                     ),
 
@@ -2467,8 +2429,8 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
   late final AnimationController _ctrl;
   bool _waitingForTap = false;
 
-  static const _cyan = Color(0xFFE8A94E); // candle gold
-  static const _pink = Color(0xFFD4883C); // warm amber
+  static const _cyan = Color(0xFF00EEFF);
+  static const _pink = Color(0xFFFF2D9B);
 
   @override
   void initState() {
@@ -2489,15 +2451,16 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
   void dispose() { _ctrl.dispose(); super.dispose(); }
 
   Widget _neon(String text, Color color, double size) => Text(text,
-    style: GoogleFonts.playfairDisplay(
+    style: GoogleFonts.outfit(
       fontSize: size, fontWeight: FontWeight.w900,
       fontStyle: FontStyle.italic, height: 0.95,
-      color: const Color(0xFFF5E6C8),
+      color: Colors.white,
       shadows: [
         Shadow(color: color, blurRadius: 0),
-        Shadow(color: color.withAlpha(200), blurRadius: 14),
-        Shadow(color: color.withAlpha(120), blurRadius: 30),
-        Shadow(color: color.withAlpha(60),  blurRadius: 50),
+        Shadow(color: color.withAlpha(230), blurRadius: 10),
+        Shadow(color: color.withAlpha(160), blurRadius: 24),
+        Shadow(color: color.withAlpha(90),  blurRadius: 50),
+        Shadow(color: color.withAlpha(40),  blurRadius: 90),
       ],
     ));
 
@@ -2544,9 +2507,9 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                     center: Alignment(0, -0.2),
                     radius: 1.1,
                     colors: [
-                      Color(0xFF2A1A08),
-                      Color(0xFF140C04),
-                      Color(0xFF080400),
+                      Color(0xFF1A0040),
+                      Color(0xFF0A001A),
+                      Color(0xFF000008),
                     ],
                     stops: [0.0, 0.55, 1.0],
                   ),
@@ -2559,48 +2522,10 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                         child: IgnorePointer(
                           child: Opacity(
                             opacity: flashOp,
-                            child: Container(color: const Color(0xFFF5E6C8)),
+                            child: Container(color: Colors.white),
                           ),
                         ),
                       ),
-                    // Confetti particles
-                    if (t > 0.20)
-                      ...List.generate(20, (i) {
-                        final seed = i * 137.5;
-                        final x = (sin(seed) * 0.5 + 0.5);
-                        final speed = 0.4 + (cos(seed * 2) * 0.3 + 0.3);
-                        final confT = ((t - 0.20) * speed * 2).clamp(0.0, 1.0);
-                        final yStart = -0.1;
-                        final yEnd = 1.2;
-                        final y = yStart + (yEnd - yStart) * confT;
-                        final wobble = sin(confT * pi * 4 + seed) * 20;
-                        final confOp = (1 - confT).clamp(0.0, 1.0) *
-                            (t > 0.80 ? (1 - (t - 0.80) / 0.20) : 1.0).clamp(0.0, 1.0);
-                        const confColors = [
-                          Color(0xFFE8A94E), Color(0xFFD4883C),
-                          Color(0xFFCC6B3A), Color(0xFFF5E6C8),
-                          Color(0xFF6B9E5A), Color(0xFFCC4433),
-                        ];
-                        return Positioned(
-                          left: x * MediaQuery.of(context).size.width + wobble,
-                          top: y * MediaQuery.of(context).size.height,
-                          child: Opacity(
-                            opacity: confOp,
-                            child: Transform.rotate(
-                              angle: confT * pi * 3 + seed,
-                              child: Container(
-                                width: 6 + (i % 3) * 2.0,
-                                height: 6 + (i % 3) * 2.0,
-                                decoration: BoxDecoration(
-                                  color: confColors[i % confColors.length],
-                                  borderRadius: BorderRadius.circular(
-                                      i % 2 == 0 ? 1 : 4),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
                     Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
