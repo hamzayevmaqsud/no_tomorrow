@@ -47,26 +47,29 @@ class TasksMenuScreen extends StatelessWidget {
 
           // ── Cards — fullscreen side by side ─────────────────────────
           Positioned.fill(
-            child: Row(
-              children: [
-                Expanded(
-                  child: _CategoryCard(
-                    category: TaskCategory.work,
-                    label: 'WORK',
-                    imagePath: 'assets/collection/Tasks menu/Work.jpg',
-                    color: const Color(0xFF2979FF),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _CategoryCard(
+                      category: TaskCategory.work,
+                      label: 'WORK',
+                      imagePath: 'assets/collection/Tasks menu/Work.jpg',
+                      color: const Color(0xFF2979FF),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 3),
-                Expanded(
-                  child: _CategoryCard(
-                    category: TaskCategory.live,
-                    label: 'LIVE',
-                    imagePath: 'assets/collection/Tasks menu/Live.jpg',
-                    color: const Color(0xFF00E676),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _CategoryCard(
+                      category: TaskCategory.live,
+                      label: 'LIVE',
+                      imagePath: 'assets/collection/Tasks menu/Live.jpg',
+                      color: const Color(0xFF00E676),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -131,9 +134,11 @@ class _CategoryCardState extends State<_CategoryCard> {
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 120),
         opacity: _pressed ? 0.6 : 1.0,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
             Image.asset(
               widget.imagePath,
               fit: BoxFit.cover,
@@ -193,6 +198,7 @@ class _CategoryCardState extends State<_CategoryCard> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

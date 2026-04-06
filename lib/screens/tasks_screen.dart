@@ -677,6 +677,7 @@ class _BottomBar extends StatefulWidget {
 }
 
 class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
+  static const _addBtnColor = Color(0xFFFF2D2D); // bright critical red
   late final AnimationController _pulseCtrl;
   late final AnimationController _rotCtrl;
   late final AnimationController _tapCtrl;
@@ -781,10 +782,10 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                                     child: Container(
                                       width: 6, height: 6,
                                       decoration: BoxDecoration(
-                                        color: AppColors.tasks,
+                                        color: _addBtnColor,
                                         shape: BoxShape.circle,
                                         boxShadow: [BoxShadow(
-                                          color: AppColors.tasks.withAlpha(200),
+                                          color: _addBtnColor.withAlpha(200),
                                           blurRadius: 5,
                                         )],
                                       ),
@@ -798,11 +799,11 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: AppColors.tasks.withAlpha(35 + (50 * p).round()),
+                                  color: _addBtnColor.withAlpha(35 + (50 * p).round()),
                                   width: 1.1,
                                 ),
                                 boxShadow: [BoxShadow(
-                                  color: AppColors.tasks.withAlpha(22 + (55 * p).round()),
+                                  color: _addBtnColor.withAlpha(22 + (55 * p).round()),
                                   blurRadius: 14 + p * 14,
                                   spreadRadius: p * 2,
                                 )],
@@ -813,7 +814,7 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                               angle: _rotCtrl.value * 2 * pi,
                               child: CustomPaint(
                                 size: const Size(64, 64),
-                                painter: _ArcPainter(color: AppColors.tasks),
+                                painter: _ArcPainter(color: _addBtnColor),
                               ),
                             ),
                             // Main circle button
@@ -822,11 +823,11 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                               child: Container(
                                 width: 46, height: 46,
                                 decoration: BoxDecoration(
-                                  color: AppColors.tasks,
+                                  color: _addBtnColor,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.tasks.withAlpha(110 + (65 * p).round()),
+                                      color: _addBtnColor.withAlpha(110 + (65 * p).round()),
                                       blurRadius: 16 + p * 10,
                                       spreadRadius: 1,
                                     ),
