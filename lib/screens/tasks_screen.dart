@@ -153,6 +153,7 @@ class _TasksScreenState extends State<TasksScreen> {
     final color        = _pColor(task.priority);
     final fromProgress = GameState.instance.levelProgress;
     final fromLevel    = GameState.instance.level;
+    GameState.instance.recordCompletion();
     final didLevelUp   = GameState.instance.addXp(task.xp);
     final toProgress   = didLevelUp ? 1.0 : GameState.instance.levelProgress;
     _showXp(task.xp, color,
@@ -278,9 +279,30 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Widget _dismissible(Task task, bool isDark) => Dismissible(
     key: ValueKey('${task.id}_${task.isCompleted}'),
-    direction: DismissDirection.endToStart,
+    direction: task.isCompleted
+        ? DismissDirection.endToStart
+        : DismissDirection.horizontal,
+    confirmDismiss: (direction) async {
+      if (direction == DismissDirection.startToEnd && !task.isCompleted) {
+        _complete(task);
+        return false; // don't remove, just complete
+      }
+      return true; // endToStart = delete
+    },
     onDismissed: (_) => _delete(task.id),
+    // Swipe right → green complete
     background: Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 18),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.success.withAlpha(isDark ? 25 : 35),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Icon(Icons.check_rounded, color: AppColors.success, size: 20),
+    ),
+    // Swipe left → red delete
+    secondaryBackground: Container(
       alignment: Alignment.centerRight,
       padding: const EdgeInsets.only(right: 18),
       margin: const EdgeInsets.only(bottom: 10),
@@ -390,6 +412,50 @@ class _TasksScreenState extends State<TasksScreen> {
                                         ? AppColors.success
                                         : Colors.white.withAlpha(160),
                                   )),
+                                if (GameState.instance.streak >= 2) ...[
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: GameState.instance.streak >= 7
+                                          ? const Color(0xFFFF6B35).withAlpha(40)
+                                          : GameState.instance.streak >= 3
+                                              ? const Color(0xFFF59E0B).withAlpha(35)
+                                              : Colors.white.withAlpha(15),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: GameState.instance.streak >= 7
+                                            ? const Color(0xFFFF6B35).withAlpha(120)
+                                            : GameState.instance.streak >= 3
+                                                ? const Color(0xFFF59E0B).withAlpha(100)
+                                                : Colors.white.withAlpha(40),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.local_fire_department_rounded,
+                                          size: 12,
+                                          color: GameState.instance.streak >= 7
+                                              ? const Color(0xFFFF6B35)
+                                              : GameState.instance.streak >= 3
+                                                  ? const Color(0xFFF59E0B)
+                                                  : Colors.white.withAlpha(120)),
+                                        const SizedBox(width: 3),
+                                        Text('${GameState.instance.streak}',
+                                          style: GoogleFonts.jetBrainsMono(
+                                            fontSize: 10, fontWeight: FontWeight.w700,
+                                            color: GameState.instance.streak >= 7
+                                                ? const Color(0xFFFF6B35)
+                                                : GameState.instance.streak >= 3
+                                                    ? const Color(0xFFF59E0B)
+                                                    : Colors.white.withAlpha(140),
+                                          )),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                         ],
@@ -1194,7 +1260,7 @@ class _TaskCard extends StatelessWidget {
                           if (task.description.isNotEmpty) ...[
                             const SizedBox(height: 4),
                             Text(task.description,
-                              maxLines: 1,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.inter(
                                 fontSize: 12, height: 1.3, color: subCol,
@@ -1492,42 +1558,71 @@ class _TaskDetailSheet extends StatelessWidget {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-class _Empty extends StatelessWidget {
+class _Empty extends StatefulWidget {
   final bool isDark;
   final bool hasDateFilter;
   const _Empty({required this.isDark, this.hasDateFilter = false});
 
   @override
+  State<_Empty> createState() => _EmptyState();
+}
+
+class _EmptyState extends State<_Empty> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2400))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 60, height: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withAlpha(18),
-              border: Border.all(color: Colors.white.withAlpha(80), width: 1.5),
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, child) {
+          final y = sin(_ctrl.value * pi) * 8; // float up/down 8px
+          final opacity = 0.7 + 0.3 * sin(_ctrl.value * pi); // pulse 0.7–1.0
+          return Transform.translate(
+            offset: Offset(0, -y),
+            child: Opacity(opacity: opacity, child: child),
+          );
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60, height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(18),
+                border: Border.all(color: Colors.white.withAlpha(80), width: 1.5),
+              ),
+              child: Icon(Icons.checklist_rounded,
+                  size: 26, color: Colors.white.withAlpha(180)),
             ),
-            child: Icon(Icons.checklist_rounded,
-                size: 26, color: Colors.white.withAlpha(180)),
-          ),
-          const SizedBox(height: 18),
-          Text(hasDateFilter ? 'no tasks this day' : 'no tasks yet',
-            style: GoogleFonts.inter(
-              fontSize: 15, fontWeight: FontWeight.w600,
-              color: Colors.white.withAlpha(200),
-            )),
-          const SizedBox(height: 6),
-          Text(hasDateFilter
-              ? 'tap another day or add a task'
-              : 'tap + below to add one',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.white.withAlpha(160),
-            )),
-        ],
+            const SizedBox(height: 18),
+            Text(widget.hasDateFilter ? 'no tasks this day' : 'no tasks yet',
+              style: GoogleFonts.inter(
+                fontSize: 15, fontWeight: FontWeight.w600,
+                color: Colors.white.withAlpha(200),
+              )),
+            const SizedBox(height: 6),
+            Text(widget.hasDateFilter
+                ? 'tap another day or add a task'
+                : 'tap + below to add one',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.white.withAlpha(160),
+              )),
+          ],
+        ),
       ),
     );
   }

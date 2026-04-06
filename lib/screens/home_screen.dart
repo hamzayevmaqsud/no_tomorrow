@@ -289,13 +289,13 @@ class _HomeScreenState extends State<HomeScreen>
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [Color(0xFF3D1464), Color(0xFF0F2060)],
+                            colors: [Color(0xFF2A1A10), Color(0xFF1A1008)],
                           ),
                           border: Border.all(
-                              color: const Color(0xFF00EEFF), width: 2.5),
+                              color: const Color(0xFFFF6B35), width: 2.5),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF00EEFF).withAlpha(90),
+                              color: const Color(0xFFFF6B35).withAlpha(80),
                               blurRadius: 14, spreadRadius: 2,
                             ),
                           ],
@@ -336,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
-                                  color: kSections[8].color,
+                                  color: const Color(0xFFFF6B35),
                                   child: Text('LVL ${GameState.instance.level}',
                                     style: GoogleFonts.outfit(
                                       fontSize: 8, fontWeight: FontWeight.w900,
@@ -355,7 +355,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     FractionallySizedBox(
                                       widthFactor: GameState.instance.levelProgress,
                                       child: Container(
-                                          height: 4, color: kSections[8].color),
+                                          height: 4, color: const Color(0xFFFF6B35)),
                                     ),
                                   ]),
                                 ),
