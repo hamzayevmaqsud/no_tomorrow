@@ -677,7 +677,7 @@ class _BottomBar extends StatefulWidget {
 }
 
 class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
-  static const _addBtnColor = Color(0xFFFF2D2D); // bright critical red
+  static const _addBtnColor = Color(0xFFD4C4A8); // warm beige
   late final AnimationController _pulseCtrl;
   late final AnimationController _rotCtrl;
   late final AnimationController _tapCtrl;
@@ -834,7 +834,7 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                                   ],
                                 ),
                                 child: const Icon(Icons.edit_note_rounded,
-                                    color: Colors.white, size: 24),
+                                    color: Color(0xFF2A2318), size: 24),
                               ),
                             ),
                           ],
@@ -951,16 +951,16 @@ class _DashboardPanel extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Stats row — warm cream cards
+          // Stats row
           Row(
             children: [
-              _StatBox(label: 'TOTAL',   value: '$total',      color: textCol,                isDark: false),
+              _StatBox(label: 'TOTAL',   value: '$total',      color: const Color(0xFF2A2318), isDark: isDark),
               const SizedBox(width: 8),
-              _StatBox(label: 'DONE',    value: '$done',       color: const Color(0xFF4A8C3F), isDark: false),
+              _StatBox(label: 'DONE',    value: '$done',       color: const Color(0xFF2E7D32), isDark: isDark),
               const SizedBox(width: 8),
-              _StatBox(label: 'PENDING', value: '$pending',    color: const Color(0xFFC49A3C), isDark: false),
+              _StatBox(label: 'PENDING', value: '$pending',    color: const Color(0xFFE65100), isDark: isDark),
               const SizedBox(width: 8),
-              _StatBox(label: 'XP',      value: '+$xpEarned',  color: const Color(0xFFB85C38), isDark: false),
+              _StatBox(label: 'XP',      value: '+$xpEarned',  color: const Color(0xFFC62828), isDark: isDark),
             ],
           ),
 
@@ -1031,20 +1031,21 @@ class _StatBox extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withAlpha(12),
+          color: color.withAlpha(22),
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withAlpha(35), width: 0.8),
         ),
         child: Column(
           children: [
             Text(value,
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+                fontSize: 18, fontWeight: FontWeight.w700, color: color)),
             const SizedBox(height: 2),
             Text(label,
               style: GoogleFonts.inter(
-                fontSize: 8, fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-                color: color.withAlpha(160))),
+                fontSize: 8, fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: color.withAlpha(200))),
           ],
         ),
       ),
