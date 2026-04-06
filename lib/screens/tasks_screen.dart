@@ -102,21 +102,48 @@ class TasksScreen extends StatefulWidget {
   State<TasksScreen> createState() => _TasksScreenState();
 }
 
+enum _TaskFilter { all, today, priority }
+
 class _TasksScreenState extends State<TasksScreen> {
   DateTime? _selectedDate;
   bool _showDashboard = false;
+  _TaskFilter _filter = _TaskFilter.all;
 
   List<Task> get _tasks =>
       TaskStore.tasks.where((t) => t.category == widget.category).toList();
 
   List<Task> get _filteredTasks {
-    if (_selectedDate == null) return _tasks;
-    return _tasks.where((t) {
-      if (t.dueDate == null) return false;
-      return t.dueDate!.year == _selectedDate!.year &&
-             t.dueDate!.month == _selectedDate!.month &&
-             t.dueDate!.day == _selectedDate!.day;
-    }).toList();
+    var list = _tasks;
+
+    // Date filter from calendar strip
+    if (_selectedDate != null) {
+      list = list.where((t) {
+        if (t.dueDate == null) return false;
+        return t.dueDate!.year == _selectedDate!.year &&
+               t.dueDate!.month == _selectedDate!.month &&
+               t.dueDate!.day == _selectedDate!.day;
+      }).toList();
+    }
+
+    // Tab filter
+    final now = DateTime.now();
+    switch (_filter) {
+      case _TaskFilter.today:
+        list = list.where((t) {
+          if (t.dueDate == null) return false;
+          return t.dueDate!.year == now.year &&
+                 t.dueDate!.month == now.month &&
+                 t.dueDate!.day == now.day;
+        }).toList();
+        break;
+      case _TaskFilter.priority:
+        list = List.of(list)..sort((a, b) => a.priority.index.compareTo(b.priority.index));
+        break;
+      case _TaskFilter.all:
+        break;
+    }
+
+    return list;
   }
 
   Future<void> _complete(Task task) async {
@@ -332,9 +359,9 @@ class _TasksScreenState extends State<TasksScreen> {
                           if (total > 0)
                             Text('$done / $total completed',
                               style: GoogleFonts.inter(
-                                fontSize: 10, fontWeight: FontWeight.w500,
+                                fontSize: 11, fontWeight: FontWeight.w600,
                                 letterSpacing: 0.5,
-                                color: Colors.white.withAlpha(55),
+                                color: Colors.white.withAlpha(140),
                               )),
                         ],
                       ),
@@ -376,7 +403,56 @@ class _TasksScreenState extends State<TasksScreen> {
                     ),
                 ]),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
+
+                // ── Filter tabs ──────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: _TaskFilter.values.map((f) {
+                      final active = _filter == f;
+                      final label = switch (f) {
+                        _TaskFilter.all      => 'ALL',
+                        _TaskFilter.today    => 'TODAY',
+                        _TaskFilter.priority => 'PRIORITY',
+                      };
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () => setState(() => _filter = f),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: active
+                                  ? AppColors.tasks.withAlpha(50)
+                                  : Colors.white.withAlpha(10),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: active
+                                    ? AppColors.tasks.withAlpha(160)
+                                    : Colors.white.withAlpha(30),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(label,
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 1,
+                                color: active
+                                    ? AppColors.tasks
+                                    : Colors.white.withAlpha(160),
+                              )),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
 
                 // ── Calendar strip ───────────────────────────────────────
                 _CalendarStrip(
@@ -529,7 +605,7 @@ class _CalendarStrip extends StatelessWidget {
                             letterSpacing: 0.3,
                             color: isSelected || isToday
                                 ? kRed
-                                : kBeige.withAlpha(120),
+                                : kBeige.withAlpha(180),
                           )),
                         const SizedBox(height: 4),
                         Text('${day.day}',
@@ -1390,7 +1466,7 @@ class _Empty extends StatelessWidget {
               : 'tap + below to add one',
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: Colors.white.withAlpha(110),
+              color: Colors.white.withAlpha(160),
             )),
         ],
       ),
@@ -1634,7 +1710,7 @@ class _AddSheetState extends State<_AddSheet> {
                         decoration: InputDecoration(
                           hintText: 'What needs to be done?',
                           hintStyle: GoogleFonts.inter(
-                              fontSize: 14, color: _kCocoa.withAlpha(70)),
+                              fontSize: 14, color: _kCocoa.withAlpha(120)),
                           border: InputBorder.none,
                           isDense: true, contentPadding: EdgeInsets.zero,
                         ),
@@ -1652,7 +1728,7 @@ class _AddSheetState extends State<_AddSheet> {
                         decoration: InputDecoration(
                           hintText: 'Optional notes…',
                           hintStyle: GoogleFonts.inter(
-                              fontSize: 12, color: _kCocoa.withAlpha(60)),
+                              fontSize: 12, color: _kCocoa.withAlpha(120)),
                           border: InputBorder.none,
                           isDense: true, contentPadding: EdgeInsets.zero,
                         ),

@@ -495,17 +495,25 @@ class _HomeScreenState extends State<HomeScreen>
                   onTap: _open,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 36, vertical: 13),
+                        horizontal: 48, vertical: 18),
                     decoration: BoxDecoration(
                       color: section.color,
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: section.color.withAlpha(120),
+                          blurRadius: 24,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Text(
                       'OPEN  ${section.label}',
                       style: GoogleFonts.outfit(
-                        fontSize: 13,
+                        fontSize: 16,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 3,
+                        letterSpacing: 2,
                         color: Colors.white,
                       ),
                     ),
