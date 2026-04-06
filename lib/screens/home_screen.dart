@@ -468,16 +468,7 @@ class _HomeScreenState extends State<HomeScreen>
                           ],
                         ),
                       )
-                    : section.id == 'tasks'
-                        ? SizedBox(
-                            key: const ValueKey('tasks_anim'),
-                            height: 300,
-                            child: Image.asset(
-                              'assets/collection/Tasks menu/takshero.jpg',
-                              fit: BoxFit.contain,
-                            ),
-                          )
-                        : const SizedBox(key: ValueKey('no_anim')),
+                    : const SizedBox(key: ValueKey('no_anim')),
               ),
             ),
           ),
