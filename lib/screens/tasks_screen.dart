@@ -286,7 +286,7 @@ class _TasksScreenState extends State<TasksScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.red.withAlpha(isDark ? 15 : 25),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
       ),
       child: const Icon(Icons.delete_outline_rounded, color: Colors.red, size: 16),
     ),
@@ -325,6 +325,15 @@ class _TasksScreenState extends State<TasksScreen> {
               child: Opacity(
                 opacity: bgImgOpacity,
                 child: Image.asset(bgImage, fit: BoxFit.cover),
+              ),
+            ),
+          ),
+
+          // ── Grain texture ──────────────────────────────────────────────
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _GrainPainter(),
               ),
             ),
           ),
@@ -1090,7 +1099,7 @@ class _TaskCard extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withAlpha(20),
@@ -1100,7 +1109,7 @@ class _TaskCard extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(24),
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1276,7 +1285,7 @@ class _TaskDetailSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: sheetBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.fromLTRB(
           24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
@@ -1575,19 +1584,19 @@ class _AddSheetState extends State<_AddSheet> {
     ));
   }
 
-  // Pantone palette (light version)
-  static const _kNavy        = Color(0xFF002D4E); // 2965 C
-  static const _kDarkNavy    = Color(0xFF001828); // darker bg (unused in light)
+  // Dark chocolate palette
+  static const _kNavy        = Color(0xFF1A0E08); // deep chocolate
+  static const _kDarkNavy    = Color(0xFF0F0804); // darkest
   static const _kRedInferno  = Color(0xFF4E0000); // 4975 C
-  static const _kPastelYellow= Color(0xFFF2E6B1); // 11-0616 TCX
-  static const _kReseda      = Color(0xFFA1AD8C); // 15-6414 TCX
-  static const _kChive       = Color(0xFF4E5226); // 19-0323 TCX
-  static const _kCocoa       = Color(0xFF594536); // 19-1119 TCX
-  static const _kCoconutMilk = Color(0xFFF0EDE5); // 11-0608 TPG
-  // derived light tones
-  static const _kSheetBg     = Color(0xFFF5F1E8); // warm off-white
-  static const _kRowBg       = Color(0xFFEFEBE0); // slightly darker row
-  static const _kDivider     = Color(0xFFDDD8CB); // soft divider
+  static const _kPastelYellow= Color(0xFFE8A94E); // candle gold
+  static const _kReseda      = Color(0xFF8B7355); // warm brown
+  static const _kChive       = Color(0xFF4E3D28); // dark leather
+  static const _kCocoa       = Color(0xFFD4C4A8); // warm cream text
+  static const _kCoconutMilk = Color(0xFF1A0E08); // dark bg for button text
+  // derived dark tones
+  static const _kSheetBg     = Color(0xFF2A1A10); // dark chocolate
+  static const _kRowBg       = Color(0xFF332014); // slightly lighter row
+  static const _kDivider     = Color(0xFF3D2A1A); // warm divider
 
   Widget _tableRow({
     required String label,
@@ -1674,11 +1683,11 @@ class _AddSheetState extends State<_AddSheet> {
                           Container(
                             width: 36, height: 36,
                             decoration: BoxDecoration(
-                              color: _kCocoa,
+                              color: const Color(0xFFD4883C),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(Icons.add_rounded,
-                                color: _kCoconutMilk, size: 20),
+                                color: Color(0xFF1A0E08), size: 20),
                           ),
                           const SizedBox(width: 12),
                           Column(
@@ -1844,26 +1853,32 @@ class _AddSheetState extends State<_AddSheet> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
-                            color: _kCocoa,
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFD4883C), // amber
+                                Color(0xFFE8A94E), // candle gold
+                                Color(0xFFD4883C), // amber
+                              ],
+                            ),
                             borderRadius: BorderRadius.circular(22),
                             boxShadow: [BoxShadow(
-                              color: _kCocoa.withAlpha(70),
-                              blurRadius: 14, offset: const Offset(0, 4),
+                              color: const Color(0xFFD4883C).withAlpha(100),
+                              blurRadius: 18, offset: const Offset(0, 4),
                             )],
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text('ADD MISSION',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12, fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.4, color: _kCoconutMilk,
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 13, fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.4, color: const Color(0xFF1A0E08),
                                 )),
                               const SizedBox(width: 8),
                               Text('+${_pXp(_priority)} XP',
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 9, fontWeight: FontWeight.w600,
-                                  color: _kPastelYellow.withAlpha(210),
+                                  color: const Color(0xFF2A1A10).withAlpha(180),
                                 )),
                             ],
                           ),
@@ -1879,6 +1894,31 @@ class _AddSheetState extends State<_AddSheet> {
       ),
     );
   }
+}
+
+// ── Grain texture painter ─────────────────────────────────────────────────────
+
+class _GrainPainter extends CustomPainter {
+  _GrainPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+    final rng = Random(42); // fixed seed for stable grain
+    final count = (size.width * size.height * 0.003).toInt().clamp(0, 4000);
+    for (int i = 0; i < count; i++) {
+      final x = rng.nextDouble() * size.width;
+      final y = rng.nextDouble() * size.height;
+      final bright = rng.nextBool();
+      paint.color = bright
+          ? Colors.white.withAlpha(8 + rng.nextInt(10))
+          : Colors.black.withAlpha(12 + rng.nextInt(14));
+      canvas.drawCircle(Offset(x, y), 0.5 + rng.nextDouble() * 0.5, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ── Field ─────────────────────────────────────────────────────────────────────
@@ -1964,8 +2004,9 @@ class _XpBarOverlay extends StatefulWidget {
 }
 
 class _XpBarOverlayState extends State<_XpBarOverlay>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _ctrl;
+  late final AnimationController _shimmer;
   late final Animation<double> _slideY;
   late final Animation<double> _fill;
   late final Animation<double> _labelY;
@@ -1977,6 +2018,9 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
     super.initState();
     _ctrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 2200));
+    _shimmer = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1400))
+      ..repeat();
 
     _slideY = Tween(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(parent: _ctrl,
@@ -2027,12 +2071,12 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() { _shimmer.dispose(); _ctrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: _ctrl,
+      animation: Listenable.merge([_ctrl, _shimmer]),
       builder: (context, _) => Positioned(
         bottom: 0, left: 0, right: 0,
         child: IgnorePointer(
@@ -2103,11 +2147,43 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                             fontSize: 9, fontWeight: FontWeight.w600,
                             letterSpacing: 2,
                             color: Colors.white.withAlpha(120))),
-                        Text('LVL ${widget.level}',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9, fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
-                            color: Colors.white.withAlpha(120))),
+                        // Medal-style LVL badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFD4883C),
+                                Color(0xFFE8A94E),
+                                Color(0xFFD4883C),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFD4883C).withAlpha(120),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.shield_rounded,
+                                  size: 10,
+                                  color: const Color(0xFF1A0E08)),
+                              const SizedBox(width: 3),
+                              Text('LVL ${widget.level}',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w700,
+                                  letterSpacing: 1,
+                                  color: const Color(0xFF1A0E08),
+                                )),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
 
@@ -2126,22 +2202,51 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                         ),
                         FractionallySizedBox(
                           widthFactor: _fill.value.clamp(0.0, 1.0),
-                          child: Container(
-                            height: 16,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              gradient: LinearGradient(
-                                colors: [
-                                  widget.color.withAlpha(180),
-                                  widget.color,
-                                  widget.color.withAlpha(220),
-                                ],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: widget.color.withAlpha(200),
-                                  blurRadius: 18,
-                                  spreadRadius: 2,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Stack(
+                              children: [
+                                // Base fill
+                                Container(
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        widget.color.withAlpha(180),
+                                        widget.color,
+                                        widget.color.withAlpha(220),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: widget.color.withAlpha(200),
+                                        blurRadius: 18,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Shimmer energy sweep
+                                Positioned.fill(
+                                  child: Transform.translate(
+                                    offset: Offset(
+                                      (_shimmer.value * 2 - 0.5) *
+                                          MediaQuery.of(context).size.width,
+                                      0,
+                                    ),
+                                    child: Container(
+                                      width: 80,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.white.withAlpha(0),
+                                            Colors.white.withAlpha(70),
+                                            Colors.white.withAlpha(0),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -2362,8 +2467,8 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
   late final AnimationController _ctrl;
   bool _waitingForTap = false;
 
-  static const _cyan = Color(0xFF00EEFF);
-  static const _pink = Color(0xFFFF2D9B);
+  static const _cyan = Color(0xFFE8A94E); // candle gold
+  static const _pink = Color(0xFFD4883C); // warm amber
 
   @override
   void initState() {
@@ -2384,16 +2489,15 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
   void dispose() { _ctrl.dispose(); super.dispose(); }
 
   Widget _neon(String text, Color color, double size) => Text(text,
-    style: GoogleFonts.outfit(
+    style: GoogleFonts.playfairDisplay(
       fontSize: size, fontWeight: FontWeight.w900,
       fontStyle: FontStyle.italic, height: 0.95,
-      color: Colors.white,
+      color: const Color(0xFFF5E6C8),
       shadows: [
         Shadow(color: color, blurRadius: 0),
-        Shadow(color: color.withAlpha(230), blurRadius: 10),
-        Shadow(color: color.withAlpha(160), blurRadius: 24),
-        Shadow(color: color.withAlpha(90),  blurRadius: 50),
-        Shadow(color: color.withAlpha(40),  blurRadius: 90),
+        Shadow(color: color.withAlpha(200), blurRadius: 14),
+        Shadow(color: color.withAlpha(120), blurRadius: 30),
+        Shadow(color: color.withAlpha(60),  blurRadius: 50),
       ],
     ));
 
@@ -2440,9 +2544,9 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                     center: Alignment(0, -0.2),
                     radius: 1.1,
                     colors: [
-                      Color(0xFF1A0040),
-                      Color(0xFF0A001A),
-                      Color(0xFF000008),
+                      Color(0xFF2A1A08),
+                      Color(0xFF140C04),
+                      Color(0xFF080400),
                     ],
                     stops: [0.0, 0.55, 1.0],
                   ),
@@ -2455,10 +2559,48 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                         child: IgnorePointer(
                           child: Opacity(
                             opacity: flashOp,
-                            child: Container(color: Colors.white),
+                            child: Container(color: const Color(0xFFF5E6C8)),
                           ),
                         ),
                       ),
+                    // Confetti particles
+                    if (t > 0.20)
+                      ...List.generate(20, (i) {
+                        final seed = i * 137.5;
+                        final x = (sin(seed) * 0.5 + 0.5);
+                        final speed = 0.4 + (cos(seed * 2) * 0.3 + 0.3);
+                        final confT = ((t - 0.20) * speed * 2).clamp(0.0, 1.0);
+                        final yStart = -0.1;
+                        final yEnd = 1.2;
+                        final y = yStart + (yEnd - yStart) * confT;
+                        final wobble = sin(confT * pi * 4 + seed) * 20;
+                        final confOp = (1 - confT).clamp(0.0, 1.0) *
+                            (t > 0.80 ? (1 - (t - 0.80) / 0.20) : 1.0).clamp(0.0, 1.0);
+                        const confColors = [
+                          Color(0xFFE8A94E), Color(0xFFD4883C),
+                          Color(0xFFCC6B3A), Color(0xFFF5E6C8),
+                          Color(0xFF6B9E5A), Color(0xFFCC4433),
+                        ];
+                        return Positioned(
+                          left: x * MediaQuery.of(context).size.width + wobble,
+                          top: y * MediaQuery.of(context).size.height,
+                          child: Opacity(
+                            opacity: confOp,
+                            child: Transform.rotate(
+                              angle: confT * pi * 3 + seed,
+                              child: Container(
+                                width: 6 + (i % 3) * 2.0,
+                                height: 6 + (i % 3) * 2.0,
+                                decoration: BoxDecoration(
+                                  color: confColors[i % confColors.length],
+                                  borderRadius: BorderRadius.circular(
+                                      i % 2 == 0 ? 1 : 4),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
                     Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

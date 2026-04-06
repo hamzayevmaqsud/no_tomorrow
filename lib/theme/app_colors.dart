@@ -17,22 +17,22 @@ class AppColors {
   static const darkText = Color(0xFFF5F7FF);
   static const darkTextSub = Color(0xFF8892B0);
 
-  // Accents
-  static const primary = Color(0xFF4F8EF7);
-  static const primaryDark = Color(0xFF2563EB);
-  static const secondary = Color(0xFF00D4FF);
-  static const danger = Color(0xFFFF4757);
-  static const success = Color(0xFF2ED573);
-  static const warning = Color(0xFFFFD700);
+  // Accents — warm lamp palette
+  static const primary = Color(0xFFD4883C);      // warm amber
+  static const primaryDark = Color(0xFFB8702A);   // deep amber
+  static const secondary = Color(0xFFE8A94E);     // candle gold
+  static const danger = Color(0xFFCC4433);         // muted red
+  static const success = Color(0xFF6B9E5A);        // sage green
+  static const warning = Color(0xFFE8A94E);        // candle yellow
 
-  // Section colors — vivid & saturated
-  static const tasks       = Color(0xFF2979FF); // vivid blue
-  static const habits      = Color(0xFFAA00FF); // vivid purple
-  static const workouts    = Color(0xFFFF5722); // deep orange
-  static const abstinences = Color(0xFFFF1744); // vivid red
-  static const reading     = Color(0xFF00E676); // vivid green
-  static const budget      = Color(0xFFFFD600); // vivid yellow
-  static const food        = Color(0xFFFF4081); // vivid pink
-  static const collection  = Color(0xFF00E5FF); // vivid cyan
-  static const profile     = Color(0xFF7C4DFF); // vivid violet
+  // Section colors — warm & earthy
+  static const tasks       = Color(0xFFD4883C); // amber
+  static const habits      = Color(0xFF9B6B4A); // warm brown
+  static const workouts    = Color(0xFFCC6B3A); // burnt orange
+  static const abstinences = Color(0xFFCC4433); // muted brick red
+  static const reading     = Color(0xFF6B9E5A); // sage green
+  static const budget      = Color(0xFFE8A94E); // candle gold
+  static const food        = Color(0xFFCC7A5A); // terracotta
+  static const collection  = Color(0xFFD4A55A); // warm gold
+  static const profile     = Color(0xFF8B6E5A); // warm taupe
 }
