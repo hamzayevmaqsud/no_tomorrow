@@ -505,7 +505,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       ? _DashboardPanel(
                           tasks: _tasks,
                           isDark: isDark,
-                          accentColor: AppColors.tasks,
+                          accentColor: const Color(0xFF594536),
                         )
                       : const SizedBox.shrink(),
                 ),
