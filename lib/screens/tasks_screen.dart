@@ -336,8 +336,8 @@ class _TasksScreenState extends State<TasksScreen> {
     final categoryBg   = isWork ? const Color(0xFF12100E) : const Color(0xFF060C09);
     final bgImgOpacity = isWork ? 0.28 : 0.34;
 
-    // Vivid accent for this screen
-    const vivid = Color(0xFFFF6B35); // bright warm orange
+    // Unified accent
+    const vivid = AppColors.action;
 
     return SwipeToPop(child: Scaffold(
       backgroundColor: isDark ? categoryBg : _bg(isDark),
@@ -352,6 +352,11 @@ class _TasksScreenState extends State<TasksScreen> {
                 child: Image.asset(bgImage, fit: BoxFit.cover),
               ),
             ),
+          ),
+
+          // ── Living gradient mesh ───────────────────────────────────────
+          Positioned.fill(
+            child: IgnorePointer(child: _LivingGradient()),
           ),
 
           // ── Grain texture ──────────────────────────────────────────────
@@ -419,14 +424,14 @@ class _TasksScreenState extends State<TasksScreen> {
                                         horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: GameState.instance.streak >= 7
-                                          ? const Color(0xFFFF6B35).withAlpha(40)
+                                          ? AppColors.action.withAlpha(40)
                                           : GameState.instance.streak >= 3
                                               ? const Color(0xFFF59E0B).withAlpha(35)
                                               : Colors.white.withAlpha(15),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: GameState.instance.streak >= 7
-                                            ? const Color(0xFFFF6B35).withAlpha(120)
+                                            ? AppColors.action.withAlpha(120)
                                             : GameState.instance.streak >= 3
                                                 ? const Color(0xFFF59E0B).withAlpha(100)
                                                 : Colors.white.withAlpha(40),
@@ -438,7 +443,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                         Icon(Icons.local_fire_department_rounded,
                                           size: 12,
                                           color: GameState.instance.streak >= 7
-                                              ? const Color(0xFFFF6B35)
+                                              ? AppColors.action
                                               : GameState.instance.streak >= 3
                                                   ? const Color(0xFFF59E0B)
                                                   : Colors.white.withAlpha(120)),
@@ -447,7 +452,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                           style: GoogleFonts.jetBrainsMono(
                                             fontSize: 10, fontWeight: FontWeight.w700,
                                             color: GameState.instance.streak >= 7
-                                                ? const Color(0xFFFF6B35)
+                                                ? AppColors.action
                                                 : GameState.instance.streak >= 3
                                                     ? const Color(0xFFF59E0B)
                                                     : Colors.white.withAlpha(140),
@@ -746,7 +751,7 @@ class _BottomBar extends StatefulWidget {
 }
 
 class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
-  static const _addBtnColor = Color(0xFFFF6B35); // vivid warm orange
+  static const _addBtnColor = AppColors.action;
   late final AnimationController _pulseCtrl;
   late final AnimationController _rotCtrl;
   late final AnimationController _tapCtrl;
@@ -809,13 +814,13 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: widget.dashboardActive
-                          ? const Color(0xFFFF6B35).withAlpha(50)
+                          ? AppColors.action.withAlpha(50)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.bar_chart_rounded,
                         color: widget.dashboardActive
-                            ? const Color(0xFFFF6B35)
+                            ? AppColors.action
                             : Colors.white.withAlpha(160),
                         size: 22),
                   ),
@@ -1200,10 +1205,17 @@ class _TaskCard extends StatelessWidget {
             color: cardBg,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
+              // Outer shadow — depth
               BoxShadow(
-                color: Colors.black.withAlpha(20),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withAlpha(25),
+                blurRadius: 12,
+                offset: const Offset(0, 5),
+              ),
+              // Inner highlight — top edge light
+              BoxShadow(
+                color: Colors.white.withAlpha(180),
+                blurRadius: 1,
+                offset: const Offset(0, -0.5),
               ),
             ],
           ),
@@ -1294,14 +1306,26 @@ class _TaskCard extends StatelessWidget {
                                   )),
                               ],
                               const Spacer(),
-                              Text(
-                                done
-                                    ? '✓ ${_pXp(task.priority)} XP'
-                                    : '+${_pXp(task.priority)} XP',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9, fontWeight: FontWeight.w700,
-                                  color: subCol,
-                                )),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 7, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: done
+                                      ? subCol.withAlpha(20)
+                                      : AppColors.gold.withAlpha(20),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  done
+                                      ? '✓ ${_pXp(task.priority)} XP'
+                                      : '+${_pXp(task.priority)} XP',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 9, fontWeight: FontWeight.w700,
+                                    color: done
+                                        ? subCol
+                                        : AppColors.gold,
+                                  )),
+                              ),
                             ],
                           ),
                         ],
@@ -2043,6 +2067,64 @@ class _AddSheetState extends State<_AddSheet> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Living gradient mesh ──────────────────────────────────────────────────────
+
+class _LivingGradient extends StatefulWidget {
+  const _LivingGradient();
+
+  @override
+  State<_LivingGradient> createState() => _LivingGradientState();
+}
+
+class _LivingGradientState extends State<_LivingGradient>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(seconds: 8))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        final t = _ctrl.value;
+        return Opacity(
+          opacity: 0.18,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(
+                  -0.5 + sin(t * pi) * 0.8,
+                  -0.3 + cos(t * pi * 0.7) * 0.6,
+                ),
+                radius: 1.2 + sin(t * pi * 1.3) * 0.3,
+                colors: [
+                  Color.lerp(
+                    const Color(0xFFFF6B35),
+                    const Color(0xFFCA8A04),
+                    t,
+                  )!,
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 1.0],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

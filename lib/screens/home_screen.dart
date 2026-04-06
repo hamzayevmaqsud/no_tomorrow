@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import '../models/section.dart';
+import '../theme/app_colors.dart';
 import '../models/game_state.dart';
 import 'section_screen.dart';
 import 'settings_screen.dart';
@@ -103,15 +104,17 @@ class _HomeScreenState extends State<HomeScreen>
     Navigator.push(
       context,
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: const Duration(milliseconds: 500),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (ctx, anim, sec) => page,
         transitionsBuilder: (ctx, anim, sec, child) {
-          final c =
-              CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+          final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
           return FadeTransition(
-            opacity: c,
+            opacity: Tween(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(parent: anim,
+                  curve: const Interval(0.0, 0.4, curve: Curves.easeOut))),
             child: ScaleTransition(
-              scale: Tween<double>(begin: 0.95, end: 1.0).animate(c),
+              scale: Tween<double>(begin: 0.88, end: 1.0).animate(curve),
               child: child,
             ),
           );
@@ -189,6 +192,19 @@ class _HomeScreenState extends State<HomeScreen>
             child: RepaintBoundary(
               child: CustomPaint(
                 painter: _GlowPainter(color: section.color),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+
+          // ── Compass ring around wheel focal ─────────────────────────────
+          IgnorePointer(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _CompassRingPainter(
+                  color: section.color,
+                  rotation: _angle,
+                ),
                 child: const SizedBox.expand(),
               ),
             ),
@@ -292,10 +308,10 @@ class _HomeScreenState extends State<HomeScreen>
                             colors: [Color(0xFF2A1A10), Color(0xFF1A1008)],
                           ),
                           border: Border.all(
-                              color: const Color(0xFFFF6B35), width: 2.5),
+                              color: AppColors.action, width: 2.5),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFFF6B35).withAlpha(80),
+                              color: AppColors.action.withAlpha(80),
                               blurRadius: 14, spreadRadius: 2,
                             ),
                           ],
@@ -336,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 6, vertical: 2),
-                                  color: const Color(0xFFFF6B35),
+                                  color: AppColors.action,
                                   child: Text('LVL ${GameState.instance.level}',
                                     style: GoogleFonts.outfit(
                                       fontSize: 8, fontWeight: FontWeight.w900,
@@ -355,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     FractionallySizedBox(
                                       widthFactor: GameState.instance.levelProgress,
                                       child: Container(
-                                          height: 4, color: const Color(0xFFFF6B35)),
+                                          height: 4, color: AppColors.action),
                                     ),
                                   ]),
                                 ),
@@ -841,6 +857,74 @@ class _GlowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_GlowPainter old) => old.color != color;
+}
+
+// ── Compass ring (quest map decoration) ──────────────────────────────────────
+
+class _CompassRingPainter extends CustomPainter {
+  final Color color;
+  final double rotation;
+
+  _CompassRingPainter({required this.color, required this.rotation});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final focal = Offset(size.width / 2, size.height * 0.44);
+    final radius = size.width * 0.38;
+
+    // Outer ring
+    canvas.drawCircle(
+      focal, radius,
+      Paint()
+        ..color = color.withAlpha(35)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+
+    // Inner ring
+    canvas.drawCircle(
+      focal, radius * 0.88,
+      Paint()
+        ..color = color.withAlpha(20)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+
+    // Tick marks around the ring (like compass)
+    final tickPaint = Paint()
+      ..color = color.withAlpha(50)
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
+
+    for (int i = 0; i < 36; i++) {
+      final angle = i * pi / 18 + rotation * 0.3;
+      final isMajor = i % 9 == 0;
+      final innerR = radius * (isMajor ? 0.90 : 0.94);
+      final outerR = radius * 0.99;
+      tickPaint.color = color.withAlpha(isMajor ? 80 : 35);
+      tickPaint.strokeWidth = isMajor ? 1.5 : 0.8;
+      canvas.drawLine(
+        Offset(focal.dx + innerR * cos(angle), focal.dy + innerR * sin(angle)),
+        Offset(focal.dx + outerR * cos(angle), focal.dy + outerR * sin(angle)),
+        tickPaint,
+      );
+    }
+
+    // Cardinal dots (N/E/S/W) — warm gold dots
+    final dotPaint = Paint()..color = const Color(0xFFCA8A04).withAlpha(120);
+    for (int i = 0; i < 4; i++) {
+      final angle = i * pi / 2 + rotation * 0.3;
+      final pos = Offset(
+        focal.dx + radius * 1.04 * cos(angle),
+        focal.dy + radius * 1.04 * sin(angle),
+      );
+      canvas.drawCircle(pos, 2.5, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_CompassRingPainter old) =>
+      old.color != color || old.rotation != rotation;
 }
 
 // ── Comic book overlay (speed lines + halftone dots) ─────────────────────────

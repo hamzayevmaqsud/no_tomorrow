@@ -222,7 +222,7 @@ class _DonateButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFFFF6B35), Color(0xFFFF1744)],
+            colors: [AppColors.action, AppColors.danger],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),

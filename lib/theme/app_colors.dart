@@ -17,13 +17,17 @@ class AppColors {
   static const darkText = Color(0xFFF5F7FF);
   static const darkTextSub = Color(0xFF8892B0);
 
+  // Global accents — used across all screens
+  static const action = Color(0xFFFF6B35);    // warm orange — CTA, buttons, active UI
+  static const gold   = Color(0xFFCA8A04);    // gold — XP, levels, rewards, streaks
+
   // Accents
-  static const primary = Color(0xFF4F8EF7);
-  static const primaryDark = Color(0xFF2563EB);
-  static const secondary = Color(0xFF00D4FF);
-  static const danger = Color(0xFFFF4757);
+  static const primary = Color(0xFFFF6B35);   // = action
+  static const primaryDark = Color(0xFFE85D2A);
+  static const secondary = Color(0xFFCA8A04); // = gold
+  static const danger = Color(0xFFDC2626);
   static const success = Color(0xFF22C55E);
-  static const warning = Color(0xFFFFD700);
+  static const warning = Color(0xFFF59E0B);
 
   // Section colors
   static const tasks       = Color(0xFF2979FF); // vivid blue
