@@ -372,8 +372,10 @@ class _TasksScreenState extends State<TasksScreen> {
     final categoryBg   = isWork ? const Color(0xFF12100E) : const Color(0xFF060C09);
     final bgImgOpacity = isWork ? 0.28 : 0.34;
 
-    // Unified accent
-    const vivid = AppColors.action;
+    // Category-specific accent
+    final vivid = isWork
+        ? AppColors.action                // warm orange for WORK
+        : const Color(0xFF10B981);        // emerald green for LIVE
 
     return SwipeToPop(child: Scaffold(
       backgroundColor: isDark ? categoryBg : _bg(isDark),
@@ -647,6 +649,7 @@ class _TasksScreenState extends State<TasksScreen> {
             child: _BottomBar(
               onAdd: _showAdd,
               isDark: isDark,
+              accentColor: vivid,
               dashboardActive: _showDashboard,
               onDashboard: () => setState(() => _showDashboard = !_showDashboard),
             ),
@@ -775,12 +778,14 @@ class _BottomBar extends StatefulWidget {
   final VoidCallback onAdd;
   final VoidCallback onDashboard;
   final bool isDark;
+  final Color accentColor;
   final bool dashboardActive;
 
   const _BottomBar({
     required this.onAdd,
     required this.onDashboard,
     required this.isDark,
+    required this.accentColor,
     required this.dashboardActive,
   });
 
@@ -789,7 +794,7 @@ class _BottomBar extends StatefulWidget {
 }
 
 class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
-  static const _addBtnColor = AppColors.action;
+  Color get _addBtnColor => widget.accentColor;
   late final AnimationController _pulseCtrl;
   late final AnimationController _rotCtrl;
   late final AnimationController _tapCtrl;
@@ -852,13 +857,13 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: widget.dashboardActive
-                          ? AppColors.action.withAlpha(50)
+                          ? widget.accentColor.withAlpha(50)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.bar_chart_rounded,
                         color: widget.dashboardActive
-                            ? AppColors.action
+                            ? widget.accentColor
                             : Colors.white.withAlpha(160),
                         size: 22),
                   ),
