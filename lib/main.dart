@@ -83,6 +83,12 @@ class _SplashGateState extends State<_SplashGate>
 
   @override
   Widget build(BuildContext context) {
+    if (_done && !_OnboardingState.hasSeenOnboarding) {
+      return _Onboarding(onComplete: () {
+        _OnboardingState.hasSeenOnboarding = true;
+        setState(() {});
+      });
+    }
     if (_done) return HomeScreen(onToggleTheme: widget.onToggleTheme);
 
     return AnimatedBuilder(
@@ -120,6 +126,148 @@ class _SplashGateState extends State<_SplashGate>
                   )),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Onboarding ───────────────────────────────────────────────────────────────
+
+class _OnboardingState {
+  static bool hasSeenOnboarding = false;
+}
+
+class _Onboarding extends StatefulWidget {
+  final VoidCallback onComplete;
+  const _Onboarding({required this.onComplete});
+  @override
+  State<_Onboarding> createState() => __OnboardingState();
+}
+
+class __OnboardingState extends State<_Onboarding> {
+  int _page = 0;
+
+  static const _steps = [
+    (
+      icon: Icons.explore_rounded,
+      title: 'SPIN THE WHEEL',
+      sub: 'Swipe to explore sections.\nTasks, Habits, Workouts and more.',
+    ),
+    (
+      icon: Icons.add_circle_outline_rounded,
+      title: 'CREATE MISSIONS',
+      sub: 'Add tasks and habits.\nEach completion earns XP.',
+    ),
+    (
+      icon: Icons.emoji_events_rounded,
+      title: 'LEVEL UP',
+      sub: 'Earn XP, build streaks,\nunlock achievements. No tomorrow.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final step = _steps[_page];
+    final isLast = _page == _steps.length - 1;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0F),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(flex: 2),
+              // Icon
+              Container(
+                width: 90, height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFFF6B35).withAlpha(18),
+                  border: Border.all(
+                      color: const Color(0xFFFF6B35).withAlpha(60), width: 2),
+                ),
+                child: Icon(step.icon, size: 40,
+                    color: const Color(0xFFFF6B35)),
+              ),
+              const SizedBox(height: 32),
+              // Title
+              Text(step.title,
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 28, fontWeight: FontWeight.w800,
+                  fontStyle: FontStyle.italic,
+                  letterSpacing: 2, color: Colors.white,
+                )),
+              const SizedBox(height: 16),
+              // Subtitle
+              Text(step.sub,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14, fontWeight: FontWeight.w500,
+                  height: 1.5, color: Colors.white.withAlpha(160),
+                )),
+              const Spacer(flex: 2),
+              // Dots
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(3, (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: i == _page ? 24 : 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: i == _page
+                        ? const Color(0xFFFF6B35)
+                        : Colors.white.withAlpha(40),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                )),
+              ),
+              const SizedBox(height: 32),
+              // Button
+              GestureDetector(
+                onTap: () {
+                  if (isLast) {
+                    widget.onComplete();
+                  } else {
+                    setState(() => _page++);
+                  }
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B35),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(
+                      color: const Color(0xFFFF6B35).withAlpha(80),
+                      blurRadius: 20, offset: const Offset(0, 6),
+                    )],
+                  ),
+                  child: Center(
+                    child: Text(isLast ? 'BEGIN' : 'NEXT',
+                      style: GoogleFonts.inter(
+                        fontSize: 14, fontWeight: FontWeight.w800,
+                        letterSpacing: 2, color: Colors.white,
+                      )),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (!isLast)
+                GestureDetector(
+                  onTap: widget.onComplete,
+                  child: Text('SKIP',
+                    style: GoogleFonts.inter(
+                      fontSize: 12, fontWeight: FontWeight.w600,
+                      letterSpacing: 2, color: Colors.white.withAlpha(80),
+                    )),
+                ),
+              const SizedBox(height: 32),
+            ],
           ),
         ),
       ),

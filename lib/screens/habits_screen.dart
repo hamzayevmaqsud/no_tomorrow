@@ -30,7 +30,18 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
   void _delete(String id) {
     HapticFeedback.lightImpact();
-    setState(() => HabitStore.habits.removeWhere((h) => h.id == id));
+    final idx = HabitStore.habits.indexWhere((h) => h.id == id);
+    if (idx < 0) return;
+    final removed = HabitStore.habits.removeAt(idx);
+    setState(() {});
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Deleted "${removed.title}"'),
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(label: 'UNDO', onPressed: () {
+        setState(() => HabitStore.habits.insert(idx.clamp(0, HabitStore.habits.length), removed));
+      }),
+    ));
   }
 
   void _showAdd() {

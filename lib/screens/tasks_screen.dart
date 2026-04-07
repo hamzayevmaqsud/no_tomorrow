@@ -200,7 +200,21 @@ class _TasksScreenState extends State<TasksScreen> {
 
   void _delete(String id) {
     HapticFeedback.lightImpact();
-    setState(() => TaskStore.tasks.removeWhere((t) => t.id == id));
+    final idx = TaskStore.tasks.indexWhere((t) => t.id == id);
+    if (idx < 0) return;
+    final removed = TaskStore.tasks.removeAt(idx);
+    setState(() {});
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Deleted "${removed.title}"'),
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(
+        label: 'UNDO',
+        onPressed: () {
+          setState(() => TaskStore.tasks.insert(idx.clamp(0, TaskStore.tasks.length), removed));
+        },
+      ),
+    ));
   }
 
   void _showXp(int xp, Color color,

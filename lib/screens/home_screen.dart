@@ -487,6 +487,54 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
+          // ── Daily Quest bar ────────────────────────────────────────────────
+          Positioned(
+            bottom: size.height * 0.22,
+            left: 20, right: 20,
+            child: IgnorePointer(
+              child: ListenableBuilder(
+                listenable: GameState.instance,
+                builder: (ctx, _) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withAlpha(140),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.gold.withAlpha(40)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome_rounded, size: 14,
+                          color: AppColors.gold),
+                      const SizedBox(width: 8),
+                      Text('DAILY QUEST', style: GoogleFonts.jetBrainsMono(
+                        fontSize: 8, fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5, color: AppColors.gold)),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(GameState.instance.dailyQuest,
+                          style: GoogleFonts.inter(
+                            fontSize: 11, fontWeight: FontWeight.w500,
+                            color: Colors.white.withAlpha(180),
+                          )),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text('+${GameState.instance.dailyQuestXp} XP',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 8, fontWeight: FontWeight.w700,
+                            color: AppColors.gold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
           // ── Section label ─────────────────────────────────────────────────
           Positioned(
             top: size.height * 0.20,
@@ -888,6 +936,17 @@ class _PizzaPainter extends CustomPainter {
 
       _drawSector(canvas, center, innerR, outerR, startAngle, sweepAngle,
           Paint()..color = adjusted);
+
+      // Active sector glow edge
+      if (brightness > 0.85) {
+        final glowPaint = Paint()
+          ..color = c.withAlpha((brightness * 100).toInt())
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+        _drawSector(canvas, center, outerR * 0.25, outerR * 0.7,
+            startAngle, sweepAngle, glowPaint);
+      }
     }
   }
 

@@ -374,29 +374,76 @@ class _AddWorkoutSheetState extends State<_AddWorkoutSheet> {
   }
 }
 
-class _Counter extends StatelessWidget {
+class _Counter extends StatefulWidget {
   final String label;
   final int value, min, max, step;
   final ValueChanged<int> onChanged;
   const _Counter({required this.label, required this.value, required this.onChanged,
     this.min = 0, this.max = 100, this.step = 1});
   @override
+  State<_Counter> createState() => _CounterState();
+}
+
+class _CounterState extends State<_Counter> {
+  bool _editing = false;
+  late TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: '${widget.value}');
+  }
+
+  @override
+  void didUpdateWidget(_Counter old) {
+    super.didUpdateWidget(old);
+    if (!_editing) _ctrl.text = '${widget.value}';
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  void _finishEdit() {
+    final v = (int.tryParse(_ctrl.text) ?? widget.value)
+        .clamp(widget.min, widget.max);
+    widget.onChanged(v);
+    setState(() => _editing = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
     const cocoa = Color(0xFF594536);
     return Expanded(child: Column(children: [
-      Text(label, style: GoogleFonts.jetBrainsMono(fontSize: 8, fontWeight: FontWeight.w700,
+      Text(widget.label, style: GoogleFonts.jetBrainsMono(fontSize: 8, fontWeight: FontWeight.w700,
         letterSpacing: 1.5, color: cocoa.withAlpha(140))),
       const SizedBox(height: 6),
       Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        GestureDetector(onTap: value > min ? () => onChanged(value - step) : null,
+        GestureDetector(
+          onTap: widget.value > widget.min ? () => widget.onChanged(widget.value - widget.step) : null,
           child: Icon(Icons.remove_circle_outline_rounded, size: 20,
-            color: value > min ? cocoa : cocoa.withAlpha(50))),
+            color: widget.value > widget.min ? cocoa : cocoa.withAlpha(50))),
         const SizedBox(width: 8),
-        Text('$value', style: GoogleFonts.jetBrainsMono(fontSize: 18, fontWeight: FontWeight.w700, color: cocoa)),
+        _editing
+            ? SizedBox(width: 50,
+                child: TextField(
+                  controller: _ctrl,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  autofocus: true,
+                  style: GoogleFonts.jetBrainsMono(fontSize: 18, fontWeight: FontWeight.w700, color: cocoa),
+                  decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
+                  onSubmitted: (_) => _finishEdit(),
+                  onTapOutside: (_) => _finishEdit(),
+                ))
+            : GestureDetector(
+                onTap: () => setState(() => _editing = true),
+                child: Text('${widget.value}', style: GoogleFonts.jetBrainsMono(
+                  fontSize: 18, fontWeight: FontWeight.w700, color: cocoa))),
         const SizedBox(width: 8),
-        GestureDetector(onTap: value < max ? () => onChanged(value + step) : null,
+        GestureDetector(
+          onTap: widget.value < widget.max ? () => widget.onChanged(widget.value + widget.step) : null,
           child: Icon(Icons.add_circle_outline_rounded, size: 20,
-            color: value < max ? cocoa : cocoa.withAlpha(50))),
+            color: widget.value < widget.max ? cocoa : cocoa.withAlpha(50))),
       ]),
     ]));
   }
