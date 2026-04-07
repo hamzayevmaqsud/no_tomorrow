@@ -16,6 +16,7 @@ import 'abstain_screen.dart';
 import 'reading_screen.dart';
 import 'budget_screen.dart';
 import 'food_screen.dart';
+import 'profile_screen.dart';
 
 const _kQuotes = [
   '"There is no tomorrow — only today."',
@@ -146,6 +147,7 @@ class _HomeScreenState extends State<HomeScreen>
       case 'budget':   page = const BudgetScreen(); break;
       case 'food':     page = const FoodScreen(); break;
       case 'collect':  page = const CollectionScreen(); break;
+      case 'profile':  page = const ProfileScreen(); break;
       default:         page = SectionScreen(section: section); break;
     }
     Navigator.push(
