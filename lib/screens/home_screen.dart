@@ -487,52 +487,10 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
-          // ── Daily Quest bar ────────────────────────────────────────────────
+          // ── Daily Quest popup (top, auto-dismiss) ───────────────────────
           Positioned(
-            bottom: size.height * 0.22,
-            left: 20, right: 20,
-            child: IgnorePointer(
-              child: ListenableBuilder(
-                listenable: GameState.instance,
-                builder: (ctx, _) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(140),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.gold.withAlpha(40)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.auto_awesome_rounded, size: 14,
-                          color: AppColors.gold),
-                      const SizedBox(width: 8),
-                      Text('DAILY QUEST', style: GoogleFonts.jetBrainsMono(
-                        fontSize: 8, fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5, color: AppColors.gold)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(GameState.instance.dailyQuest,
-                          style: GoogleFonts.inter(
-                            fontSize: 11, fontWeight: FontWeight.w500,
-                            color: Colors.white.withAlpha(180),
-                          )),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.gold.withAlpha(20),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text('+${GameState.instance.dailyQuestXp} XP',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 8, fontWeight: FontWeight.w700,
-                            color: AppColors.gold)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            top: 0, left: 0, right: 0,
+            child: SafeArea(child: _DailyQuestPopup()),
           ),
 
           // ── Section label ─────────────────────────────────────────────────
@@ -1117,6 +1075,130 @@ class _ComicOverlayPainter extends CustomPainter {
 }
 
 // ── Floating embers (firefly particles) ──────────────────────────────────────
+
+// ── Daily Quest popup ─────────────────────────────────────────────────────────
+
+class _DailyQuestPopup extends StatefulWidget {
+  const _DailyQuestPopup();
+  @override
+  State<_DailyQuestPopup> createState() => _DailyQuestPopupState();
+}
+
+class _DailyQuestPopupState extends State<_DailyQuestPopup>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 5000));
+
+    _slide = TweenSequence<Offset>([
+      TweenSequenceItem(
+        tween: Tween(begin: const Offset(0, -1), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 10),
+      TweenSequenceItem(tween: ConstantTween(Offset.zero), weight: 70),
+      TweenSequenceItem(
+        tween: Tween(begin: Offset.zero, end: const Offset(0, -1))
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 20),
+    ]).animate(_ctrl);
+
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 10),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 70),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 20),
+    ]).animate(_ctrl);
+
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) => SlideTransition(
+        position: _slide,
+        child: Opacity(
+          opacity: _opacity.value.clamp(0.0, 1.0),
+          child: IgnorePointer(
+            ignoring: _ctrl.value > 0.85,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(200),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.gold.withAlpha(50)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.gold.withAlpha(20),
+                      blurRadius: 20, spreadRadius: 2),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28, height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withAlpha(25),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.gold.withAlpha(80)),
+                      ),
+                      child: Icon(Icons.auto_awesome_rounded,
+                          size: 14, color: AppColors.gold),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('DAILY QUEST',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 8, fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5, color: AppColors.gold)),
+                          const SizedBox(height: 2),
+                          Text(GameState.instance.dailyQuest,
+                            style: GoogleFonts.inter(
+                              fontSize: 12, fontWeight: FontWeight.w500,
+                              color: Colors.white.withAlpha(200),
+                            )),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.gold.withAlpha(20),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.gold.withAlpha(50)),
+                      ),
+                      child: Text('+${GameState.instance.dailyQuestXp} XP',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9, fontWeight: FontWeight.w700,
+                          color: AppColors.gold)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Floating embers ──────────────────────────────────────────────────────────
 
 class _FloatingEmbers extends StatefulWidget {
   const _FloatingEmbers();
