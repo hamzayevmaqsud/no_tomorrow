@@ -11,6 +11,11 @@ import 'settings_screen.dart';
 import 'tasks_menu_screen.dart';
 import 'collection_screen.dart';
 import 'habits_screen.dart';
+import 'workouts_screen.dart';
+import 'abstain_screen.dart';
+import 'reading_screen.dart';
+import 'budget_screen.dart';
+import 'food_screen.dart';
 
 const _kQuotes = [
   '"There is no tomorrow — only today."',
@@ -131,13 +136,18 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _open() {
     final section = kSections[_currentIndex];
-    final page = section.id == 'tasks'
-        ? const TasksMenuScreen()
-        : section.id == 'habits'
-            ? const HabitsScreen()
-            : section.id == 'collect'
-                ? const CollectionScreen()
-                : SectionScreen(section: section);
+    Widget page;
+    switch (section.id) {
+      case 'tasks':    page = const TasksMenuScreen(); break;
+      case 'habits':   page = const HabitsScreen(); break;
+      case 'workouts': page = const WorkoutsScreen(); break;
+      case 'abstain':  page = const AbstainScreen(); break;
+      case 'reading':  page = const ReadingScreen(); break;
+      case 'budget':   page = const BudgetScreen(); break;
+      case 'food':     page = const FoodScreen(); break;
+      case 'collect':  page = const CollectionScreen(); break;
+      default:         page = SectionScreen(section: section); break;
+    }
     Navigator.push(
       context,
       PageRouteBuilder(
