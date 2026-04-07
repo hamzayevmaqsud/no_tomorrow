@@ -282,6 +282,7 @@ class _TasksScreenState extends State<TasksScreen> {
         },
         nextId: '${TaskStore.nextId++}',
         preselectedDate: _selectedDate,
+        isWork: widget.category == TaskCategory.work,
       ),
       transitionBuilder: (_, anim, __, child) => SlideTransition(
         position: Tween<Offset>(
@@ -1762,10 +1763,12 @@ class _AddSheet extends StatefulWidget {
   final void Function(Task) onAdd;
   final String nextId;
   final DateTime? preselectedDate;
+  final bool isWork;
   const _AddSheet({
     required this.onAdd,
     required this.nextId,
     this.preselectedDate,
+    this.isWork = true,
   });
 
   @override
@@ -1951,11 +1954,15 @@ class _AddSheetState extends State<_AddSheet> {
                           Container(
                             width: 36, height: 36,
                             decoration: BoxDecoration(
-                              color: _kCocoa,
+                              color: widget.isWork
+                                  ? _kCocoa
+                                  : const Color(0xFF10B981),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(Icons.add_rounded,
-                                color: _kCoconutMilk, size: 20),
+                            child: Icon(Icons.add_rounded,
+                                color: widget.isWork
+                                    ? _kCoconutMilk
+                                    : Colors.white, size: 20),
                           ),
                           const SizedBox(width: 12),
                           Column(
@@ -2138,10 +2145,14 @@ class _AddSheetState extends State<_AddSheet> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
-                            color: _kCocoa,
+                            color: widget.isWork
+                                ? _kCocoa
+                                : const Color(0xFF10B981),
                             borderRadius: BorderRadius.circular(22),
                             boxShadow: [BoxShadow(
-                              color: _kCocoa.withAlpha(70),
+                              color: (widget.isWork
+                                  ? _kCocoa
+                                  : const Color(0xFF10B981)).withAlpha(70),
                               blurRadius: 14, offset: const Offset(0, 4),
                             )],
                           ),
@@ -2151,7 +2162,7 @@ class _AddSheetState extends State<_AddSheet> {
                               Text('ADD MISSION',
                                 style: GoogleFonts.inter(
                                   fontSize: 12, fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.4, color: _kCoconutMilk,
+                                  letterSpacing: 1.4, color: Colors.white,
                                 )),
                               const SizedBox(width: 8),
                               Text('+${_pXp(_priority)} XP',
