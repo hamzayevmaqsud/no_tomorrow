@@ -160,6 +160,13 @@ class ProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
+              // ── Next Level Preview ─────────────────────
+              _SectionTitle(label: 'LEVEL REWARDS'),
+              const SizedBox(height: 12),
+              _LevelRewardsPreview(currentLevel: gs.level),
+
+              const SizedBox(height: 28),
+
               // ── Achievements ───────────────────────────
               _SectionTitle(label: 'ACHIEVEMENTS'),
               const SizedBox(height: 4),
@@ -256,9 +263,21 @@ class _StatCard extends StatelessWidget {
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(value, style: GoogleFonts.jetBrainsMono(
-                fontSize: 16, fontWeight: FontWeight.w700,
-                color: const Color(0xFF2A2318))),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, anim) => SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, 0.3),
+                    end: Offset.zero,
+                  ).animate(anim),
+                  child: FadeTransition(opacity: anim, child: child),
+                ),
+                child: Text(value,
+                  key: ValueKey(value),
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 16, fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2A2318))),
+              ),
               Text(label, style: GoogleFonts.inter(
                 fontSize: 8, fontWeight: FontWeight.w600,
                 letterSpacing: 0.5, color: const Color(0xFF8A8070))),
@@ -396,6 +415,106 @@ class _WeeklyActivity extends StatelessWidget {
               color: isToday ? AppColors.action : const Color(0xFF8A8070))),
           ]));
         }),
+      ),
+    );
+  }
+}
+
+// ── Milestone row ────────────────────────────────────────────────────────────
+
+// ── Level rewards preview ─────────────────────────────────────────────────────
+
+class _LevelRewardsPreview extends StatelessWidget {
+  final int currentLevel;
+  const _LevelRewardsPreview({required this.currentLevel});
+
+  static const _rewards = {
+    2: ('Custom Themes', Icons.palette_rounded),
+    3: ('Habit Categories', Icons.category_rounded),
+    5: ('Dark Mode Pro', Icons.dark_mode_rounded),
+    7: ('Weekly Analytics', Icons.insights_rounded),
+    10: ('Custom Avatars', Icons.face_rounded),
+    15: ('Streak Shields', Icons.shield_rounded),
+    20: ('Legendary Title', Icons.military_tech_rounded),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F2EB),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [BoxShadow(
+          color: Colors.black.withAlpha(25),
+          blurRadius: 10, offset: const Offset(0, 4))],
+      ),
+      child: Column(
+        children: _rewards.entries.map((e) {
+          final lvl = e.key;
+          final (label, icon) = e.value;
+          final unlocked = currentLevel >= lvl;
+          final isNext = !unlocked && (lvl == _rewards.keys.firstWhere((k) => k > currentLevel, orElse: () => 999));
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(children: [
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: unlocked
+                      ? AppColors.gold.withAlpha(25)
+                      : isNext
+                          ? AppColors.action.withAlpha(15)
+                          : const Color(0xFF2A2318).withAlpha(8),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: unlocked
+                        ? AppColors.gold.withAlpha(80)
+                        : isNext
+                            ? AppColors.action.withAlpha(50)
+                            : const Color(0xFF2A2318).withAlpha(15)),
+                ),
+                child: Icon(icon, size: 14,
+                  color: unlocked
+                      ? AppColors.gold
+                      : isNext
+                          ? AppColors.action
+                          : const Color(0xFF8A8070).withAlpha(80)),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(label, style: GoogleFonts.inter(
+                  fontSize: 12, fontWeight: FontWeight.w600,
+                  color: unlocked
+                      ? const Color(0xFF2A2318)
+                      : const Color(0xFF8A8070).withAlpha(unlocked ? 255 : 140),
+                )),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: unlocked
+                      ? AppColors.gold.withAlpha(15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: unlocked
+                        ? AppColors.gold.withAlpha(50)
+                        : const Color(0xFF2A2318).withAlpha(15)),
+                ),
+                child: Text(unlocked ? '✓ LVL $lvl' : 'LVL $lvl',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9, fontWeight: FontWeight.w700,
+                    color: unlocked
+                        ? AppColors.gold
+                        : isNext
+                            ? AppColors.action
+                            : const Color(0xFF8A8070).withAlpha(100),
+                  )),
+              ),
+            ]),
+          );
+        }).toList(),
       ),
     );
   }

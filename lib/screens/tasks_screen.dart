@@ -293,6 +293,16 @@ class _TasksScreenState extends State<TasksScreen> {
           task.category = widget.category;
           setState(() => TaskStore.tasks.insert(0, task));
           Navigator.of(ctx).pop();
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Row(children: [
+              Icon(Icons.check_circle_rounded, size: 16, color: AppColors.success),
+              const SizedBox(width: 8),
+              Text('Mission created!'),
+            ]),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ));
         },
         nextId: '${TaskStore.nextId++}',
         preselectedDate: _selectedDate,
@@ -734,7 +744,7 @@ class _CalendarStrip extends StatelessWidget {
 
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => onDateSelected(day),
+                  onTap: () { HapticFeedback.selectionClick(); onDateSelected(day); },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     margin: EdgeInsets.only(right: i < 6 ? 6 : 0),
@@ -1286,7 +1296,7 @@ class _DoneDivider extends StatelessWidget {
 
 // ── Task card ─────────────────────────────────────────────────────────────────
 
-class _TaskCard extends StatelessWidget {
+class _TaskCard extends StatefulWidget {
   final Task task;
   final VoidCallback onComplete;
   final VoidCallback onTap;
@@ -1299,7 +1309,17 @@ class _TaskCard extends StatelessWidget {
   });
 
   @override
+  State<_TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends State<_TaskCard> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
+    final task = widget.task;
+    final onTap = widget.onTap;
+    final onComplete = widget.onComplete;
     final done      = task.isCompleted;
     final accentBg  = done ? const Color(0xFFCCCAC4) : _pCardBg(task.priority);
     final accentTxt = done ? const Color(0xFF8A8880) : _pCardText(task.priority);
@@ -1315,7 +1335,13 @@ class _TaskCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedOpacity(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
         opacity: done ? 0.55 : 1.0,
         child: Container(
@@ -1499,6 +1525,7 @@ class _TaskCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -1795,6 +1822,7 @@ class _AddSheetState extends State<_AddSheet> {
   TaskPriority _priority = TaskPriority.medium;
   TimeOfDay? _time;
   late DateTime? _date;
+  bool _titleError = false;
 
   @override
   void initState() {
@@ -1845,7 +1873,14 @@ class _AddSheetState extends State<_AddSheet> {
 
   void _submit() {
     final title = _titleCtrl.text.trim();
-    if (title.isEmpty) return;
+    if (title.isEmpty) {
+      HapticFeedback.heavyImpact();
+      setState(() => _titleError = true);
+      Future.delayed(const Duration(milliseconds: 600),
+          () { if (mounted) setState(() => _titleError = false); });
+      return;
+    }
+    HapticFeedback.lightImpact();
     widget.onAdd(Task(
       id: widget.nextId,
       title: title,
@@ -1998,13 +2033,13 @@ class _AddSheetState extends State<_AddSheet> {
                           GestureDetector(
                             onTap: () => Navigator.of(context).pop(),
                             child: Container(
-                              width: 28, height: 28,
+                              width: 36, height: 36,
                               decoration: BoxDecoration(
                                 color: _kDivider,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(Icons.close_rounded,
-                                  color: _kCocoa.withAlpha(150), size: 14),
+                                  color: _kCocoa.withAlpha(150), size: 16),
                             ),
                           ),
                         ],
@@ -2012,25 +2047,54 @@ class _AddSheetState extends State<_AddSheet> {
                     ),
 
                     // ── Form fields ────────────────────────────────────
-                    _tableRow(
-                      label: 'TITLE',
-                      icon: Icons.edit_rounded,
-                      topBorder: false,
-                      content: TextField(
-                        controller: _titleCtrl,
-                        autofocus: true,
-                        style: GoogleFonts.inter(
-                          fontSize: 14, fontWeight: FontWeight.w600,
-                          color: _kCocoa,
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: _titleError ? 1.0 : 0.0),
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.elasticOut,
+                      builder: (ctx, shake, child) => Transform.translate(
+                        offset: Offset(sin(shake * pi * 4) * 8, 0),
+                        child: child,
+                      ),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: _titleError
+                              ? const Color(0xFFDC2626).withAlpha(8)
+                              : Colors.transparent,
+                          border: _titleError
+                              ? Border(bottom: BorderSide(
+                                  color: const Color(0xFFDC2626).withAlpha(120), width: 1.5))
+                              : const Border(),
                         ),
-                        decoration: InputDecoration(
-                          hintText: 'What needs to be done?',
-                          hintStyle: GoogleFonts.inter(
-                              fontSize: 14, color: _kCocoa.withAlpha(120)),
-                          border: InputBorder.none,
-                          isDense: true, contentPadding: EdgeInsets.zero,
+                        child: _tableRow(
+                          label: 'TITLE',
+                          icon: Icons.edit_rounded,
+                          topBorder: false,
+                          content: TextField(
+                            controller: _titleCtrl,
+                            autofocus: true,
+                            style: GoogleFonts.inter(
+                              fontSize: 14, fontWeight: FontWeight.w600,
+                              color: _titleError ? const Color(0xFFDC2626) : _kCocoa,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: _titleError
+                                  ? 'Title is required!'
+                                  : 'What needs to be done?',
+                              hintStyle: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: _titleError
+                                      ? const Color(0xFFDC2626).withAlpha(160)
+                                      : _kCocoa.withAlpha(120)),
+                              border: InputBorder.none,
+                              isDense: true, contentPadding: EdgeInsets.zero,
+                            ),
+                            onSubmitted: (_) => _submit(),
+                            onChanged: (_) {
+                              if (_titleError) setState(() => _titleError = false);
+                            },
+                          ),
                         ),
-                        onSubmitted: (_) => _submit(),
                       ),
                     ),
 
@@ -2118,8 +2182,11 @@ class _AddSheetState extends State<_AddSheet> {
                             const SizedBox(width: 6),
                             GestureDetector(
                               onTap: () => setState(() => _date = null),
-                              child: Icon(Icons.close_rounded,
-                                  size: 12, color: _kCocoa.withAlpha(110))),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Icon(Icons.close_rounded,
+                                    size: 14, color: _kCocoa.withAlpha(110)))),
                           ],
                         ]),
                       ),
@@ -2142,8 +2209,11 @@ class _AddSheetState extends State<_AddSheet> {
                             const SizedBox(width: 6),
                             GestureDetector(
                               onTap: () => setState(() => _time = null),
-                              child: Icon(Icons.close_rounded,
-                                  size: 12, color: _kCocoa.withAlpha(110))),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Icon(Icons.close_rounded,
+                                    size: 14, color: _kCocoa.withAlpha(110)))),
                           ],
                         ]),
                       ),

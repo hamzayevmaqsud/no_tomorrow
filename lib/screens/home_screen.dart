@@ -150,6 +150,17 @@ class _HomeScreenState extends State<HomeScreen>
       case 'profile':  page = const ProfileScreen(); break;
       default:         page = SectionScreen(section: section); break;
     }
+    // Per-section unique transition
+    final Offset slideBegin;
+    final double scaleBegin;
+    switch (section.id) {
+      case 'tasks':    slideBegin = const Offset(-0.08, 0); scaleBegin = 0.92; break;
+      case 'habits':   slideBegin = const Offset(0, 0.08);  scaleBegin = 0.92; break;
+      case 'workouts': slideBegin = const Offset(0.08, 0);  scaleBegin = 0.90; break;
+      case 'profile':  slideBegin = const Offset(0, 0);     scaleBegin = 0.80; break;
+      case 'collect':  slideBegin = const Offset(0, -0.06); scaleBegin = 0.92; break;
+      default:         slideBegin = const Offset(0, 0.04);  scaleBegin = 0.92; break;
+    }
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -162,9 +173,12 @@ class _HomeScreenState extends State<HomeScreen>
             opacity: Tween(begin: 0.0, end: 1.0).animate(
               CurvedAnimation(parent: anim,
                   curve: const Interval(0.0, 0.4, curve: Curves.easeOut))),
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.88, end: 1.0).animate(curve),
-              child: child,
+            child: SlideTransition(
+              position: Tween(begin: slideBegin, end: Offset.zero).animate(curve),
+              child: ScaleTransition(
+                scale: Tween<double>(begin: scaleBegin, end: 1.0).animate(curve),
+                child: child,
+              ),
             ),
           );
         },
@@ -494,6 +508,13 @@ class _HomeScreenState extends State<HomeScreen>
             top: 0, left: 0, right: 0,
             child: SafeArea(child: _DailyQuestPopup()),
           ),
+
+          // ── Weekly Summary (Mondays only) ──────────────────────────────
+          if (DateTime.now().weekday == DateTime.monday)
+            Positioned(
+              top: 0, left: 0, right: 0,
+              child: SafeArea(child: _WeeklySummaryPopup()),
+            ),
 
           // ── Section label ─────────────────────────────────────────────────
           Positioned(
@@ -1074,6 +1095,122 @@ class _ComicOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(_ComicOverlayPainter old) =>
       old.sectionColor != sectionColor;
+}
+
+// ── Weekly Summary popup (Mondays) ────────────────────────────────────────────
+
+class _WeeklySummaryPopup extends StatefulWidget {
+  const _WeeklySummaryPopup();
+  @override
+  State<_WeeklySummaryPopup> createState() => _WeeklySummaryPopupState();
+}
+
+class _WeeklySummaryPopupState extends State<_WeeklySummaryPopup>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<Offset> _slide;
+  late final Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    // Delayed start — appears after daily quest fades
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 7000));
+
+    _slide = TweenSequence<Offset>([
+      // Wait for daily quest to finish (first 40%)
+      TweenSequenceItem(tween: ConstantTween(const Offset(0, -1)), weight: 40),
+      // Slide in
+      TweenSequenceItem(
+        tween: Tween(begin: const Offset(0, -1), end: Offset.zero)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 8),
+      // Stay
+      TweenSequenceItem(tween: ConstantTween(Offset.zero), weight: 35),
+      // Slide out
+      TweenSequenceItem(
+        tween: Tween(begin: Offset.zero, end: const Offset(0, -1))
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 17),
+    ]).animate(_ctrl);
+
+    _opacity = TweenSequence<double>([
+      TweenSequenceItem(tween: ConstantTween(0.0), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 8),
+      TweenSequenceItem(tween: ConstantTween(1.0), weight: 35),
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 17),
+    ]).animate(_ctrl);
+
+    _ctrl.forward();
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    final gs = GameState.instance;
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) => SlideTransition(
+        position: _slide,
+        child: Opacity(
+          opacity: _opacity.value.clamp(0.0, 1.0),
+          child: IgnorePointer(
+            ignoring: _ctrl.value > 0.85 || _ctrl.value < 0.45,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(210),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppColors.action.withAlpha(40)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(children: [
+                      Icon(Icons.calendar_month_rounded, size: 16,
+                          color: AppColors.action),
+                      const SizedBox(width: 8),
+                      Text('WEEKLY RECAP', style: GoogleFonts.jetBrainsMono(
+                        fontSize: 10, fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5, color: AppColors.action)),
+                    ]),
+                    const SizedBox(height: 10),
+                    Row(children: [
+                      _RecapStat(value: '${gs.totalCompletions}', label: 'DONE'),
+                      _RecapStat(value: '${gs.totalXp}', label: 'XP'),
+                      _RecapStat(value: '${gs.bestStreak}d', label: 'STREAK'),
+                      _RecapStat(value: 'LVL ${gs.level}', label: 'RANK'),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecapStat extends StatelessWidget {
+  final String value, label;
+  const _RecapStat({required this.value, required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(child: Column(children: [
+      Text(value, style: GoogleFonts.jetBrainsMono(
+        fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+      const SizedBox(height: 2),
+      Text(label, style: GoogleFonts.inter(
+        fontSize: 7, fontWeight: FontWeight.w600,
+        letterSpacing: 1, color: Colors.white.withAlpha(100))),
+    ]));
+  }
 }
 
 // ── Floating embers (firefly particles) ──────────────────────────────────────
