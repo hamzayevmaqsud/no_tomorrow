@@ -8,6 +8,8 @@ import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 
+// ── Screen ───────────────────────────────────────────────────────────────────
+
 class HabitsScreen extends StatefulWidget {
   const HabitsScreen({super.key});
 
@@ -47,7 +49,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
       ),
       transitionBuilder: (_, anim, __, child) => SlideTransition(
         position: Tween<Offset>(
-          begin: const Offset(0, 1),
+          begin: const Offset(-1, 0),
           end: Offset.zero,
         ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
         child: child,
@@ -60,20 +62,21 @@ class _HabitsScreenState extends State<HabitsScreen> {
     final habits = HabitStore.habits;
     final doneToday = habits.where((h) => h.isDoneToday()).length;
     final total = habits.length;
+    final pending = habits.where((h) => !h.isDoneToday()).toList();
+    final completed = habits.where((h) => h.isDoneToday()).toList();
 
     return SwipeToPop(child: Scaffold(
-      backgroundColor: const Color(0xFF0C0A14),
+      backgroundColor: const Color(0xFF0E0A16),
       body: Stack(
         children: [
-          // ── Gradient bg ──────────────────────────────────
+          // ── Blurred bg ──────────────────────────────────
           Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment(0, -0.4),
-                  radius: 1.2,
-                  colors: [Color(0xFF1A1028), Color(0xFF0C0A14)],
-                ),
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Opacity(
+                opacity: 0.3,
+                child: Image.asset('assets/collection/Tasks menu/Live.jpg',
+                    fit: BoxFit.cover),
               ),
             ),
           ),
@@ -93,15 +96,42 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 26, fontWeight: FontWeight.w800,
                               letterSpacing: 3,
-                              color: const Color(0xFFE0D4F0),
+                              color: const Color(0xFFE8D4F0),
                             )),
                           const SizedBox(height: 3),
                           if (total > 0)
-                            Text('$doneToday / $total today',
-                              style: GoogleFonts.inter(
-                                fontSize: 11, fontWeight: FontWeight.w700,
-                                color: Colors.white.withAlpha(160),
-                              )),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  doneToday == total
+                                      ? Icons.check_circle_rounded
+                                      : Icons.check_circle_outline_rounded,
+                                  size: 12,
+                                  color: doneToday == total
+                                      ? AppColors.success
+                                      : Colors.white.withAlpha(140)),
+                                const SizedBox(width: 5),
+                                Text('$doneToday / $total today',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11, fontWeight: FontWeight.w700,
+                                    color: doneToday == total
+                                        ? AppColors.success
+                                        : Colors.white.withAlpha(160),
+                                  )),
+                                if (GameState.instance.streak >= 2) ...[
+                                  const SizedBox(width: 10),
+                                  Icon(Icons.local_fire_department_rounded,
+                                      size: 12, color: const Color(0xFFF59E0B)),
+                                  const SizedBox(width: 2),
+                                  Text('${GameState.instance.streak}',
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 10, fontWeight: FontWeight.w700,
+                                      color: const Color(0xFFF59E0B),
+                                    )),
+                                ],
+                              ],
+                            ),
                         ],
                       ),
                       Align(
@@ -126,44 +156,26 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
                 const SizedBox(height: 14),
                 Container(height: 1, color: Colors.white.withAlpha(12)),
-
-                // ── Daily progress ring ────────────────────
-                if (total > 0) ...[
-                  const SizedBox(height: 24),
-                  _DailyRing(done: doneToday, total: total),
-                  const SizedBox(height: 24),
-                ],
+                const SizedBox(height: 16),
 
                 // ── Habit list ─────────────────────────────
                 Expanded(
                   child: habits.isEmpty
                       ? _EmptyHabits()
-                      : ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                          itemCount: habits.length,
-                          itemBuilder: (ctx, i) {
-                            final h = habits[i];
-                            return Dismissible(
-                              key: ValueKey(h.id),
-                              direction: DismissDirection.endToStart,
-                              onDismissed: (_) => _delete(h.id),
-                              background: Container(
-                                alignment: Alignment.centerRight,
-                                padding: const EdgeInsets.only(right: 18),
-                                margin: const EdgeInsets.only(bottom: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withAlpha(20),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(Icons.delete_outline_rounded,
-                                    color: Colors.red, size: 16),
-                              ),
-                              child: _HabitCard(
-                                habit: h,
-                                onToggle: () => _toggle(h),
-                              ),
-                            );
-                          },
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                          children: [
+                            // Pending habits
+                            ...pending.asMap().entries.map((e) =>
+                              _staggered(e.key, _dismissible(e.value))),
+                            // Completed divider + done habits
+                            if (completed.isNotEmpty) ...[
+                              _DoneDivider(count: completed.length),
+                              ...completed.asMap().entries.map((e) =>
+                                _staggered(pending.length + e.key,
+                                    _dismissible(e.value))),
+                            ],
+                          ],
                         ),
                 ),
               ],
@@ -172,33 +184,47 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
           // ── FAB ──────────────────────────────────────────
           Positioned(
-            bottom: 36, left: 0, right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: _showAdd,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.habits,
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.habits.withAlpha(100),
-                        blurRadius: 20, spreadRadius: 2,
+            bottom: 36, left: 52, right: 52,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: GestureDetector(
+                  onTap: _showAdd,
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(22),
+                      borderRadius: BorderRadius.circular(40),
+                      border: Border.all(color: Colors.white.withAlpha(40)),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.habits,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(
+                                color: AppColors.habits.withAlpha(100),
+                                blurRadius: 12, spreadRadius: 1,
+                              )],
+                            ),
+                            child: const Icon(Icons.add_rounded,
+                                color: Colors.white, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text('NEW  HABIT',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 14, fontWeight: FontWeight.w700,
+                              letterSpacing: 2,
+                              color: Colors.white.withAlpha(200),
+                            )),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                      const SizedBox(width: 8),
-                      Text('NEW HABIT',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 14, fontWeight: FontWeight.w700,
-                          letterSpacing: 1, color: Colors.white,
-                        )),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -208,51 +234,102 @@ class _HabitsScreenState extends State<HabitsScreen> {
       ),
     ));
   }
+
+  Widget _staggered(int index, Widget child) {
+    final delay = (index * 50).clamp(0, 400);
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('hs_$index'),
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + delay),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value.clamp(0.0, 1.0),
+        child: Transform.translate(
+          offset: Offset(0, 24 * (1 - value)), child: child),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _dismissible(Habit habit) {
+    final done = habit.isDoneToday();
+    return Dismissible(
+      key: ValueKey(habit.id),
+      direction: done
+          ? DismissDirection.endToStart
+          : DismissDirection.horizontal,
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd && !done) {
+          _toggle(habit);
+          return false;
+        }
+        return true;
+      },
+      onDismissed: (_) => _delete(habit.id),
+      background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 18),
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: AppColors.success.withAlpha(25),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Icon(Icons.check_rounded, color: AppColors.success, size: 20),
+      ),
+      secondaryBackground: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 18),
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: Colors.red.withAlpha(20),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const Icon(Icons.delete_outline_rounded,
+            color: Colors.red, size: 16),
+      ),
+      child: _HabitCard(habit: habit, onToggle: () => _toggle(habit)),
+    );
+  }
 }
 
-// ── Daily progress ring ──────────────────────────────────────────────────────
+// ── Done divider ─────────────────────────────────────────────────────────────
 
-class _DailyRing extends StatelessWidget {
-  final int done;
-  final int total;
-  const _DailyRing({required this.done, required this.total});
+class _DoneDivider extends StatelessWidget {
+  final int count;
+  const _DoneDivider({required this.count});
 
   @override
   Widget build(BuildContext context) {
-    final progress = total == 0 ? 0.0 : done / total;
-    return SizedBox(
-      width: 90, height: 90,
-      child: Stack(
-        alignment: Alignment.center,
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 10),
+      child: Row(
         children: [
-          SizedBox(
-            width: 90, height: 90,
-            child: CircularProgressIndicator(
-              value: progress,
-              strokeWidth: 5,
-              backgroundColor: Colors.white.withAlpha(15),
-              valueColor: AlwaysStoppedAnimation(
-                progress >= 1.0 ? AppColors.success : AppColors.habits),
+          Expanded(child: Container(height: 1,
+              color: AppColors.success.withAlpha(40))),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.success.withAlpha(22),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.success.withAlpha(80)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.check_circle_outline_rounded,
+                    size: 11, color: AppColors.success),
+                const SizedBox(width: 5),
+                Text('DONE  $count',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9, fontWeight: FontWeight.w700,
+                    letterSpacing: 1, color: AppColors.success,
+                  )),
+              ],
             ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$done/$total',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 18, fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                )),
-              Text(progress >= 1.0 ? 'ALL DONE' : 'TODAY',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 8, fontWeight: FontWeight.w600,
-                  letterSpacing: 1.5,
-                  color: progress >= 1.0
-                      ? AppColors.success
-                      : Colors.white.withAlpha(100),
-                )),
-            ],
-          ),
+          Expanded(child: Container(height: 1,
+              color: AppColors.success.withAlpha(40))),
         ],
       ),
     );
@@ -272,125 +349,195 @@ class _HabitCard extends StatelessWidget {
     final done = habit.isDoneToday();
     final color = habitCatColor(habit.category);
     final streak = habit.streak;
+    final weekly = habit.weeklyCount;
+
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
 
     return GestureDetector(
       onTap: onToggle,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: done
-              ? color.withAlpha(18)
-              : Colors.white.withAlpha(8),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: done ? color.withAlpha(80) : Colors.white.withAlpha(20),
-            width: 1,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: done ? 0.6 : 1.0,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(25),
+                blurRadius: 12, offset: const Offset(0, 5)),
+              BoxShadow(
+                color: Colors.white.withAlpha(180),
+                blurRadius: 1, offset: const Offset(0, -0.5)),
+            ],
           ),
-        ),
-        child: Row(
-          children: [
-            // Check circle
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 40, height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: done ? color.withAlpha(40) : Colors.white.withAlpha(8),
-                border: Border.all(
-                  color: done ? color : Colors.white.withAlpha(40),
-                  width: done ? 2 : 1.2,
-                ),
-              ),
-              child: done
-                  ? Icon(Icons.check_rounded, size: 20, color: color)
-                  : Icon(habitCatIcon(habit.category),
-                      size: 18, color: Colors.white.withAlpha(80)),
-            ),
-
-            const SizedBox(width: 14),
-
-            // Title + streak
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(habit.title,
-                    style: GoogleFonts.inter(
-                      fontSize: 15, fontWeight: FontWeight.w600,
-                      color: done
-                          ? Colors.white.withAlpha(120)
-                          : Colors.white.withAlpha(220),
-                      decoration: done
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                      decorationColor: Colors.white.withAlpha(60),
-                    )),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: color.withAlpha(20),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(habitCatLabel(habit.category),
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 8, fontWeight: FontWeight.w700,
-                            letterSpacing: 1, color: color,
-                          )),
+                  // ── Left content ─────────────────────────
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Category tag
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: color.withAlpha(15),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: color.withAlpha(40), width: 0.8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(habitCatIcon(habit.category),
+                                    size: 10, color: color),
+                                const SizedBox(width: 4),
+                                Text(habitCatLabel(habit.category),
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 8, fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.8, color: color,
+                                  )),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          // Title
+                          Text(habit.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 18, fontWeight: FontWeight.w700,
+                              fontStyle: FontStyle.italic,
+                              height: 1.2, color: textCol,
+                              decoration: done
+                                  ? TextDecoration.lineThrough
+                                  : TextDecoration.none,
+                              decorationColor: textCol.withAlpha(100),
+                            )),
+
+                          const SizedBox(height: 10),
+
+                          // Weekly progress bar + streak
+                          Row(
+                            children: [
+                              // 7-day bar
+                              ...List.generate(7, (i) {
+                                final d = DateTime.now().subtract(
+                                    Duration(days: 6 - i));
+                                final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                                final filled = habit.completedDates.contains(key);
+                                final isToday = i == 6;
+                                return Container(
+                                  width: 16, height: 6,
+                                  margin: const EdgeInsets.only(right: 3),
+                                  decoration: BoxDecoration(
+                                    color: filled
+                                        ? color
+                                        : textCol.withAlpha(18),
+                                    borderRadius: BorderRadius.circular(2),
+                                    border: isToday && !filled
+                                        ? Border.all(
+                                            color: color.withAlpha(80),
+                                            width: 0.8)
+                                        : null,
+                                  ),
+                                );
+                              }),
+                              const SizedBox(width: 6),
+                              Text('$weekly/7',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  color: subCol)),
+
+                              if (streak >= 2) ...[
+                                const SizedBox(width: 8),
+                                Icon(Icons.local_fire_department_rounded,
+                                    size: 12,
+                                    color: streak >= 7
+                                        ? AppColors.action
+                                        : const Color(0xFFF59E0B)),
+                                const SizedBox(width: 2),
+                                Text('$streak',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 9, fontWeight: FontWeight.w700,
+                                    color: streak >= 7
+                                        ? AppColors.action
+                                        : const Color(0xFFF59E0B),
+                                  )),
+                              ],
+                            ],
+                          ),
+                        ],
                       ),
-                      if (streak >= 2) ...[
-                        const SizedBox(width: 8),
-                        Icon(Icons.local_fire_department_rounded,
-                            size: 12,
-                            color: streak >= 7
-                                ? AppColors.action
-                                : const Color(0xFFF59E0B)),
-                        const SizedBox(width: 2),
-                        Text('$streak',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 10, fontWeight: FontWeight.w700,
-                            color: streak >= 7
-                                ? AppColors.action
-                                : const Color(0xFFF59E0B),
-                          )),
+                    ),
+                  ),
+
+                  // ── Right accent block ────────────────────
+                  Container(
+                    width: 56,
+                    color: done
+                        ? const Color(0xFFCCCAC4)
+                        : color.withAlpha(30),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Check circle
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          width: 30, height: 30,
+                          decoration: BoxDecoration(
+                            color: done
+                                ? color.withAlpha(60)
+                                : color.withAlpha(20),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: done
+                                  ? color.withAlpha(160)
+                                  : color.withAlpha(60),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: done
+                              ? Icon(Icons.check_rounded,
+                                  size: 16, color: color)
+                              : null,
+                        ),
+                        const SizedBox(height: 8),
+                        // XP
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withAlpha(20),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            done ? '✓' : '+${habit.xpPerCheck}',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 8, fontWeight: FontWeight.w700,
+                              color: done ? subCol : AppColors.gold,
+                            )),
+                        ),
                       ],
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-
-            // Weekly mini dots
-            Row(
-              children: List.generate(7, (i) {
-                final d = DateTime.now().subtract(Duration(days: 6 - i));
-                final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-                final filled = habit.completedDates.contains(key);
-                return Container(
-                  width: 6, height: 6,
-                  margin: const EdgeInsets.only(left: 3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: filled ? color : Colors.white.withAlpha(18),
-                  ),
-                );
-              }),
-            ),
-
-            const SizedBox(width: 6),
-
-            // XP
-            Text('+${habit.xpPerCheck}',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w700,
-                color: AppColors.gold,
-              )),
-          ],
+          ),
         ),
       ),
     );
@@ -399,26 +546,66 @@ class _HabitCard extends StatelessWidget {
 
 // ── Empty state ──────────────────────────────────────────────────────────────
 
-class _EmptyHabits extends StatelessWidget {
+class _EmptyHabits extends StatefulWidget {
+  @override
+  State<_EmptyHabits> createState() => _EmptyHabitsState();
+}
+
+class _EmptyHabitsState extends State<_EmptyHabits>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2400))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.loop_rounded, size: 40, color: Colors.white.withAlpha(60)),
-          const SizedBox(height: 16),
-          Text('no habits yet',
-            style: GoogleFonts.inter(
-              fontSize: 15, fontWeight: FontWeight.w600,
-              color: Colors.white.withAlpha(180),
-            )),
-          const SizedBox(height: 6),
-          Text('build your daily routine',
-            style: GoogleFonts.inter(
-              fontSize: 12, color: Colors.white.withAlpha(120),
-            )),
-        ],
+      child: AnimatedBuilder(
+        animation: _ctrl,
+        builder: (context, child) {
+          final y = sin(_ctrl.value * pi) * 8;
+          final opacity = 0.7 + 0.3 * sin(_ctrl.value * pi);
+          return Transform.translate(
+            offset: Offset(0, -y),
+            child: Opacity(opacity: opacity, child: child),
+          );
+        },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 60, height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(18),
+                border: Border.all(
+                    color: Colors.white.withAlpha(80), width: 1.5),
+              ),
+              child: Icon(Icons.loop_rounded,
+                  size: 26, color: Colors.white.withAlpha(180)),
+            ),
+            const SizedBox(height: 18),
+            Text('no habits yet',
+              style: GoogleFonts.inter(
+                fontSize: 15, fontWeight: FontWeight.w600,
+                color: Colors.white.withAlpha(200),
+              )),
+            const SizedBox(height: 6),
+            Text('build your daily routine',
+              style: GoogleFonts.inter(
+                fontSize: 12, color: Colors.white.withAlpha(160),
+              )),
+          ],
+        ),
       ),
     );
   }
@@ -439,6 +626,12 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
   final _ctrl = TextEditingController();
   HabitCategory _cat = HabitCategory.health;
 
+  static const _kSheetBg     = Color(0xFFF5F1E8);
+  static const _kRowBg       = Color(0xFFEFEBE0);
+  static const _kDivider     = Color(0xFFDDD8CB);
+  static const _kCocoa       = Color(0xFF594536);
+  static const _kCoconutMilk = Color(0xFFF0EDE5);
+
   void _submit() {
     final title = _ctrl.text.trim();
     if (title.isEmpty) return;
@@ -455,122 +648,238 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
     final kb = MediaQuery.of(context).viewInsets.bottom;
 
     return Align(
-      alignment: Alignment.bottomCenter,
+      alignment: Alignment.centerLeft,
       child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 0, 16, kb > 0 ? kb + 12 : 36),
+        padding: EdgeInsets.fromLTRB(12, 48, 40, kb > 0 ? kb + 12 : 48),
         child: Material(
           color: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1C1828),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withAlpha(20)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(100),
-                  blurRadius: 30, offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('NEW HABIT',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 18, fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  )),
-                const SizedBox(height: 16),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(36),
+            child: Container(
+              width: sw * 0.82,
+              decoration: BoxDecoration(
+                color: _kSheetBg,
+                borderRadius: BorderRadius.circular(36),
+                boxShadow: [BoxShadow(
+                  color: Colors.black.withAlpha(80),
+                  blurRadius: 40, offset: const Offset(6, 8),
+                )],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Header ──────────────────────────────
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.habits.withAlpha(25),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(36)),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.habits,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.loop_rounded,
+                                color: Colors.white, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('NEW HABIT',
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 14, fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2, color: _kCocoa,
+                                )),
+                              Text('+${Habit(id: '', title: '', createdAt: DateTime.now()).xpPerCheck} XP / day',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  color: _kCocoa.withAlpha(140),
+                                )),
+                            ],
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: Container(
+                              width: 28, height: 28,
+                              decoration: BoxDecoration(
+                                color: _kDivider,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(Icons.close_rounded,
+                                  color: _kCocoa.withAlpha(150), size: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                // Title field
-                TextField(
-                  controller: _ctrl,
-                  autofocus: true,
-                  style: GoogleFonts.inter(
-                    fontSize: 16, fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'e.g. Meditate 10 minutes',
-                    hintStyle: GoogleFonts.inter(
-                        fontSize: 16, color: Colors.white.withAlpha(60)),
-                    border: InputBorder.none,
-                  ),
-                  onSubmitted: (_) => _submit(),
-                ),
+                    // ── Title field ─────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_rounded,
+                              size: 12, color: _kCocoa.withAlpha(130)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _ctrl,
+                              autofocus: true,
+                              style: GoogleFonts.inter(
+                                fontSize: 15, fontWeight: FontWeight.w600,
+                                color: _kCocoa,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'e.g. Meditate 10 min',
+                                hintStyle: GoogleFonts.inter(
+                                    fontSize: 15,
+                                    color: _kCocoa.withAlpha(100)),
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              onSubmitted: (_) => _submit(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
-                const SizedBox(height: 16),
+                    Divider(height: 1, thickness: 1, color: _kDivider),
 
-                // Category chips
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: HabitCategory.values.map((c) {
-                    final active = _cat == c;
-                    final color = habitCatColor(c);
-                    return GestureDetector(
-                      onTap: () => setState(() => _cat = c),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: active ? color.withAlpha(30) : Colors.white.withAlpha(8),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: active ? color.withAlpha(160) : Colors.white.withAlpha(25),
+                    // ── Category picker ─────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.category_rounded,
+                                  size: 12, color: _kCocoa.withAlpha(130)),
+                              const SizedBox(width: 6),
+                              Text('CATEGORY',
+                                style: GoogleFonts.inter(
+                                  fontSize: 9, fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
+                                  color: _kCocoa.withAlpha(140),
+                                )),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 7,
+                            runSpacing: 7,
+                            children: HabitCategory.values.map((c) {
+                              final active = _cat == c;
+                              final color = habitCatColor(c);
+                              return GestureDetector(
+                                onTap: () => setState(() => _cat = c),
+                                child: AnimatedScale(
+                                  scale: active ? 1.08 : 1.0,
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOutBack,
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 7),
+                                    decoration: BoxDecoration(
+                                      color: active
+                                          ? color.withAlpha(25)
+                                          : _kRowBg,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: active
+                                            ? color.withAlpha(150)
+                                            : _kDivider,
+                                        width: active ? 1.5 : 1.0,
+                                      ),
+                                      boxShadow: active
+                                          ? [BoxShadow(
+                                              color: color.withAlpha(60),
+                                              blurRadius: 8, spreadRadius: 1)]
+                                          : [],
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(habitCatIcon(c), size: 13,
+                                            color: active
+                                                ? color
+                                                : _kCocoa.withAlpha(100)),
+                                        const SizedBox(width: 5),
+                                        Text(habitCatLabel(c),
+                                          style: GoogleFonts.jetBrainsMono(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.5,
+                                            color: active
+                                                ? color
+                                                : _kCocoa.withAlpha(130),
+                                          )),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Submit ──────────────────────────────
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
+                      child: GestureDetector(
+                        onTap: _submit,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          decoration: BoxDecoration(
+                            color: AppColors.habits,
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [BoxShadow(
+                              color: AppColors.habits.withAlpha(70),
+                              blurRadius: 14, offset: const Offset(0, 4),
+                            )],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('CREATE HABIT',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12, fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.4, color: Colors.white,
+                                )),
+                              const SizedBox(width: 8),
+                              Text('+15 XP',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  color: Colors.white.withAlpha(200),
+                                )),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(habitCatIcon(c), size: 14,
-                                color: active ? color : Colors.white.withAlpha(100)),
-                            const SizedBox(width: 6),
-                            Text(habitCatLabel(c),
-                              style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9, fontWeight: FontWeight.w700,
-                                letterSpacing: 0.8,
-                                color: active ? color : Colors.white.withAlpha(120),
-                              )),
-                          ],
-                        ),
                       ),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Submit
-                GestureDetector(
-                  onTap: _submit,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.habits,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [BoxShadow(
-                        color: AppColors.habits.withAlpha(80),
-                        blurRadius: 14, offset: const Offset(0, 4),
-                      )],
                     ),
-                    child: Center(
-                      child: Text('CREATE HABIT',
-                        style: GoogleFonts.inter(
-                          fontSize: 13, fontWeight: FontWeight.w800,
-                          letterSpacing: 1.2, color: Colors.white,
-                        )),
-                    ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
