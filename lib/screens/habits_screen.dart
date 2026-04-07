@@ -156,7 +156,14 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
                 const SizedBox(height: 14),
                 Container(height: 1, color: Colors.white.withAlpha(12)),
-                const SizedBox(height: 16),
+
+                // ── Realtime Dashboard ─────────────────────
+                if (total > 0)
+                  _MotivationDashboard(
+                    habits: habits,
+                    doneToday: doneToday,
+                    total: total,
+                  ),
 
                 // ── Habit list ─────────────────────────────
                 Expanded(
@@ -288,6 +295,270 @@ class _HabitsScreenState extends State<HabitsScreen> {
             color: Colors.red, size: 16),
       ),
       child: _HabitCard(habit: habit, onToggle: () => _toggle(habit)),
+    );
+  }
+}
+
+// ── Done divider ─────────────────────────────────────────────────────────────
+
+// ── Motivation dashboard ─────────────────────────────────────────────────────
+
+class _MotivationDashboard extends StatefulWidget {
+  final List<Habit> habits;
+  final int doneToday;
+  final int total;
+  const _MotivationDashboard({
+    required this.habits,
+    required this.doneToday,
+    required this.total,
+  });
+
+  @override
+  State<_MotivationDashboard> createState() => _MotivationDashboardState();
+}
+
+class _MotivationDashboardState extends State<_MotivationDashboard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ring;
+
+  @override
+  void initState() {
+    super.initState();
+    _ring = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..forward();
+  }
+
+  @override
+  void didUpdateWidget(_MotivationDashboard old) {
+    super.didUpdateWidget(old);
+    if (old.doneToday != widget.doneToday) {
+      _ring.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() { _ring.dispose(); super.dispose(); }
+
+  String get _motivationMsg {
+    final p = widget.total == 0 ? 0.0 : widget.doneToday / widget.total;
+    if (p >= 1.0) return 'ALL HABITS DONE. LEGENDARY.';
+    if (p >= 0.7) return 'ALMOST THERE. FINISH STRONG.';
+    if (p >= 0.4) return 'GOOD MOMENTUM. KEEP GOING.';
+    if (p > 0)    return 'STARTED. DON\'T STOP NOW.';
+    return 'NEW DAY. TIME TO GRIND.';
+  }
+
+  int get _bestStreak {
+    int best = 0;
+    for (final h in widget.habits) {
+      if (h.streak > best) best = h.streak;
+    }
+    return best;
+  }
+
+  int get _totalWeeklyChecks {
+    int sum = 0;
+    for (final h in widget.habits) { sum += h.weeklyCount; }
+    return sum;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = widget.total == 0 ? 0.0 : widget.doneToday / widget.total;
+    final weekMax = widget.total * 7;
+    final weekPct = weekMax == 0 ? 0 : (_totalWeeklyChecks * 100 / weekMax).round();
+    final todayXp = widget.doneToday * 15;
+    final allDone = progress >= 1.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F2EB),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(25),
+              blurRadius: 12, offset: const Offset(0, 5)),
+            BoxShadow(
+              color: Colors.white.withAlpha(180),
+              blurRadius: 1, offset: const Offset(0, -0.5)),
+          ],
+        ),
+        child: Column(
+          children: [
+            // ── Top row: ring + stats ───────────────────
+            Row(
+              children: [
+                // Animated ring
+                SizedBox(
+                  width: 70, height: 70,
+                  child: AnimatedBuilder(
+                    animation: _ring,
+                    builder: (context, _) {
+                      final animProgress = progress *
+                          Curves.easeOutCubic.transform(
+                              _ring.value.clamp(0.0, 1.0));
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          SizedBox(
+                            width: 70, height: 70,
+                            child: CircularProgressIndicator(
+                              value: animProgress,
+                              strokeWidth: 5,
+                              backgroundColor: const Color(0xFF2A2318).withAlpha(15),
+                              valueColor: AlwaysStoppedAnimation(
+                                allDone ? AppColors.success : AppColors.habits),
+                            ),
+                          ),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('${widget.doneToday}/${widget.total}',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 16, fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF2A2318),
+                                )),
+                              Text(allDone ? 'DONE' : 'TODAY',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 7, fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.5,
+                                  color: allDone
+                                      ? AppColors.success
+                                      : const Color(0xFF8A8070),
+                                )),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(width: 16),
+
+                // Stats column
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Row 1: Today's XP + Best streak
+                      Row(
+                        children: [
+                          _MiniStat(
+                            icon: Icons.star_rounded,
+                            label: 'TODAY XP',
+                            value: '+$todayXp',
+                            color: AppColors.gold,
+                          ),
+                          const SizedBox(width: 12),
+                          _MiniStat(
+                            icon: Icons.local_fire_department_rounded,
+                            label: 'BEST STREAK',
+                            value: '$_bestStreak',
+                            color: AppColors.action,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Row 2: Week consistency
+                      Row(
+                        children: [
+                          _MiniStat(
+                            icon: Icons.insights_rounded,
+                            label: 'THIS WEEK',
+                            value: '$weekPct%',
+                            color: AppColors.habits,
+                          ),
+                          const SizedBox(width: 12),
+                          _MiniStat(
+                            icon: Icons.repeat_rounded,
+                            label: 'TOTAL',
+                            value: '$_totalWeeklyChecks/${weekMax}',
+                            color: const Color(0xFF2A2318),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // ── Motivation message ─────────────────────
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+              decoration: BoxDecoration(
+                color: allDone
+                    ? AppColors.success.withAlpha(15)
+                    : AppColors.habits.withAlpha(10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: allDone
+                      ? AppColors.success.withAlpha(50)
+                      : AppColors.habits.withAlpha(30)),
+              ),
+              child: Text(_motivationMsg,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 9, fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                  color: allDone
+                      ? AppColors.success
+                      : const Color(0xFF594536),
+                )),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _MiniStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value,
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 12, fontWeight: FontWeight.w700,
+                  color: color,
+                )),
+              Text(label,
+                style: GoogleFonts.inter(
+                  fontSize: 7, fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                  color: const Color(0xFF8A8070),
+                )),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
