@@ -263,22 +263,30 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   void _showDetail(Task task) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _TaskDetailSheet(
+    Navigator.push(context, PageRouteBuilder(
+      opaque: false,
+      transitionDuration: const Duration(milliseconds: 400),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (ctx, _, __) => _TaskDetailOverlay(
         task: task,
         onComplete: () {
-          Navigator.pop(context);
+          Navigator.pop(ctx);
           _complete(task);
         },
         onDelete: () {
-          Navigator.pop(context);
+          Navigator.pop(ctx);
           _delete(task.id);
         },
+        onEdit: () => setState(() {}),
       ),
-    );
+      transitionsBuilder: (ctx, anim, _, child) {
+        return FadeTransition(
+          opacity: Tween(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+          child: child,
+        );
+      },
+    ));
   }
 
   void _showAdd() {
@@ -651,17 +659,26 @@ class _TasksScreenState extends State<TasksScreen> {
                 Expanded(
                   child: pending.isEmpty && completed.isEmpty
                       ? _Empty(isDark: isDark, hasDateFilter: _selectedDate != null)
-                      : ListView(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
-                          children: [
-                            ...pending.asMap().entries.map((e) =>
-                              _staggered(e.key, _dismissible(e.value, isDark))),
-                            if (completed.isNotEmpty) ...[
-                              _DoneDivider(count: completed.length),
-                              ...completed.asMap().entries.map((e) =>
-                                _staggered(pending.length + e.key, _dismissible(e.value, isDark))),
+                      : RefreshIndicator(
+                          color: vivid,
+                          backgroundColor: const Color(0xFFF5F2EB),
+                          onRefresh: () async {
+                            HapticFeedback.lightImpact();
+                            setState(() {});
+                            await Future.delayed(const Duration(milliseconds: 400));
+                          },
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                            children: [
+                              ...pending.asMap().entries.map((e) =>
+                                _staggered(e.key, _dismissible(e.value, isDark))),
+                              if (completed.isNotEmpty) ...[
+                                _DoneDivider(count: completed.length),
+                                ...completed.asMap().entries.map((e) =>
+                                  _staggered(pending.length + e.key, _dismissible(e.value, isDark))),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                 ),
               ],
@@ -1533,194 +1550,233 @@ class _TaskCardState extends State<_TaskCard> {
 
 // ── Task detail sheet ─────────────────────────────────────────────────────────
 
-class _TaskDetailSheet extends StatelessWidget {
+class _TaskDetailOverlay extends StatelessWidget {
   final Task task;
   final VoidCallback onComplete;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
-  const _TaskDetailSheet({
+  const _TaskDetailOverlay({
     required this.task,
     required this.onComplete,
     required this.onDelete,
+    required this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final color    = _pColor(task.priority);
-    final sheetBg  = isDark ? AppColors.darkCard : const Color(0xFFFFFFFF);
-    final done     = task.isCompleted;
+    final color = _pColor(task.priority);
+    final done  = task.isCompleted;
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: sheetBg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-          24, 12, 24, MediaQuery.of(context).padding.bottom + 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 40, height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: _cardBorder(isDark),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-
-          // Top row: priority tag + delete
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: color.withAlpha(isDark ? 28 : 35),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: color.withAlpha(isDark ? 90 : 120), width: 1),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.flag_rounded, size: 12, color: color),
-                    const SizedBox(width: 5),
-                    Text('${_pLabel(task.priority)} priority',
-                      style: GoogleFonts.inter(
-                        fontSize: 11, fontWeight: FontWeight.w600,
-                        color: color,
-                      )),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: onDelete,
-                child: Container(
-                  width: 34, height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.red.withAlpha(isDark ? 20 : 15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: Colors.red.withAlpha(isDark ? 60 : 50)),
+    return Scaffold(
+      backgroundColor: Colors.black.withAlpha(180),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Top bar ────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(15),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white.withAlpha(30)),
+                      ),
+                      child: Icon(Icons.close_rounded,
+                          size: 20, color: Colors.white.withAlpha(200)),
+                    ),
                   ),
-                  child: const Icon(Icons.delete_outline_rounded,
-                      size: 15, color: Colors.red),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // XP label
-          Text('+${_pXp(task.priority)} XP',
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 11, fontWeight: FontWeight.w700,
-              color: color.withAlpha(180),
-            )),
-
-          const SizedBox(height: 6),
-
-          // Title
-          Text(task.title,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24, fontWeight: FontWeight.w700,
-              height: 1.2,
-              color: done ? _textSub(isDark) : _textPrimary(isDark),
-              decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
-              decorationColor: _textSub(isDark).withAlpha(150),
-            )),
-
-          // Date / time
-          if (task.dueDate != null || task.dueTime != null) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                if (task.dueTime != null)
-                  Text(_fmt24(task.dueTime!),
-                    style: GoogleFonts.inter(
-                      fontSize: 14, fontWeight: FontWeight.w500,
-                      color: _textSub(isDark),
-                    )),
-                if (task.dueDate != null) ...[
-                  if (task.dueTime != null)
-                    Text(' • ',
-                      style: GoogleFonts.inter(
-                          fontSize: 14, color: _textSub(isDark))),
-                  Text('due ${_fmtDate(task.dueDate!)}',
-                    style: GoogleFonts.inter(
-                      fontSize: 14, fontWeight: FontWeight.w500,
-                      color: _textSub(isDark),
-                    )),
+                  const Spacer(),
+                  // Delete
+                  GestureDetector(
+                    onTap: onDelete,
+                    child: Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.red.withAlpha(20),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.red.withAlpha(50)),
+                      ),
+                      child: const Icon(Icons.delete_outline_rounded,
+                          size: 18, color: Colors.red),
+                    ),
+                  ),
                 ],
-              ],
+              ),
             ),
-          ],
 
-          // Description
-          if (task.description.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text('Description',
-              style: GoogleFonts.inter(
-                fontSize: 11, fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-                color: _textSub(isDark).withAlpha(150),
-              )),
-            const SizedBox(height: 6),
-            Text(task.description,
-              style: GoogleFonts.inter(
-                fontSize: 15, height: 1.55,
-                color: _textSub(isDark),
-              )),
-          ],
+            const Spacer(),
 
-          const SizedBox(height: 28),
-
-          // Complete button
-          if (!done)
-            GestureDetector(
-              onTap: onComplete,
+            // ── Card ───────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white : Colors.black,
-                  borderRadius: BorderRadius.circular(14),
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: (isDark ? Colors.white : Colors.black)
-                          .withAlpha(30),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6),
-                    ),
+                      color: Colors.black.withAlpha(40),
+                      blurRadius: 30, offset: const Offset(0, 10)),
                   ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Complete mission',
-                      style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.black : Colors.white,
+                    // Priority + XP
+                    Row(children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: color.withAlpha(25),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: color.withAlpha(80)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.flag_rounded, size: 12, color: color),
+                            const SizedBox(width: 5),
+                            Text(_pLabel(task.priority),
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 10, fontWeight: FontWeight.w700,
+                                letterSpacing: 1, color: color)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withAlpha(20),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text('+${_pXp(task.priority)} XP',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 9, fontWeight: FontWeight.w700,
+                            color: AppColors.gold)),
+                      ),
+                      const Spacer(),
+                      Text(task.category == TaskCategory.work ? 'WORK' : 'LIVE',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9, fontWeight: FontWeight.w700,
+                          letterSpacing: 1.5, color: subCol)),
+                    ]),
+
+                    const SizedBox(height: 20),
+
+                    // Title
+                    Text(task.title,
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 28, fontWeight: FontWeight.w800,
+                        fontStyle: FontStyle.italic,
+                        height: 1.15, color: textCol,
+                        decoration: done
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                        decorationColor: textCol.withAlpha(100),
                       )),
-                    const SizedBox(width: 10),
-                    Text('+${_pXp(task.priority)} XP',
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 11, fontWeight: FontWeight.w700,
-                        color: color,
-                      )),
+
+                    // Description
+                    if (task.description.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(task.description,
+                        style: GoogleFonts.inter(
+                          fontSize: 14, height: 1.6, color: subCol)),
+                    ],
+
+                    // Date / Time
+                    if (task.dueDate != null || task.dueTime != null) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: textCol.withAlpha(8),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(children: [
+                          if (task.dueTime != null) ...[
+                            Icon(Icons.access_time_rounded,
+                                size: 14, color: subCol),
+                            const SizedBox(width: 6),
+                            Text(_fmt24(task.dueTime!),
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 12, fontWeight: FontWeight.w600,
+                                color: textCol)),
+                            const SizedBox(width: 12),
+                          ],
+                          if (task.dueDate != null) ...[
+                            Icon(Icons.calendar_today_rounded,
+                                size: 14, color: subCol),
+                            const SizedBox(width: 6),
+                            Text(_fmtDate(task.dueDate!),
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 12, fontWeight: FontWeight.w600,
+                                color: textCol)),
+                          ],
+                        ]),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ),
-        ],
+
+            const SizedBox(height: 20),
+
+            // ── Complete button ─────────────────────
+            if (!done)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: GestureDetector(
+                  onTap: onComplete,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [BoxShadow(
+                        color: color.withAlpha(100),
+                        blurRadius: 20, offset: const Offset(0, 6))],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.check_rounded,
+                            size: 20, color: Colors.white),
+                        const SizedBox(width: 10),
+                        Text('COMPLETE MISSION',
+                          style: GoogleFonts.inter(
+                            fontSize: 14, fontWeight: FontWeight.w800,
+                            letterSpacing: 1, color: Colors.white)),
+                        const SizedBox(width: 10),
+                        Text('+${_pXp(task.priority)} XP',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 10, fontWeight: FontWeight.w700,
+                            color: Colors.white.withAlpha(200))),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+            const Spacer(),
+          ],
+        ),
       ),
     );
   }

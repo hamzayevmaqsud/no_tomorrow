@@ -7,6 +7,7 @@ import '../models/habit.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import 'tasks_screen.dart';
+import 'stats_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -43,6 +44,23 @@ class ProfileScreen extends StatelessWidget {
                       fontSize: 26, fontWeight: FontWeight.w800,
                       letterSpacing: 3, color: const Color(0xFFF0E6D3))),
                   ]),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => const StatsScreen())),
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.action.withAlpha(20),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.action.withAlpha(50)),
+                        ),
+                        child: Icon(Icons.insights_rounded,
+                            size: 18, color: AppColors.action),
+                      ),
+                    ),
+                  ),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: GestureDetector(

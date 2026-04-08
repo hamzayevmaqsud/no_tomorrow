@@ -523,18 +523,20 @@ class _HomeScreenState extends State<HomeScreen>
             right: 0,
             child: IgnorePointer(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 380),
+                duration: const Duration(milliseconds: 300),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeIn,
                 transitionBuilder: (child, anim) {
                   final slide = Tween<Offset>(
-                    begin: const Offset(0, 0.18),
+                    begin: const Offset(0, 0.15),
                     end: Offset.zero,
-                  ).animate(CurvedAnimation(
-                    parent: anim,
-                    curve: const Cubic(0.16, 1.0, 0.3, 1.0),
-                  ));
+                  ).animate(anim);
                   return FadeTransition(
                     opacity: anim,
-                    child: SlideTransition(position: slide, child: child),
+                    child: SlideTransition(position: slide,
+                      child: ScaleTransition(
+                        scale: Tween(begin: 0.95, end: 1.0).animate(anim),
+                        child: child)),
                   );
                 },
                 child: _SectionLabel(
