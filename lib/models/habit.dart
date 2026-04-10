@@ -38,13 +38,34 @@ class Habit {
   /// Which dates this habit was checked in
   final Set<String> completedDates; // "2026-04-06" format
 
+  // Schedule: which days of week (1=Mon..7=Sun), empty=every day
+  final List<int> scheduleDays;
+
+  // Routine type
+  String routineSlot; // 'morning', 'evening', '' (none)
+
   Habit({
     required this.id,
     required this.title,
     this.category = HabitCategory.health,
     required this.createdAt,
     Set<String>? completedDates,
-  }) : completedDates = completedDates ?? {};
+    List<int>? scheduleDays,
+    this.routineSlot = '',
+  }) : completedDates = completedDates ?? {},
+       scheduleDays = scheduleDays ?? [];
+
+  /// Whether this habit is scheduled for today
+  bool isScheduledToday() {
+    if (scheduleDays.isEmpty) return true; // every day
+    return scheduleDays.contains(DateTime.now().weekday);
+  }
+
+  String get scheduleLabel {
+    if (scheduleDays.isEmpty) return 'Every day';
+    const days = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return scheduleDays.map((d) => days[d]).join(', ');
+  }
 
   static String _dateKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
