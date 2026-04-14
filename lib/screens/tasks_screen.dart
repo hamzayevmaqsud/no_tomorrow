@@ -398,7 +398,7 @@ class _TasksScreenState extends State<TasksScreen> {
       barrierDismissible: true,
       barrierLabel: 'dismiss',
       barrierColor: Colors.black.withAlpha(140),
-      transitionDuration: const Duration(milliseconds: 250),
+      transitionDuration: const Duration(milliseconds: 340),
       pageBuilder: (ctx, _, _) => _AddSheet(
         onAdd: (task) {
           task.category = widget.category;
@@ -429,17 +429,13 @@ class _TasksScreenState extends State<TasksScreen> {
         preselectedDate: _selectedDate,
         isWork: widget.category == TaskCategory.work,
       ),
-      transitionBuilder: (_, anim, __, child) {
-        return FadeTransition(
-          opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
-          child: ScaleTransition(
-            scale: Tween(begin: 0.95, end: 1.0).animate(
-              CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-            alignment: Alignment.centerLeft,
-            child: child,
-          ),
-        );
-      },
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(-1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+        child: child,
+      ),
     );
   }
 
