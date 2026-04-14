@@ -2796,6 +2796,7 @@ class _AddSheet extends StatefulWidget {
 class _AddSheetState extends State<_AddSheet> {
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
+  final _titleFocus = FocusNode();
   TaskPriority _priority = TaskPriority.medium;
   TimeOfDay? _time;
   late DateTime? _date;
@@ -2805,11 +2806,16 @@ class _AddSheetState extends State<_AddSheet> {
   void initState() {
     super.initState();
     _date = widget.preselectedDate;
+    // Delay focus so slide animation finishes first
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) _titleFocus.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _titleCtrl.dispose();
+    _titleFocus.dispose();
     _descCtrl.dispose();
     super.dispose();
   }
@@ -3078,7 +3084,7 @@ class _AddSheetState extends State<_AddSheet> {
                           topBorder: false,
                           content: TextField(
                             controller: _titleCtrl,
-                            autofocus: true,
+                            focusNode: _titleFocus,
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
