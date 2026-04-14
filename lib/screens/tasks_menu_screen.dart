@@ -72,6 +72,29 @@ class TasksMenuScreen extends StatelessWidget {
               ),
             ),
           ),
+
+          // ── Back button ────────────────────────────────────
+          Positioned(
+            top: 0, left: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16, top: 8),
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(120),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withAlpha(30)),
+                    ),
+                    child: Icon(Icons.chevron_left_rounded,
+                        size: 24, color: Colors.white.withAlpha(220)),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     ));
