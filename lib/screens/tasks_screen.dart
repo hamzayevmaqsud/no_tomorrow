@@ -2100,307 +2100,295 @@ class _TaskCardState extends State<_TaskCard> {
 
 // ── Task detail sheet ─────────────────────────────────────────────────────────
 
-class _TaskDetailOverlay extends StatelessWidget {
+class _TaskDetailOverlay extends StatefulWidget {
   final Task task;
   final VoidCallback onComplete;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
   const _TaskDetailOverlay({
-    required this.task,
-    required this.onComplete,
-    required this.onDelete,
-    required this.onEdit,
+    required this.task, required this.onComplete,
+    required this.onDelete, required this.onEdit,
   });
 
   @override
+  State<_TaskDetailOverlay> createState() => _TaskDetailOverlayState();
+}
+
+class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
+  late final TextEditingController _titleCtrl;
+  late final TextEditingController _descCtrl;
+  bool _editing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleCtrl = TextEditingController(text: widget.task.title);
+    _descCtrl = TextEditingController(text: widget.task.description);
+  }
+
+  @override
+  void dispose() { _titleCtrl.dispose(); _descCtrl.dispose(); super.dispose(); }
+
+  void _save() {
+    widget.task.title = _titleCtrl.text.trim();
+    widget.task.description = _descCtrl.text.trim();
+    widget.onEdit();
+    setState(() => _editing = false);
+  }
+
+  void _pickDate() async {
+    final now = DateTime.now();
+    final d = await showDatePicker(
+      context: context, initialDate: widget.task.dueDate ?? now,
+      firstDate: DateTime(now.year - 1), lastDate: DateTime(now.year + 2));
+    if (d != null) { setState(() => widget.task.dueDate = d); widget.onEdit(); }
+  }
+
+  void _pickTime() async {
+    final t = await showTimePicker(
+      context: context, initialTime: widget.task.dueTime ?? TimeOfDay.now());
+    if (t != null) { setState(() => widget.task.dueTime = t); widget.onEdit(); }
+  }
+
+  void _toggleSubtask(int i) {
+    setState(() => widget.task.subtasks[i].done = !widget.task.subtasks[i].done);
+    widget.onEdit();
+  }
+
+  void _addSubtask() {
+    setState(() => widget.task.subtasks.add(SubTask(title: 'New step')));
+    widget.onEdit();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final color = _pColor(task.priority);
-    final done = task.isCompleted;
+    final t = widget.task;
+    final color = _pColor(t.priority);
+    final done = t.isCompleted;
     const cardBg = Color(0xFFF5F2EB);
     const textCol = Color(0xFF2A2318);
     const subCol = Color(0xFF8A8070);
 
     return Scaffold(
       backgroundColor: Colors.black.withAlpha(180),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Top bar ────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(15),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.white.withAlpha(30)),
-                      ),
-                      child: Icon(
-                        Icons.close_rounded,
-                        size: 20,
-                        color: Colors.white.withAlpha(200),
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  // Delete
-                  GestureDetector(
-                    onTap: onDelete,
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.red.withAlpha(20),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.red.withAlpha(50)),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const Spacer(),
-
-            // ── Card ───────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
+      body: SafeArea(child: Column(children: [
+        // ── Top bar ──────────────────────────────
+        Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Row(children: [
+            GestureDetector(onTap: () { if (_editing) _save(); Navigator.pop(context); },
+              child: Container(width: 44, height: 44,
                 decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(40),
-                      blurRadius: 30,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Priority + XP
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withAlpha(25),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: color.withAlpha(80)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.flag_rounded, size: 12, color: color),
-                              const SizedBox(width: 5),
-                              Text(
-                                _pLabel(task.priority),
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                  color: color,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.gold.withAlpha(20),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '+${_pXp(task.priority)} XP',
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.gold,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          task.category == TaskCategory.work ? 'WORK' : 'LIVE',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.5,
-                            color: subCol,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Title
-                    Text(
-                      task.title,
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        fontStyle: FontStyle.italic,
-                        height: 1.15,
-                        color: textCol,
-                        decoration: done
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                        decorationColor: textCol.withAlpha(100),
-                      ),
-                    ),
-
-                    // Description
-                    if (task.description.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        task.description,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          height: 1.6,
-                          color: subCol,
-                        ),
-                      ),
-                    ],
-
-                    // Date / Time
-                    if (task.dueDate != null || task.dueTime != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: textCol.withAlpha(8),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            if (task.dueTime != null) ...[
-                              Icon(
-                                Icons.access_time_rounded,
-                                size: 14,
-                                color: subCol,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _fmt24(task.dueTime!),
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: textCol,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                            ],
-                            if (task.dueDate != null) ...[
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                size: 14,
-                                color: subCol,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                _fmtDate(task.dueDate!),
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: textCol,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // ── Complete button ─────────────────────
-            if (!done)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: GestureDetector(
-                  onTap: onComplete,
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: color.withAlpha(100),
-                          blurRadius: 20,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.check_rounded,
-                          size: 20,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'COMPLETE MISSION',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          '+${_pXp(task.priority)} XP',
-                          style: GoogleFonts.jetBrainsMono(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white.withAlpha(200),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
+                  color: Colors.white.withAlpha(15), borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withAlpha(30))),
+                child: Icon(Icons.close_rounded, size: 20, color: Colors.white.withAlpha(200)))),
             const Spacer(),
+            // Edit toggle
+            GestureDetector(
+              onTap: () { if (_editing) _save(); else setState(() => _editing = true); },
+              child: Container(width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: _editing ? AppColors.action.withAlpha(25) : Colors.white.withAlpha(15),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _editing ? AppColors.action.withAlpha(80) : Colors.white.withAlpha(30))),
+                child: Icon(_editing ? Icons.check_rounded : Icons.edit_rounded,
+                    size: 18, color: _editing ? AppColors.action : Colors.white.withAlpha(200)))),
+            const SizedBox(width: 8),
+            GestureDetector(onTap: widget.onDelete,
+              child: Container(width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.red.withAlpha(20), borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.red.withAlpha(50))),
+                child: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red))),
+          ])),
+
+        const SizedBox(height: 20),
+
+        // ── Scrollable card ──────────────────────
+        Expanded(child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: cardBg, borderRadius: BorderRadius.circular(28),
+                boxShadow: [BoxShadow(color: Colors.black.withAlpha(40), blurRadius: 30, offset: const Offset(0, 10))]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Priority + XP + Category
+                Row(children: [
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: color.withAlpha(25),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: color.withAlpha(80))),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.flag_rounded, size: 11, color: color),
+                      const SizedBox(width: 4),
+                      Text(_pLabel(t.priority), style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: color)),
+                    ])),
+                  const SizedBox(width: 6),
+                  Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(color: AppColors.gold.withAlpha(20),
+                      borderRadius: BorderRadius.circular(8)),
+                    child: Text('+${_pXp(t.priority)} XP', style: GoogleFonts.jetBrainsMono(
+                      fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold))),
+                  const Spacer(),
+                  Text(t.category == TaskCategory.work ? 'WORK' : 'LIVE',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
+                ]),
+
+                const SizedBox(height: 16),
+
+                // Title (editable)
+                _editing
+                    ? TextField(controller: _titleCtrl,
+                        style: GoogleFonts.playfairDisplay(fontSize: 24, fontWeight: FontWeight.w800,
+                          fontStyle: FontStyle.italic, color: textCol),
+                        decoration: InputDecoration(
+                          hintText: 'Task title', border: InputBorder.none,
+                          hintStyle: GoogleFonts.playfairDisplay(fontSize: 24, color: subCol.withAlpha(100)),
+                          isDense: true, contentPadding: EdgeInsets.zero))
+                    : Text(t.title, style: GoogleFonts.playfairDisplay(
+                        fontSize: 24, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic,
+                        height: 1.15, color: textCol,
+                        decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
+                        decorationColor: textCol.withAlpha(100))),
+
+                const SizedBox(height: 12),
+
+                // Description (editable)
+                _editing
+                    ? TextField(controller: _descCtrl, maxLines: 4,
+                        style: GoogleFonts.inter(fontSize: 13, height: 1.5, color: subCol),
+                        decoration: InputDecoration(
+                          hintText: 'Add description...', border: InputBorder.none,
+                          hintStyle: GoogleFonts.inter(fontSize: 13, color: subCol.withAlpha(80)),
+                          isDense: true, contentPadding: EdgeInsets.zero))
+                    : t.description.isNotEmpty
+                        ? Text(t.description, style: GoogleFonts.inter(
+                            fontSize: 13, height: 1.5, color: subCol))
+                        : Text('No description', style: GoogleFonts.inter(
+                            fontSize: 13, fontStyle: FontStyle.italic,
+                            color: subCol.withAlpha(80))),
+
+                const SizedBox(height: 16),
+
+                // Date + Time (tappable)
+                Row(children: [
+                  GestureDetector(
+                    onTap: _pickDate,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: textCol.withAlpha(8), borderRadius: BorderRadius.circular(12)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.calendar_today_rounded, size: 13, color: subCol),
+                        const SizedBox(width: 6),
+                        Text(t.dueDate != null ? _fmtDate(t.dueDate!) : 'Add date',
+                          style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600,
+                            color: t.dueDate != null ? textCol : subCol.withAlpha(100))),
+                      ]))),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _pickTime,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: textCol.withAlpha(8), borderRadius: BorderRadius.circular(12)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.access_time_rounded, size: 13, color: subCol),
+                        const SizedBox(width: 6),
+                        Text(t.dueTime != null ? _fmt24(t.dueTime!) : 'Add time',
+                          style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600,
+                            color: t.dueTime != null ? textCol : subCol.withAlpha(100))),
+                      ]))),
+                ]),
+
+                // Subtasks
+                if (t.subtasks.isNotEmpty || _editing) ...[
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Text('SUBTASKS', style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
+                    const Spacer(),
+                    if (_editing) GestureDetector(onTap: _addSubtask,
+                      child: Icon(Icons.add_circle_outline_rounded, size: 18, color: AppColors.action)),
+                  ]),
+                  const SizedBox(height: 8),
+                  ...t.subtasks.asMap().entries.map((e) {
+                    final s = e.value;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: GestureDetector(
+                        onTap: () => _toggleSubtask(e.key),
+                        child: Row(children: [
+                          Container(width: 20, height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: s.done ? AppColors.success.withAlpha(25) : textCol.withAlpha(8),
+                              border: Border.all(
+                                color: s.done ? AppColors.success : textCol.withAlpha(25), width: 1.2)),
+                            child: s.done ? Icon(Icons.check_rounded, size: 12, color: AppColors.success) : null),
+                          const SizedBox(width: 10),
+                          Expanded(child: Text(s.title, style: GoogleFonts.inter(
+                            fontSize: 13, fontWeight: FontWeight.w500,
+                            color: s.done ? subCol : textCol,
+                            decoration: s.done ? TextDecoration.lineThrough : TextDecoration.none))),
+                        ]),
+                      ),
+                    );
+                  }),
+                ],
+
+                // Tags
+                if (t.tags.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Wrap(spacing: 6, runSpacing: 4,
+                    children: t.tags.map((tag) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: textCol.withAlpha(8), borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: textCol.withAlpha(15))),
+                      child: Text('#$tag', style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                    )).toList()),
+                ],
+
+                // Recurring
+                if (t.recurType != RecurType.none) ...[
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    Icon(Icons.repeat_rounded, size: 12, color: subCol),
+                    const SizedBox(width: 6),
+                    Text(t.recurLabel, style: GoogleFonts.jetBrainsMono(
+                      fontSize: 10, fontWeight: FontWeight.w600, color: subCol)),
+                  ]),
+                ],
+              ])),
+
+            const SizedBox(height: 16),
+
+            // ── Complete button ───────────────────
+            if (!done)
+              GestureDetector(onTap: widget.onComplete,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(color: color.withAlpha(100), blurRadius: 20, offset: const Offset(0, 6))]),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    const Icon(Icons.check_rounded, size: 20, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Text('COMPLETE MISSION', style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1, color: Colors.white)),
+                    const SizedBox(width: 10),
+                    Text('+${_pXp(t.priority)} XP', style: GoogleFonts.jetBrainsMono(
+                      fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(200))),
+                  ]))),
           ],
-        ),
-      ),
+        )),
+      ])),
     );
   }
 }
