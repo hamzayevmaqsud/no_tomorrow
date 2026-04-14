@@ -183,15 +183,35 @@ class _HabitsScreenState extends State<HabitsScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 14),
-                Container(height: 1, color: Colors.white.withAlpha(12)),
+                const SizedBox(height: 10),
 
-                // ── Realtime Dashboard (always visible) ────
-                _MotivationDashboard(
-                  habits: habits,
-                  doneToday: doneToday,
-                  total: total,
+                // ── Always-on calendar + stats ────────────
+                _HabitCalendarBar(habits: habits),
+
+                const SizedBox(height: 8),
+
+                // ── Inline stats row ──────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(children: [
+                    _InlineStat(icon: Icons.check_circle_rounded,
+                      value: '$doneToday/$total', label: 'TODAY',
+                      color: doneToday == total && total > 0
+                          ? AppColors.success : AppColors.habits),
+                    const SizedBox(width: 8),
+                    _InlineStat(icon: Icons.local_fire_department_rounded,
+                      value: '${GameState.instance.streak}',
+                      label: 'STREAK',
+                      color: GameState.instance.streak >= 7
+                          ? AppColors.action : const Color(0xFFF59E0B)),
+                    const SizedBox(width: 8),
+                    _InlineStat(icon: Icons.star_rounded,
+                      value: '+${doneToday * 15}',
+                      label: 'XP TODAY', color: AppColors.gold),
+                  ]),
                 ),
+
+                const SizedBox(height: 8),
 
                 // ── Habit list ─────────────────────────────
                 Expanded(
@@ -663,6 +683,150 @@ class _MiniStat extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Habit Calendar Bar (always visible, compact 14-day strip) ─────────────────
+
+class _HabitCalendarBar extends StatelessWidget {
+  final List<Habit> habits;
+  const _HabitCalendarBar({required this.habits});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final total = habits.length;
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(20),
+              blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          children: [
+            // 14-day strip
+            Row(
+              children: List.generate(14, (i) {
+                final day = now.subtract(Duration(days: 13 - i));
+                final isToday = i == 13;
+                final isFuture = day.isAfter(now);
+                final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+
+                // Count completions for this day
+                int dayDone = 0;
+                for (final h in habits) {
+                  if (h.completedDates.contains(key)) dayDone++;
+                }
+
+                // Color: green=all, orange=partial, grey=none
+                final Color dotColor;
+                if (total == 0 || isFuture) {
+                  dotColor = subCol.withAlpha(20);
+                } else if (dayDone >= total) {
+                  dotColor = AppColors.success;
+                } else if (dayDone > 0) {
+                  dotColor = const Color(0xFFF59E0B);
+                } else {
+                  dotColor = subCol.withAlpha(25);
+                }
+
+                return Expanded(
+                  child: Column(
+                    children: [
+                      // Day number
+                      Text('${day.day}',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9,
+                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                          color: isToday ? textCol : subCol.withAlpha(160))),
+                      const SizedBox(height: 4),
+                      // Colored dot
+                      Container(
+                        width: isToday ? 20 : 16,
+                        height: isToday ? 20 : 16,
+                        decoration: BoxDecoration(
+                          color: dotColor,
+                          shape: BoxShape.circle,
+                          border: isToday
+                              ? Border.all(color: AppColors.habits.withAlpha(180), width: 2)
+                              : null,
+                          boxShadow: dayDone > 0 && dayDone >= total
+                              ? [BoxShadow(color: AppColors.success.withAlpha(60), blurRadius: 6)]
+                              : [],
+                        ),
+                        child: dayDone > 0 && !isFuture
+                            ? Center(child: Text('$dayDone',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 7, fontWeight: FontWeight.w700,
+                                  color: dayDone >= total ? Colors.white : textCol)))
+                            : null,
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 6),
+            // Day name labels
+            Row(
+              children: List.generate(14, (i) {
+                final day = now.subtract(Duration(days: 13 - i));
+                const names = ['M','T','W','T','F','S','S'];
+                return Expanded(
+                  child: Center(child: Text(names[day.weekday - 1],
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 6, fontWeight: FontWeight.w600,
+                      color: subCol.withAlpha(100)))),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Inline stat pill ─────────────────────────────────────────────────────────
+
+class _InlineStat extends StatelessWidget {
+  final IconData icon;
+  final String value, label;
+  final Color color;
+  const _InlineStat({required this.icon, required this.value,
+    required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withAlpha(12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withAlpha(30)),
+        ),
+        child: Column(children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(height: 2),
+          Text(value, style: GoogleFonts.jetBrainsMono(
+            fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+          Text(label, style: GoogleFonts.jetBrainsMono(
+            fontSize: 7, fontWeight: FontWeight.w600,
+            letterSpacing: 1, color: Colors.white.withAlpha(80))),
+        ]),
       ),
     );
   }
