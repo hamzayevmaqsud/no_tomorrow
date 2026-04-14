@@ -762,6 +762,32 @@ class _HabitCard extends StatelessWidget {
                               ],
                             ],
                           ),
+
+                          // Schedule + routine
+                          if (habit.scheduleDays.isNotEmpty || habit.routineSlot.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(children: [
+                              if (habit.scheduleDays.isNotEmpty) ...[
+                                Icon(Icons.repeat_rounded, size: 9, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(habit.scheduleLabel,
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                              ],
+                              if (habit.routineSlot.isNotEmpty) ...[
+                                if (habit.scheduleDays.isNotEmpty) const SizedBox(width: 8),
+                                Icon(
+                                  habit.routineSlot == 'morning'
+                                      ? Icons.wb_sunny_rounded
+                                      : Icons.nightlight_round,
+                                  size: 9, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(habit.routineSlot.toUpperCase(),
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                              ],
+                            ]),
+                          ],
                         ],
                       ),
                     ),
@@ -907,6 +933,8 @@ class _AddHabitSheet extends StatefulWidget {
 class _AddHabitSheetState extends State<_AddHabitSheet> {
   final _ctrl = TextEditingController();
   HabitCategory _cat = HabitCategory.health;
+  final Set<int> _days = {}; // empty = every day
+  String _routine = ''; // '', 'morning', 'evening'
 
   static const _kSheetBg     = Color(0xFFF5F1E8);
   static const _kRowBg       = Color(0xFFEFEBE0);
@@ -922,6 +950,8 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
       title: title,
       category: _cat,
       createdAt: DateTime.now(),
+      scheduleDays: _days.toList()..sort(),
+      routineSlot: _routine,
     ));
   }
 
@@ -1123,6 +1153,97 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                       ),
                     ),
 
+                    // ── Schedule days ────────────────────────
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.calendar_today_rounded, size: 12,
+                                color: _kCocoa.withAlpha(130)),
+                            const SizedBox(width: 6),
+                            Text('REPEAT', style: GoogleFonts.inter(
+                              fontSize: 9, fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
+                            const Spacer(),
+                            Text(_days.isEmpty ? 'Every day' : '${_days.length} days',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9, fontWeight: FontWeight.w600,
+                                color: _kCocoa.withAlpha(100))),
+                          ]),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [1, 2, 3, 4, 5, 6, 7].map((d) {
+                              final active = _days.contains(d);
+                              const labels = ['', 'M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                              return Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() {
+                                    if (active) { _days.remove(d); }
+                                    else { _days.add(d); }
+                                  }),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    margin: EdgeInsets.only(right: d < 7 ? 4 : 0),
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: active
+                                          ? AppColors.habits.withAlpha(25)
+                                          : _kRowBg,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: active
+                                            ? AppColors.habits.withAlpha(120)
+                                            : _kDivider),
+                                    ),
+                                    child: Center(
+                                      child: Text(labels[d],
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 10, fontWeight: FontWeight.w700,
+                                          color: active
+                                              ? AppColors.habits
+                                              : _kCocoa.withAlpha(100))),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Routine slot ─────────────────────────
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.wb_sunny_rounded, size: 12,
+                                color: _kCocoa.withAlpha(130)),
+                            const SizedBox(width: 6),
+                            Text('ROUTINE', style: GoogleFonts.inter(
+                              fontSize: 9, fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
+                          ]),
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            _RoutineChip(label: 'MORNING', icon: Icons.wb_sunny_rounded,
+                              active: _routine == 'morning',
+                              onTap: () => setState(() => _routine = _routine == 'morning' ? '' : 'morning')),
+                            const SizedBox(width: 8),
+                            _RoutineChip(label: 'EVENING', icon: Icons.nightlight_round,
+                              active: _routine == 'evening',
+                              onTap: () => setState(() => _routine = _routine == 'evening' ? '' : 'evening')),
+                          ]),
+                        ],
+                      ),
+                    ),
+
                     // ── Submit ──────────────────────────────
                     Divider(height: 1, thickness: 1, color: _kDivider),
                     Padding(
@@ -1165,6 +1286,43 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _RoutineChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool active;
+  final VoidCallback onTap;
+  const _RoutineChip({required this.label, required this.icon,
+    required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    const cocoa = Color(0xFF594536);
+    const divider = Color(0xFFDDD8CB);
+    const rowBg = Color(0xFFEFEBE0);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.habits.withAlpha(20) : rowBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: active ? AppColors.habits.withAlpha(120) : divider),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 13, color: active ? AppColors.habits : cocoa.withAlpha(100)),
+          const SizedBox(width: 6),
+          Text(label, style: GoogleFonts.jetBrainsMono(
+            fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.8,
+            color: active ? AppColors.habits : cocoa.withAlpha(130))),
+        ]),
       ),
     );
   }
