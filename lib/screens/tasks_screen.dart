@@ -2137,17 +2137,30 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
     setState(() => _editing = false);
   }
 
+  Widget _themedPicker(BuildContext ctx, Widget? child) => Theme(
+    data: ThemeData.dark().copyWith(
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.action,
+        surface: Color(0xFF1C1C27),
+        onSurface: Colors.white,
+      ),
+    ),
+    child: child!,
+  );
+
   void _pickDate() async {
     final now = DateTime.now();
     final d = await showDatePicker(
       context: context, initialDate: widget.task.dueDate ?? now,
-      firstDate: DateTime(now.year - 1), lastDate: DateTime(now.year + 2));
+      firstDate: DateTime(now.year - 1), lastDate: DateTime(now.year + 2),
+      builder: _themedPicker);
     if (d != null) { setState(() => widget.task.dueDate = d); widget.onEdit(); }
   }
 
   void _pickTime() async {
     final t = await showTimePicker(
-      context: context, initialTime: widget.task.dueTime ?? TimeOfDay.now());
+      context: context, initialTime: widget.task.dueTime ?? TimeOfDay.now(),
+      builder: _themedPicker);
     if (t != null) { setState(() => widget.task.dueTime = t); widget.onEdit(); }
   }
 
@@ -2809,11 +2822,19 @@ class _AddSheetState extends State<_AddSheet> {
   }
 
   void _pickTime() async {
-    final t = await showModalBottomSheet<TimeOfDay>(
+    final t = await showTimePicker(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _TimeDrumPicker(initial: _time ?? TimeOfDay.now()),
+      initialTime: _time ?? TimeOfDay.now(),
+      builder: (ctx, child) => Theme(
+        data: ThemeData.dark().copyWith(
+          colorScheme: ColorScheme.dark(
+            primary: widget.isWork ? AppColors.action : const Color(0xFF10B981),
+            surface: const Color(0xFF1C1C27),
+            onSurface: Colors.white,
+          ),
+        ),
+        child: child!,
+      ),
     );
     if (t != null) setState(() => _time = t);
   }
@@ -2827,13 +2848,10 @@ class _AddSheetState extends State<_AddSheet> {
       lastDate: DateTime(now.year + 2),
       builder: (ctx, child) => Theme(
         data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.tasks,
-            surface: AppColors.darkCard,
+          colorScheme: ColorScheme.dark(
+            primary: widget.isWork ? AppColors.action : const Color(0xFF10B981),
+            surface: const Color(0xFF1C1C27),
             onSurface: Colors.white,
-          ),
-          dialogTheme: const DialogThemeData(
-            backgroundColor: AppColors.darkCard,
           ),
         ),
         child: child!,
