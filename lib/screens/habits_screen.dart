@@ -44,6 +44,24 @@ class _HabitsScreenState extends State<HabitsScreen> {
     ));
   }
 
+  void _showDetail(Habit habit) {
+    HapticFeedback.lightImpact();
+    Navigator.push(context, PageRouteBuilder(
+      opaque: false,
+      transitionDuration: const Duration(milliseconds: 400),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (ctx, _, __) => _HabitDetailView(
+        habit: habit,
+        onToggle: () { _toggle(habit); },
+      ),
+      transitionsBuilder: (ctx, anim, _, child) => FadeTransition(
+        opacity: Tween(begin: 0.0, end: 1.0).animate(
+          CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+        child: child,
+      ),
+    ));
+  }
+
   void _showAdd() {
     showGeneralDialog(
       context: context,
@@ -305,7 +323,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
         child: const Icon(Icons.delete_outline_rounded,
             color: Colors.red, size: 16),
       ),
-      child: _HabitCard(habit: habit, onToggle: () => _toggle(habit)),
+      child: _HabitCard(
+        habit: habit,
+        onToggle: () => _toggle(habit),
+        onDetail: () => _showDetail(habit),
+      ),
     );
   }
 }
@@ -623,8 +645,9 @@ class _DoneDivider extends StatelessWidget {
 class _HabitCard extends StatelessWidget {
   final Habit habit;
   final VoidCallback onToggle;
+  final VoidCallback? onDetail;
 
-  const _HabitCard({required this.habit, required this.onToggle});
+  const _HabitCard({required this.habit, required this.onToggle, this.onDetail});
 
   @override
   Widget build(BuildContext context) {
@@ -639,6 +662,7 @@ class _HabitCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onToggle,
+      onLongPress: onDetail,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
         opacity: done ? 0.6 : 1.0,
@@ -1290,6 +1314,260 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
     );
   }
 }
+
+// ── Habit detail view (calendar + stats) ─────────────────────────────────────
+
+class _HabitDetailView extends StatefulWidget {
+  final Habit habit;
+  final VoidCallback onToggle;
+  const _HabitDetailView({required this.habit, required this.onToggle});
+  @override
+  State<_HabitDetailView> createState() => _HabitDetailViewState();
+}
+
+class _HabitDetailViewState extends State<_HabitDetailView> {
+  late DateTime _viewMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  }
+
+  static String _dk(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final h = widget.habit;
+    final color = habitCatColor(h.category);
+    final now = DateTime.now();
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
+
+    // Calendar grid
+    final firstDay = DateTime(_viewMonth.year, _viewMonth.month, 1);
+    final startWeekday = firstDay.weekday; // 1=Mon
+    final daysInMonth = DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
+    const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
+      'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+
+    return Scaffold(
+      backgroundColor: Colors.black.withAlpha(180),
+      body: SafeArea(
+        child: Column(children: [
+          // Top bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Row(children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withAlpha(30))),
+                  child: Icon(Icons.close_rounded, size: 20,
+                      color: Colors.white.withAlpha(200)))),
+              const SizedBox(width: 14),
+              Expanded(child: Text(h.title, style: GoogleFonts.playfairDisplay(
+                fontSize: 20, fontWeight: FontWeight.w700,
+                fontStyle: FontStyle.italic, color: Colors.white),
+                maxLines: 1, overflow: TextOverflow.ellipsis)),
+            ]),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Main card
+          Expanded(child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            children: [
+              // ── Stats row ──────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg, borderRadius: BorderRadius.circular(24),
+                  boxShadow: [BoxShadow(color: Colors.black.withAlpha(25),
+                    blurRadius: 12, offset: const Offset(0, 5))]),
+                child: Row(children: [
+                  _DetailStat(value: '${h.streak}', label: 'STREAK',
+                    icon: Icons.local_fire_department_rounded,
+                    color: h.streak >= 7 ? AppColors.action : const Color(0xFFF59E0B)),
+                  _DetailStat(value: '${h.weeklyCount}/7', label: 'THIS WEEK',
+                    icon: Icons.insights_rounded, color: color),
+                  _DetailStat(value: '${h.completedDates.length}', label: 'TOTAL',
+                    icon: Icons.check_circle_rounded, color: AppColors.success),
+                ]),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Calendar ───────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg, borderRadius: BorderRadius.circular(24),
+                  boxShadow: [BoxShadow(color: Colors.black.withAlpha(25),
+                    blurRadius: 12, offset: const Offset(0, 5))]),
+                child: Column(children: [
+                  // Month nav
+                  Row(children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _viewMonth = DateTime(
+                          _viewMonth.year, _viewMonth.month - 1)),
+                      child: Icon(Icons.chevron_left_rounded, size: 22, color: textCol)),
+                    const Spacer(),
+                    Text('${months[_viewMonth.month - 1]}  ${_viewMonth.year}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        letterSpacing: 2, color: textCol)),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => setState(() => _viewMonth = DateTime(
+                          _viewMonth.year, _viewMonth.month + 1)),
+                      child: Icon(Icons.chevron_right_rounded, size: 22, color: textCol)),
+                  ]),
+                  const SizedBox(height: 14),
+
+                  // Day headers
+                  Row(children: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) =>
+                    Expanded(child: Center(child: Text(d,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 8, fontWeight: FontWeight.w600,
+                        color: subCol.withAlpha(140)))))).toList()),
+                  const SizedBox(height: 8),
+
+                  // Calendar grid
+                  ...List.generate(6, (week) {
+                    return Row(
+                      children: List.generate(7, (dayOfWeek) {
+                        final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
+                        if (dayIndex < 0 || dayIndex >= daysInMonth) {
+                          return const Expanded(child: SizedBox(height: 36));
+                        }
+                        final day = dayIndex + 1;
+                        final date = DateTime(_viewMonth.year, _viewMonth.month, day);
+                        final key = _dk(date);
+                        final done = h.completedDates.contains(key);
+                        final isToday = date.day == now.day &&
+                            date.month == now.month && date.year == now.year;
+                        final isFuture = date.isAfter(now);
+
+                        return Expanded(child: GestureDetector(
+                          onTap: isFuture ? null : () {
+                            setState(() {
+                              if (done) { h.completedDates.remove(key); }
+                              else { h.completedDates.add(key); }
+                            });
+                          },
+                          child: Container(
+                            height: 36,
+                            margin: const EdgeInsets.all(1.5),
+                            decoration: BoxDecoration(
+                              color: done
+                                  ? color
+                                  : isToday
+                                      ? color.withAlpha(15)
+                                      : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: isToday && !done
+                                  ? Border.all(color: color.withAlpha(120), width: 1.5)
+                                  : null,
+                            ),
+                            child: Center(child: Text('$day',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: done || isToday ? FontWeight.w700 : FontWeight.w500,
+                                color: done
+                                    ? Colors.white
+                                    : isFuture
+                                        ? subCol.withAlpha(60)
+                                        : textCol))),
+                          ),
+                        ));
+                      }),
+                    );
+                  }),
+                ]),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Info card ──────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg, borderRadius: BorderRadius.circular(24),
+                  boxShadow: [BoxShadow(color: Colors.black.withAlpha(25),
+                    blurRadius: 12, offset: const Offset(0, 5))]),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Icon(habitCatIcon(h.category), size: 14, color: color),
+                    const SizedBox(width: 6),
+                    Text(habitCatLabel(h.category), style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w700,
+                      letterSpacing: 1, color: color)),
+                    const Spacer(),
+                    Text(h.scheduleLabel, style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                  ]),
+                  if (h.routineSlot.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Icon(h.routineSlot == 'morning'
+                          ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                        size: 12, color: subCol),
+                      const SizedBox(width: 4),
+                      Text('${h.routineSlot.toUpperCase()} ROUTINE',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                    ]),
+                  ],
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.gold.withAlpha(15),
+                      borderRadius: BorderRadius.circular(8)),
+                    child: Text('+${h.xpPerCheck} XP per check-in',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.gold)),
+                  ),
+                ]),
+              ),
+            ],
+          )),
+        ]),
+      ),
+    );
+  }
+}
+
+class _DetailStat extends StatelessWidget {
+  final String value, label;
+  final IconData icon;
+  final Color color;
+  const _DetailStat({required this.value, required this.label,
+    required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(child: Column(children: [
+      Icon(icon, size: 18, color: color),
+      const SizedBox(height: 4),
+      Text(value, style: GoogleFonts.jetBrainsMono(
+        fontSize: 16, fontWeight: FontWeight.w700,
+        color: const Color(0xFF2A2318))),
+      Text(label, style: GoogleFonts.jetBrainsMono(
+        fontSize: 7, fontWeight: FontWeight.w600,
+        letterSpacing: 1.5, color: const Color(0xFF8A8070))),
+    ]));
+  }
+}
+
+// ── Routine chip ─────────────────────────────────────────────────────────────
 
 class _RoutineChip extends StatelessWidget {
   final String label;

@@ -139,8 +139,8 @@ class TasksScreen extends StatefulWidget {
 }
 
 enum _TaskFilter { all, today, priority }
-
 enum _SortMode { none, dateAsc, dateDesc, priorityHigh, priorityLow, nameAz }
+enum _ViewMode { list, timeline }
 
 class _TasksScreenState extends State<TasksScreen> {
   DateTime? _selectedDate;
@@ -149,6 +149,7 @@ class _TasksScreenState extends State<TasksScreen> {
   String _searchQuery = '';
   _SortMode _sort = _SortMode.none;
   bool _showSearch = false;
+  _ViewMode _viewMode = _ViewMode.list;
 
   List<Task> get _tasks =>
       TaskStore.tasks.where((t) => t.category == widget.category).toList();
@@ -899,14 +900,21 @@ class _TasksScreenState extends State<TasksScreen> {
                         : const SizedBox.shrink(),
                   ),
 
-                  // ── Task list ─────────────────────────────────────────────
+                  // ── Task list / Timeline ──────────────────────────────────
                   Expanded(
                     child: pending.isEmpty && completed.isEmpty
                         ? _Empty(
                             isDark: isDark,
                             hasDateFilter: _selectedDate != null,
                           )
-                        : RefreshIndicator(
+                        : _viewMode == _ViewMode.timeline
+                            ? _TimelineView(
+                                tasks: filtered,
+                                onTap: _showDetail,
+                                onComplete: _complete,
+                                accentColor: vivid,
+                              )
+                            : RefreshIndicator(
                             color: vivid,
                             backgroundColor: const Color(0xFFF5F2EB),
                             onRefresh: () async {
@@ -957,8 +965,12 @@ class _TasksScreenState extends State<TasksScreen> {
                 isDark: isDark,
                 accentColor: vivid,
                 dashboardActive: _showDashboard,
+                isTimeline: _viewMode == _ViewMode.timeline,
                 onDashboard: () =>
                     setState(() => _showDashboard = !_showDashboard),
+                onToggleView: () => setState(() =>
+                    _viewMode = _viewMode == _ViewMode.list
+                        ? _ViewMode.timeline : _ViewMode.list),
               ),
             ),
           ],
@@ -1109,16 +1121,20 @@ class _CalendarStrip extends StatelessWidget {
 class _BottomBar extends StatefulWidget {
   final VoidCallback onAdd;
   final VoidCallback onDashboard;
+  final VoidCallback onToggleView;
   final bool isDark;
   final Color accentColor;
   final bool dashboardActive;
+  final bool isTimeline;
 
   const _BottomBar({
     required this.onAdd,
     required this.onDashboard,
+    required this.onToggleView,
     required this.isDark,
     required this.accentColor,
     required this.dashboardActive,
+    this.isTimeline = false,
   });
 
   @override
@@ -1326,10 +1342,15 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                   ),
                 ),
 
-                Icon(
-                  Icons.checklist_rounded,
-                  color: Colors.white.withAlpha(140),
-                  size: 22,
+                GestureDetector(
+                  onTap: widget.onToggleView,
+                  child: Icon(
+                    widget.isTimeline
+                        ? Icons.view_list_rounded
+                        : Icons.schedule_rounded,
+                    color: Colors.white.withAlpha(160),
+                    size: 22,
+                  ),
                 ),
               ],
             ),
@@ -2468,6 +2489,244 @@ class _EmptyState extends State<_Empty> with SingleTickerProviderStateMixin {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Timeline view (Outlook-style hourly slots) ───────────────────────────────
+
+class _TimelineView extends StatelessWidget {
+  final List<Task> tasks;
+  final void Function(Task) onTap;
+  final void Function(Task) onComplete;
+  final Color accentColor;
+
+  const _TimelineView({
+    required this.tasks,
+    required this.onTap,
+    required this.onComplete,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
+    const cardBg = Color(0xFFF5F2EB);
+
+    // Group tasks by hour (0-23), unscheduled go to -1
+    final Map<int, List<Task>> byHour = {};
+    for (final t in tasks) {
+      final h = t.dueTime?.hour ?? -1;
+      byHour.putIfAbsent(h, () => []).add(t);
+    }
+
+    // Build hour slots from 6:00 to 23:00 + unscheduled
+    final hours = <int>[];
+    if (byHour.containsKey(-1)) hours.add(-1);
+    for (int h = 6; h < 24; h++) hours.add(h);
+    for (int h = 0; h < 6; h++) if (byHour.containsKey(h)) hours.add(h);
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(0, 8, 20, 120),
+      itemCount: hours.length,
+      itemBuilder: (ctx, i) {
+        final hour = hours[i];
+        final slotTasks = byHour[hour] ?? [];
+        final label = hour < 0
+            ? 'NO TIME'
+            : '${hour.toString().padLeft(2, '0')}:00';
+        final now = TimeOfDay.now();
+        final isCurrent = hour == now.hour;
+
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left time label
+              SizedBox(
+                width: 56,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    label,
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 10,
+                      fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                      color: isCurrent ? accentColor : subCol,
+                    ),
+                  ),
+                ),
+              ),
+
+              // Timeline line + dot
+              SizedBox(
+                width: 24,
+                child: Column(
+                  children: [
+                    Container(
+                      width: isCurrent ? 10 : 6,
+                      height: isCurrent ? 10 : 6,
+                      margin: const EdgeInsets.only(top: 10),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: slotTasks.isNotEmpty
+                            ? accentColor
+                            : isCurrent
+                                ? accentColor.withAlpha(80)
+                                : subCol.withAlpha(30),
+                        boxShadow: isCurrent
+                            ? [BoxShadow(
+                                color: accentColor.withAlpha(80),
+                                blurRadius: 8)]
+                            : [],
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        width: 1.5,
+                        color: isCurrent
+                            ? accentColor.withAlpha(40)
+                            : subCol.withAlpha(15),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Task cards for this slot
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: slotTasks.isEmpty
+                      ? SizedBox(
+                          height: 32,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              height: 1,
+                              margin: const EdgeInsets.only(top: 12),
+                              color: subCol.withAlpha(10),
+                            ),
+                          ),
+                        )
+                      : Column(
+                          children: slotTasks.map((t) {
+                            final done = t.isCompleted;
+                            final pColor = _pColor(t.priority);
+                            return GestureDetector(
+                              onTap: () => onTap(t),
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 6, top: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border(
+                                    left: BorderSide(
+                                      color: pColor,
+                                      width: 3,
+                                    ),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha(15),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    // Check button
+                                    GestureDetector(
+                                      onTap: done ? null : () => onComplete(t),
+                                      child: Container(
+                                        width: 22, height: 22,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: done
+                                              ? AppColors.success.withAlpha(30)
+                                              : pColor.withAlpha(15),
+                                          border: Border.all(
+                                            color: done
+                                                ? AppColors.success
+                                                : pColor.withAlpha(80),
+                                            width: 1.5),
+                                        ),
+                                        child: done
+                                            ? Icon(Icons.check_rounded,
+                                                size: 12,
+                                                color: AppColors.success)
+                                            : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    // Title + time
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            t.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.inter(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: done
+                                                  ? subCol
+                                                  : textCol,
+                                              decoration: done
+                                                  ? TextDecoration.lineThrough
+                                                  : TextDecoration.none,
+                                            ),
+                                          ),
+                                          if (t.dueTime != null)
+                                            Text(
+                                              _fmt24(t.dueTime!),
+                                              style: GoogleFonts.jetBrainsMono(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w600,
+                                                color: subCol,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    // XP
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.gold.withAlpha(15),
+                                        borderRadius:
+                                            BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '+${_pXp(t.priority)}',
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.gold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
