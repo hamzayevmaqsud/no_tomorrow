@@ -2616,151 +2616,152 @@ class _TimelineView extends StatelessWidget {
                           children: slotTasks.map((t) {
                             final done = t.isCompleted;
                             final pColor = _pColor(t.priority);
+                            final accentBg = done ? const Color(0xFFCCCAC4) : _pCardBg(t.priority);
+                            final accentTxt = done ? const Color(0xFF8A8880) : _pCardText(t.priority);
                             return GestureDetector(
                               onTap: () => onTap(t),
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 8, top: 4),
-                                padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(
-                                  color: cardBg,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border(
-                                    left: BorderSide(color: pColor, width: 4),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withAlpha(18),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Top row: check + title + XP
-                                    Row(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: done ? null : () => onComplete(t),
-                                          child: Container(
-                                            width: 26, height: 26,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: done
-                                                  ? AppColors.success.withAlpha(30)
-                                                  : pColor.withAlpha(15),
-                                              border: Border.all(
-                                                color: done
-                                                    ? AppColors.success
-                                                    : pColor.withAlpha(80),
-                                                width: 1.5),
-                                            ),
-                                            child: done
-                                                ? Icon(Icons.check_rounded,
-                                                    size: 14, color: AppColors.success)
-                                                : null,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: Text(t.title,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.playfairDisplay(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w700,
-                                              fontStyle: FontStyle.italic,
-                                              color: done ? subCol : textCol,
-                                              decoration: done
-                                                  ? TextDecoration.lineThrough
-                                                  : TextDecoration.none,
-                                            )),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 7, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.gold.withAlpha(15),
-                                            borderRadius: BorderRadius.circular(8)),
-                                          child: Text('+${_pXp(t.priority)} XP',
-                                            style: GoogleFonts.jetBrainsMono(
-                                              fontSize: 8, fontWeight: FontWeight.w700,
-                                              color: AppColors.gold)),
-                                        ),
-                                      ],
-                                    ),
-
-                                    // Description
-                                    if (t.description.isNotEmpty) ...[
-                                      const SizedBox(height: 6),
-                                      Text(t.description,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11, height: 1.3,
-                                          color: subCol)),
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 300),
+                                opacity: done ? 0.55 : 1.0,
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 8, top: 4),
+                                  decoration: BoxDecoration(
+                                    color: cardBg,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(color: Colors.black.withAlpha(20),
+                                        blurRadius: 10, offset: const Offset(0, 4)),
+                                      BoxShadow(color: Colors.white.withAlpha(180),
+                                        blurRadius: 1, offset: const Offset(0, -0.5)),
                                     ],
-
-                                    const SizedBox(height: 8),
-
-                                    // Bottom row: time + priority + subtasks + category
-                                    Row(
-                                      children: [
-                                        // Time
-                                        if (t.dueTime != null) ...[
-                                          Icon(Icons.access_time_rounded,
-                                              size: 11, color: subCol),
-                                          const SizedBox(width: 3),
-                                          Text(_fmt24(t.dueTime!),
-                                            style: GoogleFonts.jetBrainsMono(
-                                              fontSize: 10, fontWeight: FontWeight.w600,
-                                              color: textCol)),
-                                          const SizedBox(width: 10),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: IntrinsicHeight(
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          // Left content
+                                          Expanded(
+                                            child: Padding(
+                                              padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  // Category tag
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                    decoration: BoxDecoration(
+                                                      color: textCol.withAlpha(10),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                      border: Border.all(color: textCol.withAlpha(20))),
+                                                    child: Text(
+                                                      t.category == TaskCategory.work ? 'WORK' : 'LIVE',
+                                                      style: GoogleFonts.jetBrainsMono(
+                                                        fontSize: 8, fontWeight: FontWeight.w700,
+                                                        letterSpacing: 1, color: textCol.withAlpha(130))),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  // Title
+                                                  Text(t.title,
+                                                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.playfairDisplay(
+                                                      fontSize: 16, fontWeight: FontWeight.w700,
+                                                      fontStyle: FontStyle.italic, height: 1.2,
+                                                      color: textCol,
+                                                      decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
+                                                      decorationColor: textCol.withAlpha(100))),
+                                                  // Description
+                                                  if (t.description.isNotEmpty) ...[
+                                                    const SizedBox(height: 4),
+                                                    Text(t.description, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                                      style: GoogleFonts.inter(fontSize: 11, height: 1.3, color: subCol)),
+                                                  ],
+                                                  const SizedBox(height: 8),
+                                                  // Bottom row
+                                                  Row(children: [
+                                                    if (t.dueTime != null) ...[
+                                                      Icon(Icons.access_time_rounded, size: 10, color: subCol),
+                                                      const SizedBox(width: 3),
+                                                      Text(_fmt24(t.dueTime!), style: GoogleFonts.inter(
+                                                        fontSize: 10, fontWeight: FontWeight.w500, color: subCol)),
+                                                      const SizedBox(width: 8),
+                                                    ],
+                                                    if (t.dueDate != null) ...[
+                                                      Icon(Icons.calendar_today_rounded, size: 10, color: subCol),
+                                                      const SizedBox(width: 3),
+                                                      Text(_fmtDate(t.dueDate!), style: GoogleFonts.inter(
+                                                        fontSize: 10, fontWeight: FontWeight.w500, color: subCol)),
+                                                    ],
+                                                    const Spacer(),
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: done ? subCol.withAlpha(20) : AppColors.gold.withAlpha(20),
+                                                        borderRadius: BorderRadius.circular(8)),
+                                                      child: Text(
+                                                        done ? '✓ ${_pXp(t.priority)} XP' : '+${_pXp(t.priority)} XP',
+                                                        style: GoogleFonts.jetBrainsMono(
+                                                          fontSize: 8, fontWeight: FontWeight.w700,
+                                                          color: done ? subCol : AppColors.gold)),
+                                                    ),
+                                                  ]),
+                                                  // Subtasks progress
+                                                  if (t.subtasks.isNotEmpty) ...[
+                                                    const SizedBox(height: 6),
+                                                    Row(children: [
+                                                      Expanded(child: Stack(children: [
+                                                        Container(height: 3, decoration: BoxDecoration(
+                                                          color: textCol.withAlpha(15), borderRadius: BorderRadius.circular(2))),
+                                                        FractionallySizedBox(widthFactor: t.subtaskProgress,
+                                                          child: Container(height: 3, decoration: BoxDecoration(
+                                                            color: AppColors.success, borderRadius: BorderRadius.circular(2)))),
+                                                      ])),
+                                                      const SizedBox(width: 6),
+                                                      Text('${t.subtasksDone}/${t.subtasks.length}',
+                                                        style: GoogleFonts.jetBrainsMono(
+                                                          fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                                                    ]),
+                                                  ],
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          // Right accent block
+                                          Container(
+                                            width: 52,
+                                            color: accentBg,
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: done ? null : () => onComplete(t),
+                                                  child: AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 220),
+                                                    width: 26, height: 26,
+                                                    decoration: BoxDecoration(
+                                                      color: accentTxt.withAlpha(done ? 50 : 25),
+                                                      shape: BoxShape.circle,
+                                                      border: Border.all(
+                                                        color: accentTxt.withAlpha(done ? 110 : 70), width: 1.5)),
+                                                    child: done
+                                                        ? Icon(Icons.check_rounded, size: 14, color: accentTxt.withAlpha(210))
+                                                        : null,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                RotatedBox(quarterTurns: 1,
+                                                  child: Text(_pLabel(t.priority).toUpperCase(),
+                                                    style: GoogleFonts.jetBrainsMono(
+                                                      fontSize: 7, fontWeight: FontWeight.w700,
+                                                      letterSpacing: 1.5, color: accentTxt.withAlpha(150)))),
+                                              ],
+                                            ),
+                                          ),
                                         ],
-                                        // Priority label
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: pColor.withAlpha(15),
-                                            borderRadius: BorderRadius.circular(6),
-                                            border: Border.all(
-                                                color: pColor.withAlpha(40))),
-                                          child: Text(_pLabel(t.priority),
-                                            style: GoogleFonts.jetBrainsMono(
-                                              fontSize: 8, fontWeight: FontWeight.w700,
-                                              color: pColor)),
-                                        ),
-                                        // Subtasks
-                                        if (t.subtasks.isNotEmpty) ...[
-                                          const SizedBox(width: 8),
-                                          Icon(Icons.checklist_rounded,
-                                              size: 11, color: subCol),
-                                          const SizedBox(width: 2),
-                                          Text('${t.subtasksDone}/${t.subtasks.length}',
-                                            style: GoogleFonts.jetBrainsMono(
-                                              fontSize: 8, fontWeight: FontWeight.w600,
-                                              color: subCol)),
-                                        ],
-                                        // Recurring
-                                        if (t.recurType != RecurType.none) ...[
-                                          const SizedBox(width: 8),
-                                          Icon(Icons.repeat_rounded,
-                                              size: 10, color: subCol),
-                                        ],
-                                        const Spacer(),
-                                        // Category
-                                        Text(
-                                          t.category == TaskCategory.work ? 'WORK' : 'LIVE',
-                                          style: GoogleFonts.jetBrainsMono(
-                                            fontSize: 8, fontWeight: FontWeight.w600,
-                                            letterSpacing: 1, color: subCol.withAlpha(120)),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             );
