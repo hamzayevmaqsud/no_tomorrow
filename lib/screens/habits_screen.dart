@@ -186,13 +186,12 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 const SizedBox(height: 14),
                 Container(height: 1, color: Colors.white.withAlpha(12)),
 
-                // ── Realtime Dashboard ─────────────────────
-                if (total > 0)
-                  _MotivationDashboard(
-                    habits: habits,
-                    doneToday: doneToday,
-                    total: total,
-                  ),
+                // ── Realtime Dashboard (always visible) ────
+                _MotivationDashboard(
+                  habits: habits,
+                  doneToday: doneToday,
+                  total: total,
+                ),
 
                 // ── Habit list ─────────────────────────────
                 Expanded(
@@ -374,7 +373,8 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
   void dispose() { _ring.dispose(); super.dispose(); }
 
   String get _motivationMsg {
-    final p = widget.total == 0 ? 0.0 : widget.doneToday / widget.total;
+    if (widget.total == 0) return 'ADD YOUR FIRST HABIT. BEGIN.';
+    final p = widget.doneToday / widget.total;
     if (p >= 1.0) return 'ALL HABITS DONE. LEGENDARY.';
     if (p >= 0.7) return 'ALMOST THERE. FINISH STRONG.';
     if (p >= 0.4) return 'GOOD MOMENTUM. KEEP GOING.';
@@ -547,6 +547,78 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                       : const Color(0xFF594536),
                 )),
             ),
+
+            // ── Weekly bar chart ───────────────────
+            if (widget.total > 0) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Text('THIS WEEK', style: GoogleFonts.jetBrainsMono(
+                    fontSize: 8, fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5, color: const Color(0xFF8A8070))),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 50,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(7, (i) {
+                    final now = DateTime.now();
+                    final monday = now.subtract(Duration(days: now.weekday - 1));
+                    final day = monday.add(Duration(days: i));
+                    final isToday = day.day == now.day && day.month == now.month;
+                    const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+                    // Count how many habits were done on this day
+                    final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+                    int dayDone = 0;
+                    for (final h in widget.habits) {
+                      if (h.completedDates.contains(key)) dayDone++;
+                    }
+                    final maxH = widget.total;
+                    final barPct = maxH == 0 ? 0.0 : (dayDone / maxH).clamp(0.0, 1.0);
+
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(right: i < 6 ? 4 : 0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (dayDone > 0)
+                              Text('$dayDone', style: GoogleFonts.jetBrainsMono(
+                                fontSize: 7, fontWeight: FontWeight.w600,
+                                color: const Color(0xFF8A8070))),
+                            const SizedBox(height: 2),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
+                              height: (barPct * 30).clamp(3.0, 30.0),
+                              decoration: BoxDecoration(
+                                color: barPct >= 1.0
+                                    ? AppColors.success
+                                    : barPct > 0
+                                        ? AppColors.habits
+                                        : const Color(0xFF2A2318).withAlpha(12),
+                                borderRadius: BorderRadius.circular(4),
+                                border: isToday
+                                    ? Border.all(color: AppColors.habits.withAlpha(160), width: 1.2)
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(dayNames[i], style: GoogleFonts.jetBrainsMono(
+                              fontSize: 7, fontWeight: FontWeight.w600,
+                              color: isToday
+                                  ? AppColors.habits
+                                  : const Color(0xFF8A8070).withAlpha(140))),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
           ],
         ),
       ),
