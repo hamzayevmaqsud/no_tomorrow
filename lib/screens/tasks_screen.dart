@@ -1422,9 +1422,9 @@ class _DashboardPanel extends StatelessWidget {
         .length;
     final progress = total == 0 ? 0.0 : done / total;
 
-    const cardBg = Color(0xFFF5F2EB);
-    const textCol = Color(0xFF2A2318);
-    const subCol = Color(0xFF8A8070);
+    const cardBg = Color(0xFFFAF5FF);
+    const textCol = Color(0xFF4C1D95);
+    const subCol = Color(0xFF6B5A7A);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 14),
@@ -1689,9 +1689,14 @@ class _StatBox extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withAlpha(22),
+          color: const Color(0xFFF0ECF6),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withAlpha(35), width: 0.8),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(6),
+              blurRadius: 3, offset: const Offset(0, 2)),
+            BoxShadow(color: Colors.white.withAlpha(220),
+              blurRadius: 1, offset: const Offset(0, -1)),
+          ],
         ),
         child: Column(
           children: [
