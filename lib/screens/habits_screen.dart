@@ -728,9 +728,9 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 14, 10, 10),
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha(12),
+          color: Colors.white.withAlpha(35),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withAlpha(30)),
+          border: Border.all(color: Colors.white.withAlpha(50)),
         ),
         child: Column(children: [
           // Month nav — glossy style
