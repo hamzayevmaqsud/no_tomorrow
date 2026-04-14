@@ -728,9 +728,13 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
       child: Container(
         padding: const EdgeInsets.fromLTRB(10, 14, 10, 10),
         decoration: BoxDecoration(
-          color: Colors.white.withAlpha(35),
+          color: const Color(0xFFF5F2EB).withAlpha(220),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withAlpha(50)),
+          border: Border.all(color: Colors.white.withAlpha(60)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(20),
+              blurRadius: 12, offset: const Offset(0, 5)),
+          ],
         ),
         child: Column(children: [
           // Month nav — glossy style
@@ -741,42 +745,36 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                 onTap: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
                 child: Container(width: 34, height: 34,
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withAlpha(25))),
+                    color: const Color(0xFF2A2318).withAlpha(15),
+                    borderRadius: BorderRadius.circular(10)),
                   child: Icon(Icons.chevron_left_rounded, size: 18,
-                      color: Colors.white.withAlpha(240)))),
+                      color: const Color(0xFF2A2318)))),
               const Spacer(),
               Column(children: [
-                Text(months[_month.month - 1],
+                Text('${months[_month.month - 1]}  ${_month.year}',
                   style: GoogleFonts.playfairDisplay(
-                    fontSize: 22, fontWeight: FontWeight.w800,
-                    letterSpacing: 5, color: Colors.white)),
-                Text('${_month.year}',
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9, fontWeight: FontWeight.w600,
-                    letterSpacing: 2, color: Colors.white.withAlpha(140))),
+                    fontSize: 14, fontWeight: FontWeight.w700,
+                    letterSpacing: 2, color: const Color(0xFF2A2318))),
               ]),
               const Spacer(),
               GestureDetector(
                 onTap: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
                 child: Container(width: 34, height: 34,
                   decoration: BoxDecoration(
-                    color: Colors.white.withAlpha(12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withAlpha(25))),
+                    color: const Color(0xFF2A2318).withAlpha(15),
+                    borderRadius: BorderRadius.circular(10)),
                   child: Icon(Icons.chevron_right_rounded, size: 18,
-                      color: Colors.white.withAlpha(240)))),
+                      color: const Color(0xFF2A2318)))),
             ]),
           ),
           const SizedBox(height: 14),
 
           // Day headers
-          Row(children: ['M','T','W','T','F','S','S'].map((d) =>
+          Row(children: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) =>
             Expanded(child: Center(child: Text(d,
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w700,
-                color: Colors.white.withAlpha(160)))))).toList()),
+                fontSize: 8, fontWeight: FontWeight.w600,
+                color: const Color(0xFF8A8070)))))).toList()),
           const SizedBox(height: 8),
 
           // Calendar grid — rounded square cells with ring progress
@@ -820,24 +818,22 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                             Container(
                               decoration: BoxDecoration(
                                 color: isFuture
-                                    ? Colors.white.withAlpha(4)
+                                    ? Colors.transparent
                                     : allDone
-                                        ? AppColors.success.withAlpha(35)
+                                        ? AppColors.success.withAlpha(30)
                                         : dayDone > 0
-                                            ? Colors.white.withAlpha(20)
-                                            : Colors.white.withAlpha(10),
+                                            ? const Color(0xFF2A2318).withAlpha(10)
+                                            : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                                 border: isToday
                                     ? Border.all(color: AppColors.habits, width: 2.5)
                                     : allDone
-                                        ? Border.all(color: AppColors.success.withAlpha(100))
-                                        : dayDone > 0
-                                            ? Border.all(color: Colors.white.withAlpha(18))
-                                            : null,
+                                        ? Border.all(color: AppColors.success.withAlpha(80))
+                                        : null,
                                 boxShadow: allDone
-                                    ? [BoxShadow(color: AppColors.success.withAlpha(40), blurRadius: 8)]
+                                    ? [BoxShadow(color: AppColors.success.withAlpha(30), blurRadius: 6)]
                                     : isToday
-                                        ? [BoxShadow(color: AppColors.habits.withAlpha(40), blurRadius: 8)]
+                                        ? [BoxShadow(color: AppColors.habits.withAlpha(30), blurRadius: 6)]
                                         : [],
                               ),
                             ),
@@ -858,16 +854,16 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: isToday || allDone || dayDone > 0
-                                    ? FontWeight.w700 : FontWeight.w500,
+                                    ? FontWeight.w700 : FontWeight.w400,
                                 color: isFuture
-                                    ? Colors.white.withAlpha(25)
+                                    ? const Color(0xFF8A8070).withAlpha(60)
                                     : allDone
-                                        ? Colors.white
+                                        ? AppColors.success
                                         : isToday
-                                            ? Colors.white
+                                            ? AppColors.habits
                                             : dayDone > 0
-                                                ? Colors.white
-                                                : Colors.white.withAlpha(140))),
+                                                ? const Color(0xFF2A2318)
+                                                : const Color(0xFF8A8070))),
                           ],
                         ),
                       ),
@@ -901,7 +897,7 @@ class _RingPainter extends CustomPainter {
     // Background ring
     canvas.drawArc(rect, 0, 2 * pi, false,
         Paint()
-          ..color = Colors.white.withAlpha(20)
+          ..color = const Color(0xFF2A2318).withAlpha(20)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.5
           ..strokeCap = StrokeCap.round);
