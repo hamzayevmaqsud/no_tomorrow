@@ -35,23 +35,31 @@ class _HabitsScreenState extends State<HabitsScreen> {
     final removed = HabitStore.habits.removeAt(idx);
     setState(() {});
     ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Deleted "${removed.title}"'),
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'UNDO',
-          onPressed: () {
-            setState(
-              () => HabitStore.habits.insert(
-                idx.clamp(0, HabitStore.habits.length),
-                removed,
-              ),
-            );
-          },
-        ),
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Deleted "${removed.title}"'),
+      duration: const Duration(seconds: 3),
+      action: SnackBarAction(label: 'UNDO', onPressed: () {
+        setState(() => HabitStore.habits.insert(idx.clamp(0, HabitStore.habits.length), removed));
+      }),
+    ));
+  }
+
+  void _showDetail(Habit habit) {
+    HapticFeedback.lightImpact();
+    Navigator.push(context, PageRouteBuilder(
+      opaque: false,
+      transitionDuration: const Duration(milliseconds: 400),
+      reverseTransitionDuration: const Duration(milliseconds: 250),
+      pageBuilder: (ctx, _, __) => _HabitDetailView(
+        habit: habit,
+        onToggle: () { _toggle(habit); },
       ),
-    );
+      transitionsBuilder: (ctx, anim, _, child) => FadeTransition(
+        opacity: Tween(begin: 0.0, end: 1.0).animate(
+          CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+        child: child,
+      ),
+    ));
   }
 
   void _showAdd() {
@@ -61,14 +69,14 @@ class _HabitsScreenState extends State<HabitsScreen> {
       barrierLabel: 'dismiss',
       barrierColor: Colors.black.withAlpha(140),
       transitionDuration: const Duration(milliseconds: 340),
-      pageBuilder: (ctx, _, _) => _AddHabitSheet(
+      pageBuilder: (ctx, _, __) => _AddHabitSheet(
         onAdd: (habit) {
           setState(() => HabitStore.habits.insert(0, habit));
           Navigator.of(ctx).pop();
         },
         nextId: '${HabitStore.nextId++}',
       ),
-      transitionBuilder: (_, anim, _, child) => SlideTransition(
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
         position: Tween<Offset>(
           begin: const Offset(-1, 0),
           end: Offset.zero,
@@ -86,220 +94,200 @@ class _HabitsScreenState extends State<HabitsScreen> {
     final pending = habits.where((h) => !h.isDoneToday()).toList();
     final completed = habits.where((h) => h.isDoneToday()).toList();
 
-    return SwipeToPop(
-      child: Scaffold(
-        backgroundColor: const Color(0xFF0E0A16),
-        body: Stack(
-          children: [
-            // ── Blurred bg ──────────────────────────────────
-            Positioned.fill(
-              child: ImageFiltered(
-                imageFilter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: Opacity(
-                  opacity: 0.3,
-                  child: Image.asset(
-                    'assets/collection/Tasks menu/Live.jpg',
-                    fit: BoxFit.cover,
-                  ),
-                ),
+    return SwipeToPop(child: Scaffold(
+      backgroundColor: const Color(0xFF0E0A16),
+      body: Stack(
+        children: [
+          // ── Blurred bg ──────────────────────────────────
+          Positioned.fill(
+            child: ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Opacity(
+                opacity: 0.3,
+                child: Image.asset('assets/collection/Tasks menu/Live.jpg',
+                    fit: BoxFit.cover),
               ),
             ),
+          ),
 
-            SafeArea(
-              child: Column(
-                children: [
-                  // ── Header ─────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Column(
-                          children: [
-                            Text(
-                              'HABITS',
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 3,
-                                color: const Color(0xFFE8D4F0),
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            if (total > 0)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    doneToday == total
-                                        ? Icons.check_circle_rounded
-                                        : Icons.check_circle_outline_rounded,
-                                    size: 12,
+          SafeArea(
+            child: Column(
+              children: [
+                // ── Header ─────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Column(
+                        children: [
+                          Text('HABITS',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 26, fontWeight: FontWeight.w800,
+                              letterSpacing: 3,
+                              color: const Color(0xFFE8D4F0),
+                            )),
+                          const SizedBox(height: 3),
+                          if (total > 0)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  doneToday == total
+                                      ? Icons.check_circle_rounded
+                                      : Icons.check_circle_outline_rounded,
+                                  size: 12,
+                                  color: doneToday == total
+                                      ? AppColors.success
+                                      : Colors.white.withAlpha(140)),
+                                const SizedBox(width: 5),
+                                Text('$doneToday / $total today',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11, fontWeight: FontWeight.w700,
                                     color: doneToday == total
                                         ? AppColors.success
-                                        : Colors.white.withAlpha(140),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    '$doneToday / $total today',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: doneToday == total
-                                          ? AppColors.success
-                                          : Colors.white.withAlpha(160),
-                                    ),
-                                  ),
-                                  if (GameState.instance.streak >= 2) ...[
-                                    const SizedBox(width: 10),
-                                    Icon(
-                                      Icons.local_fire_department_rounded,
-                                      size: 12,
+                                        : Colors.white.withAlpha(160),
+                                  )),
+                                if (GameState.instance.streak >= 2) ...[
+                                  const SizedBox(width: 10),
+                                  Icon(Icons.local_fire_department_rounded,
+                                      size: 12, color: const Color(0xFFF59E0B)),
+                                  const SizedBox(width: 2),
+                                  Text('${GameState.instance.streak}',
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 10, fontWeight: FontWeight.w700,
                                       color: const Color(0xFFF59E0B),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      '${GameState.instance.streak}',
-                                      style: GoogleFonts.jetBrainsMono(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFFF59E0B),
-                                      ),
-                                    ),
-                                  ],
+                                    )),
                                 ],
-                              ),
-                          ],
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(18),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.white.withAlpha(40),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.chevron_left_rounded,
-                                size: 22,
-                                color: Colors.white.withAlpha(200),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 14),
-                  Container(height: 1, color: Colors.white.withAlpha(12)),
-
-                  // ── Realtime Dashboard ─────────────────────
-                  if (total > 0)
-                    _MotivationDashboard(
-                      habits: habits,
-                      doneToday: doneToday,
-                      total: total,
-                    ),
-
-                  // ── Habit list ─────────────────────────────
-                  Expanded(
-                    child: habits.isEmpty
-                        ? _EmptyHabits()
-                        : ListView(
-                            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                            children: [
-                              // Pending habits
-                              ...pending.asMap().entries.map(
-                                (e) => _staggered(e.key, _dismissible(e.value)),
-                              ),
-                              // Completed divider + done habits
-                              if (completed.isNotEmpty) ...[
-                                _DoneDivider(count: completed.length),
-                                ...completed.asMap().entries.map(
-                                  (e) => _staggered(
-                                    pending.length + e.key,
-                                    _dismissible(e.value),
-                                  ),
-                                ),
                               ],
-                            ],
-                          ),
-                  ),
-                ],
-              ),
-            ),
-
-            // ── FAB ──────────────────────────────────────────
-            Positioned(
-              bottom: 36,
-              left: 52,
-              right: 52,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(40),
-                child: BackdropFilter(
-                  filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                  child: GestureDetector(
-                    onTap: _showAdd,
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(22),
-                        borderRadius: BorderRadius.circular(40),
-                        border: Border.all(color: Colors.white.withAlpha(40)),
+                            ),
+                        ],
                       ),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(18),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white.withAlpha(40)),
+                            ),
+                            child: Icon(Icons.chevron_left_rounded,
+                                size: 22, color: Colors.white.withAlpha(200)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // ── Always-on calendar + stats ────────────
+                _HabitCalendarBar(habits: habits),
+
+                const SizedBox(height: 8),
+
+                // ── Inline stats row ──────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(children: [
+                    _InlineStat(icon: Icons.check_circle_rounded,
+                      value: '$doneToday/$total', label: 'TODAY',
+                      color: doneToday == total && total > 0
+                          ? AppColors.success : AppColors.habits),
+                    const SizedBox(width: 8),
+                    _InlineStat(icon: Icons.local_fire_department_rounded,
+                      value: '${GameState.instance.streak}',
+                      label: 'STREAK',
+                      color: GameState.instance.streak >= 7
+                          ? AppColors.action : const Color(0xFFF59E0B)),
+                    const SizedBox(width: 8),
+                    _InlineStat(icon: Icons.star_rounded,
+                      value: '+${doneToday * 15}',
+                      label: 'XP TODAY', color: AppColors.gold),
+                  ]),
+                ),
+
+                const SizedBox(height: 8),
+
+                // ── Habit list ─────────────────────────────
+                Expanded(
+                  child: habits.isEmpty
+                      ? _EmptyHabits()
+                      : ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                           children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: AppColors.habits,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.habits.withAlpha(100),
-                                    blurRadius: 12,
-                                    spreadRadius: 1,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.add_rounded,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'NEW  HABIT',
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 2,
-                                color: Colors.white.withAlpha(200),
-                              ),
-                            ),
+                            // Pending habits
+                            ...pending.asMap().entries.map((e) =>
+                              _staggered(e.key, _dismissible(e.value))),
+                            // Completed divider + done habits
+                            if (completed.isNotEmpty) ...[
+                              _DoneDivider(count: completed.length),
+                              ...completed.asMap().entries.map((e) =>
+                                _staggered(pending.length + e.key,
+                                    _dismissible(e.value))),
+                            ],
                           ],
                         ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── FAB ──────────────────────────────────────────
+          Positioned(
+            bottom: 36, left: 52, right: 52,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(40),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: GestureDetector(
+                  onTap: _showAdd,
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(22),
+                      borderRadius: BorderRadius.circular(40),
+                      border: Border.all(color: Colors.white.withAlpha(40)),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.habits,
+                              shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(
+                                color: AppColors.habits.withAlpha(100),
+                                blurRadius: 12, spreadRadius: 1,
+                              )],
+                            ),
+                            child: const Icon(Icons.add_rounded,
+                                color: Colors.white, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          Text('NEW  HABIT',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 14, fontWeight: FontWeight.w700,
+                              letterSpacing: 2,
+                              color: Colors.white.withAlpha(200),
+                            )),
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ));
   }
 
   Widget _staggered(int index, Widget child) {
@@ -312,9 +300,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
       builder: (context, value, child) => Opacity(
         opacity: value.clamp(0.0, 1.0),
         child: Transform.translate(
-          offset: Offset(0, 24 * (1 - value)),
-          child: child,
-        ),
+          offset: Offset(0, 24 * (1 - value)), child: child),
       ),
       child: child,
     );
@@ -353,13 +339,14 @@ class _HabitsScreenState extends State<HabitsScreen> {
           color: Colors.red.withAlpha(20),
           borderRadius: BorderRadius.circular(24),
         ),
-        child: const Icon(
-          Icons.delete_outline_rounded,
-          color: Colors.red,
-          size: 16,
-        ),
+        child: const Icon(Icons.delete_outline_rounded,
+            color: Colors.red, size: 16),
       ),
-      child: _HabitCard(habit: habit, onToggle: () => _toggle(habit)),
+      child: _HabitCard(
+        habit: habit,
+        onToggle: () => _toggle(habit),
+        onDetail: () => _showDetail(habit),
+      ),
     );
   }
 }
@@ -390,9 +377,8 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
   void initState() {
     super.initState();
     _ring = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..forward();
+        vsync: this, duration: const Duration(milliseconds: 1200))
+      ..forward();
   }
 
   @override
@@ -404,17 +390,15 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
   }
 
   @override
-  void dispose() {
-    _ring.dispose();
-    super.dispose();
-  }
+  void dispose() { _ring.dispose(); super.dispose(); }
 
   String get _motivationMsg {
-    final p = widget.total == 0 ? 0.0 : widget.doneToday / widget.total;
+    if (widget.total == 0) return 'ADD YOUR FIRST HABIT. BEGIN.';
+    final p = widget.doneToday / widget.total;
     if (p >= 1.0) return 'ALL HABITS DONE. LEGENDARY.';
     if (p >= 0.7) return 'ALMOST THERE. FINISH STRONG.';
     if (p >= 0.4) return 'GOOD MOMENTUM. KEEP GOING.';
-    if (p > 0) return 'STARTED. DON\'T STOP NOW.';
+    if (p > 0)    return 'STARTED. DON\'T STOP NOW.';
     return 'NEW DAY. TIME TO GRIND.';
   }
 
@@ -428,9 +412,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
 
   int get _totalWeeklyChecks {
     int sum = 0;
-    for (final h in widget.habits) {
-      sum += h.weeklyCount;
-    }
+    for (final h in widget.habits) { sum += h.weeklyCount; }
     return sum;
   }
 
@@ -438,9 +420,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
   Widget build(BuildContext context) {
     final progress = widget.total == 0 ? 0.0 : widget.doneToday / widget.total;
     final weekMax = widget.total * 7;
-    final weekPct = weekMax == 0
-        ? 0
-        : (_totalWeeklyChecks * 100 / weekMax).round();
+    final weekPct = weekMax == 0 ? 0 : (_totalWeeklyChecks * 100 / weekMax).round();
     final todayXp = widget.doneToday * 15;
     final allDone = progress >= 1.0;
 
@@ -454,14 +434,10 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
           boxShadow: [
             BoxShadow(
               color: Colors.black.withAlpha(25),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
-            ),
+              blurRadius: 12, offset: const Offset(0, 5)),
             BoxShadow(
               color: Colors.white.withAlpha(180),
-              blurRadius: 1,
-              offset: const Offset(0, -0.5),
-            ),
+              blurRadius: 1, offset: const Offset(0, -0.5)),
           ],
         ),
         child: Column(
@@ -471,55 +447,42 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
               children: [
                 // Animated ring
                 SizedBox(
-                  width: 70,
-                  height: 70,
+                  width: 70, height: 70,
                   child: AnimatedBuilder(
                     animation: _ring,
                     builder: (context, _) {
-                      final animProgress =
-                          progress *
+                      final animProgress = progress *
                           Curves.easeOutCubic.transform(
-                            _ring.value.clamp(0.0, 1.0),
-                          );
+                              _ring.value.clamp(0.0, 1.0));
                       return Stack(
                         alignment: Alignment.center,
                         children: [
                           SizedBox(
-                            width: 70,
-                            height: 70,
+                            width: 70, height: 70,
                             child: CircularProgressIndicator(
                               value: animProgress,
                               strokeWidth: 5,
-                              backgroundColor: const Color(
-                                0xFF2A2318,
-                              ).withAlpha(15),
+                              backgroundColor: const Color(0xFF2A2318).withAlpha(15),
                               valueColor: AlwaysStoppedAnimation(
-                                allDone ? AppColors.success : AppColors.habits,
-                              ),
+                                allDone ? AppColors.success : AppColors.habits),
                             ),
                           ),
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                '${widget.doneToday}/${widget.total}',
+                              Text('${widget.doneToday}/${widget.total}',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16, fontWeight: FontWeight.w700,
                                   color: const Color(0xFF2A2318),
-                                ),
-                              ),
-                              Text(
-                                allDone ? 'DONE' : 'TODAY',
+                                )),
+                              Text(allDone ? 'DONE' : 'TODAY',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 7,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 7, fontWeight: FontWeight.w600,
                                   letterSpacing: 1.5,
                                   color: allDone
                                       ? AppColors.success
                                       : const Color(0xFF8A8070),
-                                ),
-                              ),
+                                )),
                             ],
                           ),
                         ],
@@ -567,7 +530,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                           _MiniStat(
                             icon: Icons.repeat_rounded,
                             label: 'TOTAL',
-                            value: '$_totalWeeklyChecks/$weekMax',
+                            value: '$_totalWeeklyChecks/${weekMax}',
                             color: const Color(0xFF2A2318),
                           ),
                         ],
@@ -592,20 +555,90 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                 border: Border.all(
                   color: allDone
                       ? AppColors.success.withAlpha(50)
-                      : AppColors.habits.withAlpha(30),
-                ),
+                      : AppColors.habits.withAlpha(30)),
               ),
-              child: Text(
-                _motivationMsg,
+              child: Text(_motivationMsg,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 9, fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
-                  color: allDone ? AppColors.success : const Color(0xFF594536),
+                  color: allDone
+                      ? AppColors.success
+                      : const Color(0xFF594536),
+                )),
+            ),
+
+            // ── Weekly bar chart ───────────────────
+            if (widget.total > 0) ...[
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Text('THIS WEEK', style: GoogleFonts.jetBrainsMono(
+                    fontSize: 8, fontWeight: FontWeight.w700,
+                    letterSpacing: 1.5, color: const Color(0xFF8A8070))),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 50,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(7, (i) {
+                    final now = DateTime.now();
+                    final monday = now.subtract(Duration(days: now.weekday - 1));
+                    final day = monday.add(Duration(days: i));
+                    final isToday = day.day == now.day && day.month == now.month;
+                    const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+                    // Count how many habits were done on this day
+                    final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+                    int dayDone = 0;
+                    for (final h in widget.habits) {
+                      if (h.completedDates.contains(key)) dayDone++;
+                    }
+                    final maxH = widget.total;
+                    final barPct = maxH == 0 ? 0.0 : (dayDone / maxH).clamp(0.0, 1.0);
+
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(right: i < 6 ? 4 : 0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            if (dayDone > 0)
+                              Text('$dayDone', style: GoogleFonts.jetBrainsMono(
+                                fontSize: 7, fontWeight: FontWeight.w600,
+                                color: const Color(0xFF8A8070))),
+                            const SizedBox(height: 2),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
+                              height: (barPct * 30).clamp(3.0, 30.0),
+                              decoration: BoxDecoration(
+                                color: barPct >= 1.0
+                                    ? AppColors.success
+                                    : barPct > 0
+                                        ? AppColors.habits
+                                        : const Color(0xFF2A2318).withAlpha(12),
+                                borderRadius: BorderRadius.circular(4),
+                                border: isToday
+                                    ? Border.all(color: AppColors.habits.withAlpha(160), width: 1.2)
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(dayNames[i], style: GoogleFonts.jetBrainsMono(
+                              fontSize: 7, fontWeight: FontWeight.w600,
+                              color: isToday
+                                  ? AppColors.habits
+                                  : const Color(0xFF8A8070).withAlpha(140))),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -636,26 +669,318 @@ class _MiniStat extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                value,
+              Text(value,
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 12, fontWeight: FontWeight.w700,
                   color: color,
-                ),
-              ),
-              Text(
-                label,
+                )),
+              Text(label,
                 style: GoogleFonts.inter(
-                  fontSize: 7,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 7, fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                   color: const Color(0xFF8A8070),
-                ),
-              ),
+                )),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Habit Full Calendar (monthly, pie charts per day) ─────────────────────────
+
+class _HabitCalendarBar extends StatefulWidget {
+  final List<Habit> habits;
+  const _HabitCalendarBar({required this.habits});
+
+  @override
+  State<_HabitCalendarBar> createState() => _HabitCalendarBarState();
+}
+
+class _HabitCalendarBarState extends State<_HabitCalendarBar> {
+  late DateTime _month;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _month = DateTime(now.year, now.month);
+  }
+
+  static String _dk(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final habits = widget.habits;
+    final total = habits.length;
+    const months = ['JAN','FEB','MAR','APR','MAY','JUN',
+      'JUL','AUG','SEP','OCT','NOV','DEC'];
+
+    final firstDay = DateTime(_month.year, _month.month, 1);
+    final startWeekday = firstDay.weekday;
+    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 14, 10, 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFAF5FF),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(15),
+              blurRadius: 16, offset: const Offset(0, 6)),
+            BoxShadow(color: Colors.white.withAlpha(200),
+              blurRadius: 1, offset: const Offset(0, -1)),
+          ],
+        ),
+        child: Column(children: [
+          // Month nav — glossy style
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(children: [
+              GestureDetector(
+                onTap: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
+                child: Container(width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4C1D95).withAlpha(12),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withAlpha(8),
+                        blurRadius: 4, offset: const Offset(0, 2)),
+                    ]),
+                  child: Icon(Icons.chevron_left_rounded, size: 18,
+                      color: const Color(0xFF4C1D95)))),
+              const Spacer(),
+              Column(children: [
+                Text(months[_month.month - 1],
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 20, fontWeight: FontWeight.w800,
+                    letterSpacing: 4, color: const Color(0xFF4C1D95))),
+                Text('${_month.year}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9, fontWeight: FontWeight.w600,
+                    letterSpacing: 2, color: const Color(0xFF4C1D95).withAlpha(100))),
+              ]),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
+                child: Container(width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4C1D95).withAlpha(12),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withAlpha(8),
+                        blurRadius: 4, offset: const Offset(0, 2)),
+                    ]),
+                  child: Icon(Icons.chevron_right_rounded, size: 18,
+                      color: const Color(0xFF4C1D95)))),
+            ]),
+          ),
+          const SizedBox(height: 14),
+
+          // Day headers
+          Row(children: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) =>
+            Expanded(child: Center(child: Text(d,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 8, fontWeight: FontWeight.w700,
+                color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
+          const SizedBox(height: 8),
+
+          // Calendar grid — rounded square cells with ring progress
+          ...List.generate(6, (week) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                children: List.generate(7, (dayOfWeek) {
+                  final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
+                  if (dayIndex < 0 || dayIndex >= daysInMonth) {
+                    return const Expanded(child: SizedBox(height: 42));
+                  }
+                  final day = dayIndex + 1;
+                  final date = DateTime(_month.year, _month.month, day);
+                  final isToday = date.day == now.day &&
+                      date.month == now.month && date.year == now.year;
+                  final isFuture = date.isAfter(now);
+                  final key = _dk(date);
+
+                  // Count completions
+                  int dayDone = 0;
+                  final Map<HabitCategory, int> catDone = {};
+                  for (final h in habits) {
+                    if (h.completedDates.contains(key)) {
+                      dayDone++;
+                      catDone[h.category] = (catDone[h.category] ?? 0) + 1;
+                    }
+                  }
+                  final pct = total == 0 ? 0.0 : dayDone / total;
+                  final allDone = pct >= 1.0;
+
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(1.5),
+                      child: SizedBox(
+                        height: 42,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Background cell
+                            Container(
+                              decoration: BoxDecoration(
+                                color: isFuture
+                                    ? const Color(0xFFF0EBF8)
+                                    : allDone
+                                        ? AppColors.success.withAlpha(25)
+                                        : dayDone > 0
+                                            ? const Color(0xFFEDE5F8)
+                                            : const Color(0xFFF0ECF6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: isToday
+                                    ? Border.all(color: const Color(0xFF8B5CF6), width: 2.5)
+                                    : allDone
+                                        ? Border.all(color: AppColors.success.withAlpha(100))
+                                        : null,
+                                boxShadow: allDone
+                                    ? [
+                                        BoxShadow(color: AppColors.success.withAlpha(30), blurRadius: 8),
+                                        BoxShadow(color: Colors.white.withAlpha(200),
+                                          blurRadius: 1, offset: const Offset(0, -1)),
+                                      ]
+                                    : isToday
+                                        ? [BoxShadow(color: const Color(0xFF8B5CF6).withAlpha(40), blurRadius: 8)]
+                                        : dayDone > 0
+                                            ? [
+                                                BoxShadow(color: Colors.black.withAlpha(6),
+                                                  blurRadius: 3, offset: const Offset(0, 2)),
+                                                BoxShadow(color: Colors.white.withAlpha(220),
+                                                  blurRadius: 1, offset: const Offset(0, -1)),
+                                              ]
+                                            : [
+                                                // Debossed — inset feel
+                                                BoxShadow(color: Colors.black.withAlpha(4),
+                                                  blurRadius: 2, offset: const Offset(0, 1)),
+                                              ],
+                              ),
+                            ),
+                            // Ring progress (if partial)
+                            if (dayDone > 0 && !allDone && !isFuture)
+                              SizedBox(
+                                width: 30, height: 30,
+                                child: CustomPaint(
+                                  painter: _RingPainter(
+                                    progress: pct,
+                                    categories: catDone,
+                                    total: total,
+                                  ),
+                                ),
+                              ),
+                            // Day number
+                            Text('$day',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: isToday || allDone || dayDone > 0
+                                    ? FontWeight.w700 : FontWeight.w500,
+                                color: isFuture
+                                    ? const Color(0xFF4C1D95).withAlpha(30)
+                                    : allDone
+                                        ? const Color(0xFF059669)
+                                        : isToday
+                                            ? const Color(0xFF8B5CF6)
+                                            : dayDone > 0
+                                                ? const Color(0xFF4C1D95)
+                                                : const Color(0xFF4C1D95).withAlpha(100))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            );
+          }),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Ring progress painter (multi-color arc per category) ──────────────────────
+
+class _RingPainter extends CustomPainter {
+  final double progress;
+  final Map<HabitCategory, int> categories;
+  final int total;
+
+  _RingPainter({required this.progress, required this.categories, required this.total});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    // Background ring
+    canvas.drawArc(rect, 0, 2 * pi, false,
+        Paint()
+          ..color = const Color(0xFF4C1D95).withAlpha(18)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3.5
+          ..strokeCap = StrokeCap.round);
+
+    // Colored segments
+    double startAngle = -pi / 2;
+    final totalDone = categories.values.fold(0, (s, v) => s + v);
+    if (totalDone == 0) return;
+
+    for (final cat in HabitCategory.values) {
+      final count = categories[cat] ?? 0;
+      if (count == 0) continue;
+      final sweep = (count / total) * 2 * pi;
+      final paint = Paint()
+        ..color = habitCatColor(cat)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.5
+        ..strokeCap = StrokeCap.round;
+      canvas.drawArc(rect, startAngle, sweep, false, paint);
+      startAngle += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) => true;
+}
+
+// ── Inline stat pill ─────────────────────────────────────────────────────────
+
+class _InlineStat extends StatelessWidget {
+  final IconData icon;
+  final String value, label;
+  final Color color;
+  const _InlineStat({required this.icon, required this.value,
+    required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withAlpha(12),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withAlpha(30)),
+        ),
+        child: Column(children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(height: 2),
+          Text(value, style: GoogleFonts.jetBrainsMono(
+            fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+          Text(label, style: GoogleFonts.jetBrainsMono(
+            fontSize: 7, fontWeight: FontWeight.w600,
+            letterSpacing: 1, color: Colors.white.withAlpha(80))),
+        ]),
       ),
     );
   }
@@ -673,9 +998,8 @@ class _DoneDivider extends StatelessWidget {
       padding: const EdgeInsets.only(top: 14, bottom: 10),
       child: Row(
         children: [
-          Expanded(
-            child: Container(height: 1, color: AppColors.success.withAlpha(40)),
-          ),
+          Expanded(child: Container(height: 1,
+              color: AppColors.success.withAlpha(40))),
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 10),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -687,27 +1011,19 @@ class _DoneDivider extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 11,
-                  color: AppColors.success,
-                ),
+                Icon(Icons.check_circle_outline_rounded,
+                    size: 11, color: AppColors.success),
                 const SizedBox(width: 5),
-                Text(
-                  'DONE  $count',
+                Text('DONE  $count',
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
-                    color: AppColors.success,
-                  ),
-                ),
+                    fontSize: 9, fontWeight: FontWeight.w700,
+                    letterSpacing: 1, color: AppColors.success,
+                  )),
               ],
             ),
           ),
-          Expanded(
-            child: Container(height: 1, color: AppColors.success.withAlpha(40)),
-          ),
+          Expanded(child: Container(height: 1,
+              color: AppColors.success.withAlpha(40))),
         ],
       ),
     );
@@ -719,8 +1035,9 @@ class _DoneDivider extends StatelessWidget {
 class _HabitCard extends StatelessWidget {
   final Habit habit;
   final VoidCallback onToggle;
+  final VoidCallback? onDetail;
 
-  const _HabitCard({required this.habit, required this.onToggle});
+  const _HabitCard({required this.habit, required this.onToggle, this.onDetail});
 
   @override
   Widget build(BuildContext context) {
@@ -735,6 +1052,7 @@ class _HabitCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onToggle,
+      onLongPress: onDetail,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
         opacity: done ? 0.6 : 1.0,
@@ -746,14 +1064,10 @@ class _HabitCard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withAlpha(25),
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
+                blurRadius: 12, offset: const Offset(0, 5)),
               BoxShadow(
                 color: Colors.white.withAlpha(180),
-                blurRadius: 1,
-                offset: const Offset(0, -0.5),
-              ),
+                blurRadius: 1, offset: const Offset(0, -0.5)),
             ],
           ),
           child: ClipRRect(
@@ -772,35 +1086,24 @@ class _HabitCard extends StatelessWidget {
                           // Category tag
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 9,
-                              vertical: 4,
-                            ),
+                                horizontal: 9, vertical: 4),
                             decoration: BoxDecoration(
                               color: color.withAlpha(15),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: color.withAlpha(40),
-                                width: 0.8,
-                              ),
+                                  color: color.withAlpha(40), width: 0.8),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  habitCatIcon(habit.category),
-                                  size: 10,
-                                  color: color,
-                                ),
+                                Icon(habitCatIcon(habit.category),
+                                    size: 10, color: color),
                                 const SizedBox(width: 4),
-                                Text(
-                                  habitCatLabel(habit.category),
+                                Text(habitCatLabel(habit.category),
                                   style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.8,
-                                    color: color,
-                                  ),
-                                ),
+                                    fontSize: 8, fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.8, color: color,
+                                  )),
                               ],
                             ),
                           ),
@@ -808,22 +1111,18 @@ class _HabitCard extends StatelessWidget {
                           const SizedBox(height: 10),
 
                           // Title
-                          Text(
-                            habit.title,
+                          Text(habit.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.playfairDisplay(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 18, fontWeight: FontWeight.w700,
                               fontStyle: FontStyle.italic,
-                              height: 1.2,
-                              color: textCol,
+                              height: 1.2, color: textCol,
                               decoration: done
                                   ? TextDecoration.lineThrough
                                   : TextDecoration.none,
                               decorationColor: textCol.withAlpha(100),
-                            ),
-                          ),
+                            )),
 
                           const SizedBox(height: 10),
 
@@ -833,17 +1132,12 @@ class _HabitCard extends StatelessWidget {
                               // 7-day bar
                               ...List.generate(7, (i) {
                                 final d = DateTime.now().subtract(
-                                  Duration(days: 6 - i),
-                                );
-                                final key =
-                                    '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-                                final filled = habit.completedDates.contains(
-                                  key,
-                                );
+                                    Duration(days: 6 - i));
+                                final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                                final filled = habit.completedDates.contains(key);
                                 final isToday = i == 6;
                                 return Container(
-                                  width: 16,
-                                  height: 6,
+                                  width: 16, height: 6,
                                   margin: const EdgeInsets.only(right: 3),
                                   decoration: BoxDecoration(
                                     color: filled
@@ -853,45 +1147,61 @@ class _HabitCard extends StatelessWidget {
                                     border: isToday && !filled
                                         ? Border.all(
                                             color: color.withAlpha(80),
-                                            width: 0.8,
-                                          )
+                                            width: 0.8)
                                         : null,
                                   ),
                                 );
                               }),
                               const SizedBox(width: 6),
-                              Text(
-                                '$weekly/7',
+                              Text('$weekly/7',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
-                                  color: subCol,
-                                ),
-                              ),
+                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  color: subCol)),
 
                               if (streak >= 2) ...[
                                 const SizedBox(width: 8),
-                                Icon(
-                                  Icons.local_fire_department_rounded,
-                                  size: 12,
-                                  color: streak >= 7
-                                      ? AppColors.action
-                                      : const Color(0xFFF59E0B),
-                                ),
+                                Icon(Icons.local_fire_department_rounded,
+                                    size: 12,
+                                    color: streak >= 7
+                                        ? AppColors.action
+                                        : const Color(0xFFF59E0B)),
                                 const SizedBox(width: 2),
-                                Text(
-                                  '$streak',
+                                Text('$streak',
                                   style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
+                                    fontSize: 9, fontWeight: FontWeight.w700,
                                     color: streak >= 7
                                         ? AppColors.action
                                         : const Color(0xFFF59E0B),
-                                  ),
-                                ),
+                                  )),
                               ],
                             ],
                           ),
+
+                          // Schedule + routine
+                          if (habit.scheduleDays.isNotEmpty || habit.routineSlot.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(children: [
+                              if (habit.scheduleDays.isNotEmpty) ...[
+                                Icon(Icons.repeat_rounded, size: 9, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(habit.scheduleLabel,
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                              ],
+                              if (habit.routineSlot.isNotEmpty) ...[
+                                if (habit.scheduleDays.isNotEmpty) const SizedBox(width: 8),
+                                Icon(
+                                  habit.routineSlot == 'morning'
+                                      ? Icons.wb_sunny_rounded
+                                      : Icons.nightlight_round,
+                                  size: 9, color: subCol),
+                                const SizedBox(width: 3),
+                                Text(habit.routineSlot.toUpperCase(),
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                              ],
+                            ]),
+                          ],
                         ],
                       ),
                     ),
@@ -900,15 +1210,16 @@ class _HabitCard extends StatelessWidget {
                   // ── Right accent block ────────────────────
                   Container(
                     width: 56,
-                    color: done ? const Color(0xFFCCCAC4) : color.withAlpha(30),
+                    color: done
+                        ? const Color(0xFFCCCAC4)
+                        : color.withAlpha(30),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         // Check circle
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 220),
-                          width: 30,
-                          height: 30,
+                          width: 30, height: 30,
                           decoration: BoxDecoration(
                             color: done
                                 ? color.withAlpha(60)
@@ -922,20 +1233,15 @@ class _HabitCard extends StatelessWidget {
                             ),
                           ),
                           child: done
-                              ? Icon(
-                                  Icons.check_rounded,
-                                  size: 16,
-                                  color: color,
-                                )
+                              ? Icon(Icons.check_rounded,
+                                  size: 16, color: color)
                               : null,
                         ),
                         const SizedBox(height: 8),
                         // XP
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.gold.withAlpha(20),
                             borderRadius: BorderRadius.circular(8),
@@ -943,11 +1249,9 @@ class _HabitCard extends StatelessWidget {
                           child: Text(
                             done ? '✓' : '+${habit.xpPerCheck}',
                             style: GoogleFonts.jetBrainsMono(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 8, fontWeight: FontWeight.w700,
                               color: done ? subCol : AppColors.gold,
-                            ),
-                          ),
+                            )),
                         ),
                       ],
                     ),
@@ -977,16 +1281,12 @@ class _EmptyHabitsState extends State<_EmptyHabits>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
+        vsync: this, duration: const Duration(milliseconds: 2400))
+      ..repeat(reverse: true);
   }
 
   @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
+  void dispose() { _ctrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -1005,39 +1305,27 @@ class _EmptyHabitsState extends State<_EmptyHabits>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 60,
-              height: 60,
+              width: 60, height: 60,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white.withAlpha(18),
                 border: Border.all(
-                  color: Colors.white.withAlpha(80),
-                  width: 1.5,
-                ),
+                    color: Colors.white.withAlpha(80), width: 1.5),
               ),
-              child: Icon(
-                Icons.loop_rounded,
-                size: 26,
-                color: Colors.white.withAlpha(180),
-              ),
+              child: Icon(Icons.loop_rounded,
+                  size: 26, color: Colors.white.withAlpha(180)),
             ),
             const SizedBox(height: 18),
-            Text(
-              'no habits yet',
+            Text('no habits yet',
               style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontSize: 15, fontWeight: FontWeight.w600,
                 color: Colors.white.withAlpha(200),
-              ),
-            ),
+              )),
             const SizedBox(height: 6),
-            Text(
-              'build your daily routine',
+            Text('build your daily routine',
               style: GoogleFonts.inter(
-                fontSize: 12,
-                color: Colors.white.withAlpha(160),
-              ),
-            ),
+                fontSize: 12, color: Colors.white.withAlpha(160),
+              )),
           ],
         ),
       ),
@@ -1059,31 +1347,30 @@ class _AddHabitSheet extends StatefulWidget {
 class _AddHabitSheetState extends State<_AddHabitSheet> {
   final _ctrl = TextEditingController();
   HabitCategory _cat = HabitCategory.health;
+  final Set<int> _days = {}; // empty = every day
+  String _routine = ''; // '', 'morning', 'evening'
 
-  static const _kSheetBg = Color(0xFFF5F1E8);
-  static const _kRowBg = Color(0xFFEFEBE0);
-  static const _kDivider = Color(0xFFDDD8CB);
-  static const _kCocoa = Color(0xFF594536);
+  static const _kSheetBg     = Color(0xFFF5F1E8);
+  static const _kRowBg       = Color(0xFFEFEBE0);
+  static const _kDivider     = Color(0xFFDDD8CB);
+  static const _kCocoa       = Color(0xFF594536);
   static const _kCoconutMilk = Color(0xFFF0EDE5);
 
   void _submit() {
     final title = _ctrl.text.trim();
     if (title.isEmpty) return;
-    widget.onAdd(
-      Habit(
-        id: widget.nextId,
-        title: title,
-        category: _cat,
-        createdAt: DateTime.now(),
-      ),
-    );
+    widget.onAdd(Habit(
+      id: widget.nextId,
+      title: title,
+      category: _cat,
+      createdAt: DateTime.now(),
+      scheduleDays: _days.toList()..sort(),
+      routineSlot: _routine,
+    ));
   }
 
   @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
+  void dispose() { _ctrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -1103,13 +1390,10 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
               decoration: BoxDecoration(
                 color: _kSheetBg,
                 borderRadius: BorderRadius.circular(36),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(80),
-                    blurRadius: 40,
-                    offset: const Offset(6, 8),
-                  ),
-                ],
+                boxShadow: [BoxShadow(
+                  color: Colors.black.withAlpha(80),
+                  blurRadius: 40, offset: const Offset(6, 8),
+                )],
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -1121,63 +1405,47 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                       decoration: BoxDecoration(
                         color: AppColors.habits.withAlpha(25),
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(36),
-                        ),
+                            top: Radius.circular(36)),
                       ),
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                       child: Row(
                         children: [
                           Container(
-                            width: 36,
-                            height: 36,
+                            width: 36, height: 36,
                             decoration: BoxDecoration(
                               color: AppColors.habits,
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: const Icon(
-                              Icons.loop_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
+                            child: const Icon(Icons.loop_rounded,
+                                color: Colors.white, size: 20),
                           ),
                           const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'NEW HABIT',
+                              Text('NEW HABIT',
                                 style: GoogleFonts.playfairDisplay(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.2,
-                                  color: _kCocoa,
-                                ),
-                              ),
-                              Text(
-                                '+${Habit(id: '', title: '', createdAt: DateTime.now()).xpPerCheck} XP / day',
+                                  fontSize: 14, fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2, color: _kCocoa,
+                                )),
+                              Text('+${Habit(id: '', title: '', createdAt: DateTime.now()).xpPerCheck} XP / day',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 9, fontWeight: FontWeight.w600,
                                   color: _kCocoa.withAlpha(140),
-                                ),
-                              ),
+                                )),
                             ],
                           ),
                           const Spacer(),
                           GestureDetector(
                             onTap: () => Navigator.of(context).pop(),
                             child: Container(
-                              width: 28,
-                              height: 28,
+                              width: 28, height: 28,
                               decoration: BoxDecoration(
                                 color: _kDivider,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Icon(
-                                Icons.close_rounded,
-                                color: _kCocoa.withAlpha(150),
-                                size: 14,
-                              ),
+                              child: Icon(Icons.close_rounded,
+                                  color: _kCocoa.withAlpha(150), size: 14),
                             ),
                           ),
                         ],
@@ -1189,27 +1457,22 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                       padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.edit_rounded,
-                            size: 12,
-                            color: _kCocoa.withAlpha(130),
-                          ),
+                          Icon(Icons.edit_rounded,
+                              size: 12, color: _kCocoa.withAlpha(130)),
                           const SizedBox(width: 8),
                           Expanded(
                             child: TextField(
                               controller: _ctrl,
                               autofocus: true,
                               style: GoogleFonts.inter(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 15, fontWeight: FontWeight.w600,
                                 color: _kCocoa,
                               ),
                               decoration: InputDecoration(
                                 hintText: 'e.g. Meditate 10 min',
                                 hintStyle: GoogleFonts.inter(
-                                  fontSize: 15,
-                                  color: _kCocoa.withAlpha(100),
-                                ),
+                                    fontSize: 15,
+                                    color: _kCocoa.withAlpha(100)),
                                 border: InputBorder.none,
                                 isDense: true,
                                 contentPadding: EdgeInsets.zero,
@@ -1231,21 +1494,15 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                         children: [
                           Row(
                             children: [
-                              Icon(
-                                Icons.category_rounded,
-                                size: 12,
-                                color: _kCocoa.withAlpha(130),
-                              ),
+                              Icon(Icons.category_rounded,
+                                  size: 12, color: _kCocoa.withAlpha(130)),
                               const SizedBox(width: 6),
-                              Text(
-                                'CATEGORY',
+                              Text('CATEGORY',
                                 style: GoogleFonts.inter(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
+                                  fontSize: 9, fontWeight: FontWeight.w700,
                                   letterSpacing: 1.2,
                                   color: _kCocoa.withAlpha(140),
-                                ),
-                              ),
+                                )),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -1264,9 +1521,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 7,
-                                    ),
+                                        horizontal: 12, vertical: 7),
                                     decoration: BoxDecoration(
                                       color: active
                                           ? color.withAlpha(25)
@@ -1279,28 +1534,20 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                         width: active ? 1.5 : 1.0,
                                       ),
                                       boxShadow: active
-                                          ? [
-                                              BoxShadow(
-                                                color: color.withAlpha(60),
-                                                blurRadius: 8,
-                                                spreadRadius: 1,
-                                              ),
-                                            ]
+                                          ? [BoxShadow(
+                                              color: color.withAlpha(60),
+                                              blurRadius: 8, spreadRadius: 1)]
                                           : [],
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Icon(
-                                          habitCatIcon(c),
-                                          size: 13,
-                                          color: active
-                                              ? color
-                                              : _kCocoa.withAlpha(100),
-                                        ),
+                                        Icon(habitCatIcon(c), size: 13,
+                                            color: active
+                                                ? color
+                                                : _kCocoa.withAlpha(100)),
                                         const SizedBox(width: 5),
-                                        Text(
-                                          habitCatLabel(c),
+                                        Text(habitCatLabel(c),
                                           style: GoogleFonts.jetBrainsMono(
                                             fontSize: 9,
                                             fontWeight: FontWeight.w700,
@@ -1308,8 +1555,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                             color: active
                                                 ? color
                                                 : _kCocoa.withAlpha(130),
-                                          ),
-                                        ),
+                                          )),
                                       ],
                                     ),
                                   ),
@@ -1317,6 +1563,97 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                               );
                             }).toList(),
                           ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Schedule days ────────────────────────
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.calendar_today_rounded, size: 12,
+                                color: _kCocoa.withAlpha(130)),
+                            const SizedBox(width: 6),
+                            Text('REPEAT', style: GoogleFonts.inter(
+                              fontSize: 9, fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
+                            const Spacer(),
+                            Text(_days.isEmpty ? 'Every day' : '${_days.length} days',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9, fontWeight: FontWeight.w600,
+                                color: _kCocoa.withAlpha(100))),
+                          ]),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [1, 2, 3, 4, 5, 6, 7].map((d) {
+                              final active = _days.contains(d);
+                              const labels = ['', 'M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                              return Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() {
+                                    if (active) { _days.remove(d); }
+                                    else { _days.add(d); }
+                                  }),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    margin: EdgeInsets.only(right: d < 7 ? 4 : 0),
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: active
+                                          ? AppColors.habits.withAlpha(25)
+                                          : _kRowBg,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: active
+                                            ? AppColors.habits.withAlpha(120)
+                                            : _kDivider),
+                                    ),
+                                    child: Center(
+                                      child: Text(labels[d],
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 10, fontWeight: FontWeight.w700,
+                                          color: active
+                                              ? AppColors.habits
+                                              : _kCocoa.withAlpha(100))),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Routine slot ─────────────────────────
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.wb_sunny_rounded, size: 12,
+                                color: _kCocoa.withAlpha(130)),
+                            const SizedBox(width: 6),
+                            Text('ROUTINE', style: GoogleFonts.inter(
+                              fontSize: 9, fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
+                          ]),
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            _RoutineChip(label: 'MORNING', icon: Icons.wb_sunny_rounded,
+                              active: _routine == 'morning',
+                              onTap: () => setState(() => _routine = _routine == 'morning' ? '' : 'morning')),
+                            const SizedBox(width: 8),
+                            _RoutineChip(label: 'EVENING', icon: Icons.nightlight_round,
+                              active: _routine == 'evening',
+                              onTap: () => setState(() => _routine = _routine == 'evening' ? '' : 'evening')),
+                          ]),
                         ],
                       ),
                     ),
@@ -1333,35 +1670,25 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                           decoration: BoxDecoration(
                             color: AppColors.habits,
                             borderRadius: BorderRadius.circular(22),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.habits.withAlpha(70),
-                                blurRadius: 14,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                            boxShadow: [BoxShadow(
+                              color: AppColors.habits.withAlpha(70),
+                              blurRadius: 14, offset: const Offset(0, 4),
+                            )],
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(
-                                'CREATE HABIT',
+                              Text('CREATE HABIT',
                                 style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.4,
-                                  color: Colors.white,
-                                ),
-                              ),
+                                  fontSize: 12, fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.4, color: Colors.white,
+                                )),
                               const SizedBox(width: 8),
-                              Text(
-                                '+15 XP',
+                              Text('+15 XP',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 9, fontWeight: FontWeight.w600,
                                   color: Colors.white.withAlpha(200),
-                                ),
-                              ),
+                                )),
                             ],
                           ),
                         ),
@@ -1373,6 +1700,297 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ── Habit detail view (calendar + stats) ─────────────────────────────────────
+
+class _HabitDetailView extends StatefulWidget {
+  final Habit habit;
+  final VoidCallback onToggle;
+  const _HabitDetailView({required this.habit, required this.onToggle});
+  @override
+  State<_HabitDetailView> createState() => _HabitDetailViewState();
+}
+
+class _HabitDetailViewState extends State<_HabitDetailView> {
+  late DateTime _viewMonth;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  }
+
+  static String _dk(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final h = widget.habit;
+    final color = habitCatColor(h.category);
+    final now = DateTime.now();
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
+
+    // Calendar grid
+    final firstDay = DateTime(_viewMonth.year, _viewMonth.month, 1);
+    final startWeekday = firstDay.weekday; // 1=Mon
+    final daysInMonth = DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
+    const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
+      'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+
+    return Scaffold(
+      backgroundColor: Colors.black.withAlpha(180),
+      body: SafeArea(
+        child: Column(children: [
+          // Top bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Row(children: [
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withAlpha(30))),
+                  child: Icon(Icons.close_rounded, size: 20,
+                      color: Colors.white.withAlpha(200)))),
+              const SizedBox(width: 14),
+              Expanded(child: Text(h.title, style: GoogleFonts.playfairDisplay(
+                fontSize: 20, fontWeight: FontWeight.w700,
+                fontStyle: FontStyle.italic, color: Colors.white),
+                maxLines: 1, overflow: TextOverflow.ellipsis)),
+            ]),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Main card
+          Expanded(child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            children: [
+              // ── Stats row ──────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg, borderRadius: BorderRadius.circular(24),
+                  boxShadow: [BoxShadow(color: Colors.black.withAlpha(25),
+                    blurRadius: 12, offset: const Offset(0, 5))]),
+                child: Row(children: [
+                  _DetailStat(value: '${h.streak}', label: 'STREAK',
+                    icon: Icons.local_fire_department_rounded,
+                    color: h.streak >= 7 ? AppColors.action : const Color(0xFFF59E0B)),
+                  _DetailStat(value: '${h.weeklyCount}/7', label: 'THIS WEEK',
+                    icon: Icons.insights_rounded, color: color),
+                  _DetailStat(value: '${h.completedDates.length}', label: 'TOTAL',
+                    icon: Icons.check_circle_rounded, color: AppColors.success),
+                ]),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Calendar ───────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg, borderRadius: BorderRadius.circular(24),
+                  boxShadow: [BoxShadow(color: Colors.black.withAlpha(25),
+                    blurRadius: 12, offset: const Offset(0, 5))]),
+                child: Column(children: [
+                  // Month nav
+                  Row(children: [
+                    GestureDetector(
+                      onTap: () => setState(() => _viewMonth = DateTime(
+                          _viewMonth.year, _viewMonth.month - 1)),
+                      child: Icon(Icons.chevron_left_rounded, size: 22, color: textCol)),
+                    const Spacer(),
+                    Text('${months[_viewMonth.month - 1]}  ${_viewMonth.year}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        letterSpacing: 2, color: textCol)),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => setState(() => _viewMonth = DateTime(
+                          _viewMonth.year, _viewMonth.month + 1)),
+                      child: Icon(Icons.chevron_right_rounded, size: 22, color: textCol)),
+                  ]),
+                  const SizedBox(height: 14),
+
+                  // Day headers
+                  Row(children: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) =>
+                    Expanded(child: Center(child: Text(d,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 8, fontWeight: FontWeight.w600,
+                        color: subCol.withAlpha(140)))))).toList()),
+                  const SizedBox(height: 8),
+
+                  // Calendar grid
+                  ...List.generate(6, (week) {
+                    return Row(
+                      children: List.generate(7, (dayOfWeek) {
+                        final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
+                        if (dayIndex < 0 || dayIndex >= daysInMonth) {
+                          return const Expanded(child: SizedBox(height: 36));
+                        }
+                        final day = dayIndex + 1;
+                        final date = DateTime(_viewMonth.year, _viewMonth.month, day);
+                        final key = _dk(date);
+                        final done = h.completedDates.contains(key);
+                        final isToday = date.day == now.day &&
+                            date.month == now.month && date.year == now.year;
+                        final isFuture = date.isAfter(now);
+
+                        return Expanded(child: GestureDetector(
+                          onTap: isFuture ? null : () {
+                            setState(() {
+                              if (done) { h.completedDates.remove(key); }
+                              else { h.completedDates.add(key); }
+                            });
+                          },
+                          child: Container(
+                            height: 36,
+                            margin: const EdgeInsets.all(1.5),
+                            decoration: BoxDecoration(
+                              color: done
+                                  ? color
+                                  : isToday
+                                      ? color.withAlpha(15)
+                                      : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: isToday && !done
+                                  ? Border.all(color: color.withAlpha(120), width: 1.5)
+                                  : null,
+                            ),
+                            child: Center(child: Text('$day',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: done || isToday ? FontWeight.w700 : FontWeight.w500,
+                                color: done
+                                    ? Colors.white
+                                    : isFuture
+                                        ? subCol.withAlpha(60)
+                                        : textCol))),
+                          ),
+                        ));
+                      }),
+                    );
+                  }),
+                ]),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Info card ──────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: cardBg, borderRadius: BorderRadius.circular(24),
+                  boxShadow: [BoxShadow(color: Colors.black.withAlpha(25),
+                    blurRadius: 12, offset: const Offset(0, 5))]),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Icon(habitCatIcon(h.category), size: 14, color: color),
+                    const SizedBox(width: 6),
+                    Text(habitCatLabel(h.category), style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w700,
+                      letterSpacing: 1, color: color)),
+                    const Spacer(),
+                    Text(h.scheduleLabel, style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                  ]),
+                  if (h.routineSlot.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Icon(h.routineSlot == 'morning'
+                          ? Icons.wb_sunny_rounded : Icons.nightlight_round,
+                        size: 12, color: subCol),
+                      const SizedBox(width: 4),
+                      Text('${h.routineSlot.toUpperCase()} ROUTINE',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                    ]),
+                  ],
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.gold.withAlpha(15),
+                      borderRadius: BorderRadius.circular(8)),
+                    child: Text('+${h.xpPerCheck} XP per check-in',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.gold)),
+                  ),
+                ]),
+              ),
+            ],
+          )),
+        ]),
+      ),
+    );
+  }
+}
+
+class _DetailStat extends StatelessWidget {
+  final String value, label;
+  final IconData icon;
+  final Color color;
+  const _DetailStat({required this.value, required this.label,
+    required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(child: Column(children: [
+      Icon(icon, size: 18, color: color),
+      const SizedBox(height: 4),
+      Text(value, style: GoogleFonts.jetBrainsMono(
+        fontSize: 16, fontWeight: FontWeight.w700,
+        color: const Color(0xFF2A2318))),
+      Text(label, style: GoogleFonts.jetBrainsMono(
+        fontSize: 7, fontWeight: FontWeight.w600,
+        letterSpacing: 1.5, color: const Color(0xFF8A8070))),
+    ]));
+  }
+}
+
+// ── Routine chip ─────────────────────────────────────────────────────────────
+
+class _RoutineChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool active;
+  final VoidCallback onTap;
+  const _RoutineChip({required this.label, required this.icon,
+    required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    const cocoa = Color(0xFF594536);
+    const divider = Color(0xFFDDD8CB);
+    const rowBg = Color(0xFFEFEBE0);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: active ? AppColors.habits.withAlpha(20) : rowBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: active ? AppColors.habits.withAlpha(120) : divider),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 13, color: active ? AppColors.habits : cocoa.withAlpha(100)),
+          const SizedBox(width: 6),
+          Text(label, style: GoogleFonts.jetBrainsMono(
+            fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.8,
+            color: active ? AppColors.habits : cocoa.withAlpha(130))),
+        ]),
       ),
     );
   }
