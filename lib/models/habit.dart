@@ -38,11 +38,17 @@ class Habit {
   /// Which dates this habit was checked in
   final Set<String> completedDates; // "2026-04-06" format
 
+  /// Notes per check-in date
+  final Map<String, String> notes; // "2026-04-06" → "felt great"
+
   // Schedule: which days of week (1=Mon..7=Sun), empty=every day
   final List<int> scheduleDays;
 
   // Routine type
   String routineSlot; // 'morning', 'evening', '' (none)
+
+  // Streak freeze
+  int streakFreezes; // available freezes
 
   Habit({
     required this.id,
@@ -50,9 +56,12 @@ class Habit {
     this.category = HabitCategory.health,
     required this.createdAt,
     Set<String>? completedDates,
+    Map<String, String>? notes,
     List<int>? scheduleDays,
     this.routineSlot = '',
+    this.streakFreezes = 0,
   }) : completedDates = completedDates ?? {},
+       notes = notes ?? {},
        scheduleDays = scheduleDays ?? [];
 
   /// Whether this habit is scheduled for today
@@ -69,6 +78,8 @@ class Habit {
 
   static String _dateKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  static String dateKeyPublic(DateTime d) => _dateKey(d);
 
   bool isDoneToday() {
     return completedDates.contains(_dateKey(DateTime.now()));

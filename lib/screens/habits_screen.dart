@@ -25,7 +25,65 @@ class _HabitsScreenState extends State<HabitsScreen> {
     if (!wasDone) {
       GameState.instance.recordCompletion();
       GameState.instance.addXp(habit.xpPerCheck);
+      // Check-in celebration
+      _showCheckCelebration(habit);
+      // Streak milestone check
+      if (habit.streak == 7 || habit.streak == 30 || habit.streak == 100) {
+        Future.delayed(const Duration(milliseconds: 800), () {
+          if (mounted) _showStreakMilestone(habit.streak);
+        });
+      }
     }
+  }
+
+  void _showCheckCelebration(Habit habit) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry e;
+    e = OverlayEntry(builder: (_) => _CheckCelebration(
+      color: habitCatColor(habit.category),
+      onDone: () => e.remove(),
+    ));
+    overlay.insert(e);
+  }
+
+  void _showStreakMilestone(int streak) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry e;
+    e = OverlayEntry(builder: (_) => _StreakMilestone(
+      streak: streak, onDone: () => e.remove(),
+    ));
+    overlay.insert(e);
+  }
+
+  void _showNoteDialog(Habit habit) {
+    final ctrl = TextEditingController(
+      text: habit.notes[Habit.dateKeyPublic(DateTime.now())] ?? '');
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFF5F2EB),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Note', style: GoogleFonts.playfairDisplay(
+          fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF2A2318))),
+        content: TextField(
+          controller: ctrl, maxLines: 3, autofocus: true,
+          style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2A2318)),
+          decoration: InputDecoration(
+            hintText: 'How did it go?',
+            hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF8A8070)),
+            border: InputBorder.none)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF8A8070)))),
+          TextButton(onPressed: () {
+            habit.notes[Habit.dateKeyPublic(DateTime.now())] = ctrl.text.trim();
+            Navigator.pop(ctx);
+            setState(() {});
+          }, child: Text('Save', style: GoogleFonts.inter(
+            fontWeight: FontWeight.w700, color: AppColors.habits))),
+        ],
+      ),
+    );
   }
 
   void _delete(String id) {
@@ -213,6 +271,44 @@ class _HabitsScreenState extends State<HabitsScreen> {
 
                 const SizedBox(height: 8),
 
+                // ── Daily progress bar ────────────────────
+                if (total > 0) Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Stack(children: [
+                        Container(height: 6, decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(15),
+                          borderRadius: BorderRadius.circular(3))),
+                        AnimatedFractionallySizedBox(
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeOutCubic,
+                          widthFactor: total == 0 ? 0 : doneToday / total,
+                          child: Container(height: 6, decoration: BoxDecoration(
+                            color: doneToday == total
+                                ? AppColors.success
+                                : AppColors.habits,
+                            borderRadius: BorderRadius.circular(3),
+                            boxShadow: [BoxShadow(
+                              color: (doneToday == total
+                                  ? AppColors.success
+                                  : AppColors.habits).withAlpha(80),
+                              blurRadius: 8)]))),
+                      ]),
+                      const SizedBox(height: 4),
+                      Text(doneToday == total && total > 0
+                          ? 'ALL DONE TODAY!'
+                          : '$doneToday of $total completed',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600,
+                          color: doneToday == total && total > 0
+                              ? AppColors.success
+                              : Colors.white.withAlpha(100))),
+                    ],
+                  ),
+                ),
+
                 // ── Habit list ─────────────────────────────
                 Expanded(
                   child: habits.isEmpty
@@ -346,6 +442,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
         habit: habit,
         onToggle: () => _toggle(habit),
         onDetail: () => _showDetail(habit),
+        onNote: () => _showNoteDialog(habit),
       ),
     );
   }
@@ -975,8 +1072,9 @@ class _HabitCard extends StatelessWidget {
   final Habit habit;
   final VoidCallback onToggle;
   final VoidCallback? onDetail;
+  final VoidCallback? onNote;
 
-  const _HabitCard({required this.habit, required this.onToggle, this.onDetail});
+  const _HabitCard({required this.habit, required this.onToggle, this.onDetail, this.onNote});
 
   @override
   Widget build(BuildContext context) {
@@ -1140,6 +1238,23 @@ class _HabitCard extends StatelessWidget {
                                     fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
                               ],
                             ]),
+                          ],
+                          // Note indicator
+                          if (done && onNote != null) ...[
+                            const SizedBox(height: 6),
+                            GestureDetector(
+                              onTap: onNote,
+                              child: Row(children: [
+                                Icon(Icons.edit_note_rounded, size: 12, color: subCol.withAlpha(120)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  habit.notes[Habit.dateKeyPublic(DateTime.now())]?.isNotEmpty == true
+                                      ? 'View note' : 'Add note',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 9, fontWeight: FontWeight.w500,
+                                    color: subCol.withAlpha(120))),
+                              ]),
+                            ),
                           ],
                         ],
                       ),
@@ -1390,6 +1505,45 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                         ],
                       ),
                     ),
+
+                    // ── Quick-add presets ───────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 12, 18, 6),
+                      child: Wrap(
+                        spacing: 6, runSpacing: 6,
+                        children: [
+                          ('Meditate', Icons.self_improvement_rounded, HabitCategory.mindset),
+                          ('Drink Water', Icons.water_drop_rounded, HabitCategory.health),
+                          ('Exercise', Icons.fitness_center_rounded, HabitCategory.health),
+                          ('Read', Icons.menu_book_rounded, HabitCategory.productivity),
+                          ('Journal', Icons.edit_note_rounded, HabitCategory.mindset),
+                          ('Walk', Icons.directions_walk_rounded, HabitCategory.health),
+                        ].map((p) {
+                          final (label, icon, cat) = p;
+                          return GestureDetector(
+                            onTap: () {
+                              _ctrl.text = label;
+                              setState(() => _cat = cat);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _kRowBg,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: _kDivider)),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                Icon(icon, size: 12, color: habitCatColor(cat)),
+                                const SizedBox(width: 5),
+                                Text(label, style: GoogleFonts.inter(
+                                  fontSize: 10, fontWeight: FontWeight.w600,
+                                  color: _kCocoa.withAlpha(160))),
+                              ]),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    Divider(height: 1, thickness: 1, color: _kDivider),
 
                     // ── Title field ─────────────────────────
                     Padding(
@@ -1934,3 +2088,148 @@ class _RoutineChip extends StatelessWidget {
     );
   }
 }
+
+// ── Check-in celebration overlay ─────────────────────────────────────────────
+
+class _CheckCelebration extends StatefulWidget {
+  final Color color;
+  final VoidCallback onDone;
+  const _CheckCelebration({required this.color, required this.onDone});
+  @override
+  State<_CheckCelebration> createState() => _CheckCelebrationState();
+}
+
+class _CheckCelebrationState extends State<_CheckCelebration>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 800))
+      ..forward().then((_) => widget.onDone());
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        final t = _ctrl.value;
+        final sz = MediaQuery.of(context).size;
+        return Positioned.fill(child: IgnorePointer(child: Stack(
+          children: [
+            // Scale bounce checkmark
+            Center(child: Opacity(
+              opacity: (1 - t * 1.5).clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: 0.5 + Curves.elasticOut.transform((t * 2).clamp(0.0, 1.0)) * 1.5,
+                child: Icon(Icons.check_circle_rounded,
+                    size: 60, color: widget.color.withAlpha(180))),
+            )),
+            // Mini confetti
+            ...List.generate(12, (i) {
+              final seed = i * 73.7;
+              final angle = (i / 12) * 2 * pi;
+              final dist = t * 80 + sin(seed) * 20;
+              final x = sz.width / 2 + cos(angle) * dist;
+              final y = sz.height / 2 + sin(angle) * dist - t * 40;
+              return Positioned(
+                left: x - 3, top: y - 3,
+                child: Opacity(
+                  opacity: (1 - t * 1.3).clamp(0.0, 1.0),
+                  child: Container(width: 6, height: 6,
+                    decoration: BoxDecoration(
+                      color: i % 2 == 0 ? widget.color : AppColors.gold,
+                      borderRadius: BorderRadius.circular(i % 3 == 0 ? 1 : 3)))),
+              );
+            }),
+          ],
+        )));
+      },
+    );
+  }
+}
+
+// ── Streak milestone overlay ─────────────────────────────────────────────────
+
+class _StreakMilestone extends StatefulWidget {
+  final int streak;
+  final VoidCallback onDone;
+  const _StreakMilestone({required this.streak, required this.onDone});
+  @override
+  State<_StreakMilestone> createState() => _StreakMilestoneState();
+}
+
+class _StreakMilestoneState extends State<_StreakMilestone>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    HapticFeedback.heavyImpact();
+    _ctrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 2500))
+      ..forward().then((_) => widget.onDone());
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) {
+        final t = _ctrl.value;
+        final bgOp = t < 0.1 ? t / 0.1 : t > 0.8 ? 1 - (t - 0.8) / 0.2 : 1.0;
+        final scale = Curves.elasticOut.transform(
+            ((t - 0.05) / 0.3).clamp(0.0, 1.0));
+        final textOp = t < 0.1 ? 0.0 : t > 0.8 ? 1 - (t - 0.8) / 0.2 : 1.0;
+
+        return Positioned.fill(
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: bgOp.clamp(0.0, 1.0),
+              child: Container(
+                color: Colors.black.withAlpha(160),
+                child: Center(
+                  child: Opacity(
+                    opacity: textOp.clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: scale.clamp(0.0, 1.5),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.local_fire_department_rounded,
+                              size: 56, color: AppColors.action),
+                          const SizedBox(height: 12),
+                          Text('${widget.streak} DAY',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 42, fontWeight: FontWeight.w900,
+                              fontStyle: FontStyle.italic,
+                              color: AppColors.gold, height: 1)),
+                          Text('STREAK',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 42, fontWeight: FontWeight.w900,
+                              fontStyle: FontStyle.italic,
+                              color: Colors.white, height: 1)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
