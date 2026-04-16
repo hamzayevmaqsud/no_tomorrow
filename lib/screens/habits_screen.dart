@@ -723,7 +723,7 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
     final startWeekday = firstDay.weekday;
     final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
 
-    const cardBg = Color(0xFFFAF5FF);
+    const cardBg = Color(0xFFF5F2EB);
     const textCol = Color(0xFF2A2318);
     const subCol = Color(0xFF8A8070);
 
