@@ -21,6 +21,13 @@ class _HabitsScreenState extends State<HabitsScreen> {
   void _toggle(Habit habit) {
     HapticFeedback.mediumImpact();
     final wasDone = habit.isDoneToday();
+
+    // If habit has timer and not done yet — open timer instead
+    if (!wasDone && habit.timerMinutes > 0) {
+      _openTimer(habit);
+      return;
+    }
+
     setState(() => habit.toggleToday());
     if (!wasDone) {
       GameState.instance.recordCompletion();
@@ -53,6 +60,32 @@ class _HabitsScreenState extends State<HabitsScreen> {
       streak: streak, onDone: () => e.remove(),
     ));
     overlay.insert(e);
+  }
+
+  void _openTimer(Habit habit) {
+    Navigator.push(context, PageRouteBuilder(
+      opaque: false,
+      transitionDuration: const Duration(milliseconds: 300),
+      reverseTransitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (ctx, _, __) => _HabitTimerScreen(
+        habit: habit,
+        onComplete: () {
+          Navigator.pop(ctx);
+          setState(() => habit.toggleToday());
+          GameState.instance.recordCompletion();
+          GameState.instance.addXp(habit.xpPerCheck);
+          _showCheckCelebration(habit);
+          if (habit.streak == 7 || habit.streak == 30 || habit.streak == 100) {
+            Future.delayed(const Duration(milliseconds: 800), () {
+              if (mounted) _showStreakMilestone(habit.streak);
+            });
+          }
+        },
+      ),
+      transitionsBuilder: (ctx, anim, _, child) => FadeTransition(
+        opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+        child: child),
+    ));
   }
 
   void _showNoteDialog(Habit habit) {
@@ -151,6 +184,11 @@ class _HabitsScreenState extends State<HabitsScreen> {
     final total = habits.length;
     final pending = habits.where((h) => !h.isDoneToday()).toList();
     final completed = habits.where((h) => h.isDoneToday()).toList();
+
+    // Group by routine
+    final morning = pending.where((h) => h.routineSlot == 'morning').toList();
+    final evening = pending.where((h) => h.routineSlot == 'evening').toList();
+    final anytime = pending.where((h) => h.routineSlot.isEmpty).toList();
 
     return SwipeToPop(child: Scaffold(
       backgroundColor: const Color(0xFF0E0A16),
@@ -316,10 +354,27 @@ class _HabitsScreenState extends State<HabitsScreen> {
                       : ListView(
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                           children: [
-                            // Pending habits
-                            ...pending.asMap().entries.map((e) =>
-                              _staggered(e.key, _dismissible(e.value))),
-                            // Completed divider + done habits
+                            // Morning routine
+                            if (morning.isNotEmpty) ...[
+                              _RoutineHeader(icon: Icons.wb_sunny_rounded, label: 'MORNING'),
+                              ...morning.asMap().entries.map((e) =>
+                                _staggered(e.key, _dismissible(e.value))),
+                            ],
+                            // Evening routine
+                            if (evening.isNotEmpty) ...[
+                              _RoutineHeader(icon: Icons.nightlight_round, label: 'EVENING'),
+                              ...evening.asMap().entries.map((e) =>
+                                _staggered(morning.length + e.key, _dismissible(e.value))),
+                            ],
+                            // Anytime
+                            if (anytime.isNotEmpty) ...[
+                              if (morning.isNotEmpty || evening.isNotEmpty)
+                                _RoutineHeader(icon: Icons.access_time_rounded, label: 'ANYTIME'),
+                              ...anytime.asMap().entries.map((e) =>
+                                _staggered(morning.length + evening.length + e.key,
+                                    _dismissible(e.value))),
+                            ],
+                            // Completed
                             if (completed.isNotEmpty) ...[
                               _DoneDivider(count: completed.length),
                               ...completed.asMap().entries.map((e) =>
@@ -1024,6 +1079,28 @@ class _InlineStat extends StatelessWidget {
 
 // ── Done divider ─────────────────────────────────────────────────────────────
 
+class _RoutineHeader extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _RoutineHeader({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10, bottom: 6),
+      child: Row(children: [
+        Icon(icon, size: 14, color: Colors.white.withAlpha(120)),
+        const SizedBox(width: 6),
+        Text(label, style: GoogleFonts.jetBrainsMono(
+          fontSize: 9, fontWeight: FontWeight.w700,
+          letterSpacing: 2, color: Colors.white.withAlpha(120))),
+        const SizedBox(width: 10),
+        Expanded(child: Container(height: 1, color: Colors.white.withAlpha(20))),
+      ]),
+    );
+  }
+}
+
 class _DoneDivider extends StatelessWidget {
   final int count;
   const _DoneDivider({required this.count});
@@ -1214,6 +1291,17 @@ class _HabitCard extends StatelessWidget {
                             ],
                           ),
 
+                          // Timer indicator
+                          if (habit.timerMinutes > 0) ...[
+                            const SizedBox(height: 6),
+                            Row(children: [
+                              Icon(Icons.timer_rounded, size: 10, color: color),
+                              const SizedBox(width: 4),
+                              Text('${habit.timerMinutes} min',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 8, fontWeight: FontWeight.w700, color: color)),
+                            ]),
+                          ],
                           // Schedule + routine
                           if (habit.scheduleDays.isNotEmpty || habit.routineSlot.isNotEmpty) ...[
                             const SizedBox(height: 6),
@@ -1403,6 +1491,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
   HabitCategory _cat = HabitCategory.health;
   final Set<int> _days = {}; // empty = every day
   String _routine = ''; // '', 'morning', 'evening'
+  int _timer = 0; // minutes, 0 = no timer
 
   static const _kSheetBg     = Color(0xFFF5F1E8);
   static const _kRowBg       = Color(0xFFEFEBE0);
@@ -1420,6 +1509,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
       createdAt: DateTime.now(),
       scheduleDays: _days.toList()..sort(),
       routineSlot: _routine,
+      timerMinutes: _timer,
     ));
   }
 
@@ -1658,6 +1748,42 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                           ),
                         ],
                       ),
+                    ),
+
+                    // ── Timer ────────────────────────────────
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(22, 14, 22, 10),
+                      child: Row(children: [
+                        Icon(Icons.timer_rounded, size: 12, color: _kCocoa.withAlpha(130)),
+                        const SizedBox(width: 6),
+                        Text('TIMER', style: GoogleFonts.inter(
+                          fontSize: 9, fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
+                        const Spacer(),
+                        ...([0, 5, 10, 15, 30].map((m) {
+                          final active = _timer == m;
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 6),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _timer = m),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: active ? AppColors.habits.withAlpha(20) : _kRowBg,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: active ? AppColors.habits.withAlpha(120) : _kDivider)),
+                                child: Text(m == 0 ? 'OFF' : '${m}m',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 9, fontWeight: FontWeight.w700,
+                                    color: active ? AppColors.habits : _kCocoa.withAlpha(100))),
+                              ),
+                            ),
+                          );
+                        })),
+                      ]),
                     ),
 
                     // ── Schedule days ────────────────────────
@@ -2229,6 +2355,239 @@ class _StreakMilestoneState extends State<_StreakMilestone>
           ),
         );
       },
+    );
+  }
+}
+
+// ── Habit Timer Screen ───────────────────────────────────────────────────────
+
+class _HabitTimerScreen extends StatefulWidget {
+  final Habit habit;
+  final VoidCallback onComplete;
+  const _HabitTimerScreen({required this.habit, required this.onComplete});
+
+  @override
+  State<_HabitTimerScreen> createState() => _HabitTimerScreenState();
+}
+
+class _HabitTimerScreenState extends State<_HabitTimerScreen>
+    with TickerProviderStateMixin {
+  late int _secondsLeft;
+  late final int _totalSeconds;
+  bool _running = false;
+  bool _finished = false;
+  late final AnimationController _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _totalSeconds = widget.habit.timerMinutes * 60;
+    _secondsLeft = _totalSeconds;
+    _tick = AnimationController(
+        vsync: this, duration: const Duration(seconds: 1))
+      ..addStatusListener((s) {
+        if (s == AnimationStatus.completed && _running) {
+          setState(() {
+            _secondsLeft--;
+            if (_secondsLeft <= 0) {
+              _running = false;
+              _finished = true;
+              HapticFeedback.heavyImpact();
+            } else {
+              _tick.forward(from: 0);
+            }
+          });
+        }
+      });
+  }
+
+  @override
+  void dispose() { _tick.dispose(); super.dispose(); }
+
+  void _start() {
+    setState(() => _running = true);
+    _tick.forward(from: 0);
+  }
+
+  void _pause() {
+    setState(() => _running = false);
+    _tick.stop();
+  }
+
+  String get _timeDisplay {
+    final m = _secondsLeft ~/ 60;
+    final s = _secondsLeft % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  double get _progress => _totalSeconds == 0 ? 0.0
+      : 1.0 - (_secondsLeft / _totalSeconds);
+
+  @override
+  Widget build(BuildContext context) {
+    final color = habitCatColor(widget.habit.category);
+
+    return Scaffold(
+      backgroundColor: Colors.black.withAlpha(200),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Close button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(15),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withAlpha(30))),
+                    child: Icon(Icons.close_rounded, size: 20,
+                        color: Colors.white.withAlpha(200))),
+                ),
+              ),
+            ),
+
+            const Spacer(),
+
+            // Habit title
+            Text(widget.habit.title,
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 22, fontWeight: FontWeight.w700,
+                fontStyle: FontStyle.italic,
+                color: Colors.white)),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withAlpha(25),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: color.withAlpha(60))),
+              child: Text(habitCatLabel(widget.habit.category),
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 8, fontWeight: FontWeight.w700,
+                  letterSpacing: 1, color: color)),
+            ),
+
+            const SizedBox(height: 40),
+
+            // Timer ring
+            SizedBox(
+              width: 200, height: 200,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 200, height: 200,
+                    child: CircularProgressIndicator(
+                      value: _progress,
+                      strokeWidth: 8,
+                      backgroundColor: Colors.white.withAlpha(15),
+                      valueColor: AlwaysStoppedAnimation(
+                          _finished ? AppColors.success : color),
+                    ),
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_finished ? '✓' : _timeDisplay,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: _finished ? 48 : 40,
+                          fontWeight: FontWeight.w700,
+                          color: _finished ? AppColors.success : Colors.white)),
+                      if (!_finished)
+                        Text('REMAINING',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 9, fontWeight: FontWeight.w600,
+                            letterSpacing: 2,
+                            color: Colors.white.withAlpha(80))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 40),
+
+            // Controls
+            if (_finished)
+              GestureDetector(
+                onTap: widget.onComplete,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.success,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [BoxShadow(
+                      color: AppColors.success.withAlpha(80),
+                      blurRadius: 20, offset: const Offset(0, 6))]),
+                  child: Center(child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.check_rounded, size: 20, color: Colors.white),
+                      const SizedBox(width: 10),
+                      Text('COMPLETE',
+                        style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w800,
+                          letterSpacing: 1, color: Colors.white)),
+                      const SizedBox(width: 10),
+                      Text('+${widget.habit.xpPerCheck} XP',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 10, fontWeight: FontWeight.w700,
+                          color: Colors.white.withAlpha(200))),
+                    ],
+                  )),
+                ),
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Start/Pause
+                  GestureDetector(
+                    onTap: _running ? _pause : _start,
+                    child: Container(
+                      width: 64, height: 64,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(
+                          color: color.withAlpha(80),
+                          blurRadius: 16, spreadRadius: 2)]),
+                      child: Icon(
+                        _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                        size: 32, color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Reset
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _running = false;
+                      _tick.stop();
+                      _secondsLeft = _totalSeconds;
+                    }),
+                    child: Container(
+                      width: 48, height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(12),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withAlpha(30))),
+                      child: Icon(Icons.refresh_rounded, size: 22,
+                          color: Colors.white.withAlpha(180)),
+                    ),
+                  ),
+                ],
+              ),
+
+            const Spacer(),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -50,6 +50,9 @@ class Habit {
   // Streak freeze
   int streakFreezes; // available freezes
 
+  // Timer (minutes, 0 = no timer)
+  int timerMinutes;
+
   Habit({
     required this.id,
     required this.title,
@@ -60,6 +63,7 @@ class Habit {
     List<int>? scheduleDays,
     this.routineSlot = '',
     this.streakFreezes = 0,
+    this.timerMinutes = 0,
   }) : completedDates = completedDates ?? {},
        notes = notes ?? {},
        scheduleDays = scheduleDays ?? [];
@@ -127,4 +131,38 @@ class Habit {
 class HabitStore {
   static final List<Habit> habits = [];
   static int nextId = 1;
+}
+
+/// A routine is an ordered sequence of habit IDs
+class Routine {
+  final String id;
+  String name;
+  String slot; // 'morning' or 'evening'
+  final List<String> habitIds;
+
+  Routine({required this.id, required this.name, this.slot = 'morning',
+    List<String>? habitIds}) : habitIds = habitIds ?? [];
+}
+
+class RoutineStore {
+  static final List<Routine> routines = [];
+  static int nextId = 1;
+
+  /// Get morning habits in order
+  static List<Habit> morningHabits() {
+    final r = routines.where((r) => r.slot == 'morning').toList();
+    if (r.isEmpty) return HabitStore.habits.where((h) => h.routineSlot == 'morning').toList();
+    final ids = r.first.habitIds;
+    return ids.map((id) => HabitStore.habits.firstWhere((h) => h.id == id,
+        orElse: () => HabitStore.habits.first)).where((h) => HabitStore.habits.contains(h)).toList();
+  }
+
+  /// Get evening habits in order
+  static List<Habit> eveningHabits() {
+    final r = routines.where((r) => r.slot == 'evening').toList();
+    if (r.isEmpty) return HabitStore.habits.where((h) => h.routineSlot == 'evening').toList();
+    final ids = r.first.habitIds;
+    return ids.map((id) => HabitStore.habits.firstWhere((h) => h.id == id,
+        orElse: () => HabitStore.habits.first)).where((h) => HabitStore.habits.contains(h)).toList();
+  }
 }
