@@ -716,19 +716,23 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
     final now = DateTime.now();
     final habits = widget.habits;
     final total = habits.length;
-    const months = ['JAN','FEB','MAR','APR','MAY','JUN',
-      'JUL','AUG','SEP','OCT','NOV','DEC'];
+    const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
+      'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 
     final firstDay = DateTime(_month.year, _month.month, 1);
     final startWeekday = firstDay.weekday;
     final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
 
+    const cardBg = Color(0xFFFAF5FF);
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 14, 10, 10),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFFAF5FF),
+          color: cardBg,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(color: Colors.black.withAlpha(15),
@@ -738,219 +742,111 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
           ],
         ),
         child: Column(children: [
-          // Month nav — glossy style
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(children: [
-              GestureDetector(
-                onTap: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
-                child: Container(width: 34, height: 34,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4C1D95).withAlpha(12),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withAlpha(8),
-                        blurRadius: 4, offset: const Offset(0, 2)),
-                    ]),
-                  child: Icon(Icons.chevron_left_rounded, size: 18,
-                      color: const Color(0xFF4C1D95)))),
-              const Spacer(),
-              Column(children: [
-                Text(months[_month.month - 1],
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 20, fontWeight: FontWeight.w800,
-                    letterSpacing: 4, color: const Color(0xFF4C1D95))),
-                Text('${_month.year}',
-                  style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9, fontWeight: FontWeight.w600,
-                    letterSpacing: 2, color: const Color(0xFF4C1D95).withAlpha(100))),
-              ]),
-              const Spacer(),
-              GestureDetector(
-                onTap: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
-                child: Container(width: 34, height: 34,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4C1D95).withAlpha(12),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withAlpha(8),
-                        blurRadius: 4, offset: const Offset(0, 2)),
-                    ]),
-                  child: Icon(Icons.chevron_right_rounded, size: 18,
-                      color: const Color(0xFF4C1D95)))),
-            ]),
-          ),
+          // Month nav
+          Row(children: [
+            GestureDetector(
+              onTap: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
+              child: Icon(Icons.chevron_left_rounded, size: 22, color: textCol)),
+            const Spacer(),
+            Text('${months[_month.month - 1]}  ${_month.year}',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 11, fontWeight: FontWeight.w700,
+                letterSpacing: 2, color: textCol)),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
+              child: Icon(Icons.chevron_right_rounded, size: 22, color: textCol)),
+          ]),
           const SizedBox(height: 14),
 
           // Day headers
           Row(children: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) =>
             Expanded(child: Center(child: Text(d,
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w700,
+                fontSize: 8, fontWeight: FontWeight.w600,
                 color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
           const SizedBox(height: 8),
 
           // Calendar grid — rounded square cells with ring progress
+          // Calendar grid — same style as detail view
           ...List.generate(6, (week) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                children: List.generate(7, (dayOfWeek) {
-                  final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
-                  if (dayIndex < 0 || dayIndex >= daysInMonth) {
-                    return const Expanded(child: SizedBox(height: 42));
-                  }
-                  final day = dayIndex + 1;
-                  final date = DateTime(_month.year, _month.month, day);
-                  final isToday = date.day == now.day &&
-                      date.month == now.month && date.year == now.year;
-                  final isFuture = date.isAfter(now);
-                  final key = _dk(date);
+            return Row(
+              children: List.generate(7, (dayOfWeek) {
+                final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
+                if (dayIndex < 0 || dayIndex >= daysInMonth) {
+                  return const Expanded(child: SizedBox(height: 36));
+                }
+                final day = dayIndex + 1;
+                final date = DateTime(_month.year, _month.month, day);
+                final key = _dk(date);
+                final isToday = date.day == now.day &&
+                    date.month == now.month && date.year == now.year;
+                final isFuture = date.isAfter(now);
 
-                  // Count completions
-                  int dayDone = 0;
-                  final Map<HabitCategory, int> catDone = {};
-                  for (final h in habits) {
-                    if (h.completedDates.contains(key)) {
-                      dayDone++;
-                      catDone[h.category] = (catDone[h.category] ?? 0) + 1;
-                    }
-                  }
-                  final pct = total == 0 ? 0.0 : dayDone / total;
-                  final allDone = pct >= 1.0;
+                // Count completions for this day
+                int dayDone = 0;
+                for (final h in habits) {
+                  if (h.completedDates.contains(key)) dayDone++;
+                }
+                final allDone = total > 0 && dayDone >= total;
 
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(1.5),
-                      child: SizedBox(
-                        height: 42,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Background cell
-                            Container(
-                              decoration: BoxDecoration(
-                                color: isFuture
-                                    ? const Color(0xFFF0EBF8)
-                                    : allDone
-                                        ? AppColors.success.withAlpha(25)
-                                        : dayDone > 0
-                                            ? const Color(0xFFEDE5F8)
-                                            : const Color(0xFFF0ECF6),
-                                borderRadius: BorderRadius.circular(12),
-                                border: isToday
-                                    ? Border.all(color: const Color(0xFF8B5CF6), width: 2.5)
-                                    : allDone
-                                        ? Border.all(color: AppColors.success.withAlpha(100))
-                                        : null,
-                                boxShadow: allDone
-                                    ? [
-                                        BoxShadow(color: AppColors.success.withAlpha(30), blurRadius: 8),
-                                        BoxShadow(color: Colors.white.withAlpha(200),
-                                          blurRadius: 1, offset: const Offset(0, -1)),
-                                      ]
-                                    : isToday
-                                        ? [BoxShadow(color: const Color(0xFF8B5CF6).withAlpha(40), blurRadius: 8)]
-                                        : dayDone > 0
-                                            ? [
-                                                BoxShadow(color: Colors.black.withAlpha(6),
-                                                  blurRadius: 3, offset: const Offset(0, 2)),
-                                                BoxShadow(color: Colors.white.withAlpha(220),
-                                                  blurRadius: 1, offset: const Offset(0, -1)),
-                                              ]
-                                            : [
-                                                // Debossed — inset feel
-                                                BoxShadow(color: Colors.black.withAlpha(4),
-                                                  blurRadius: 2, offset: const Offset(0, 1)),
-                                              ],
-                              ),
-                            ),
-                            // Ring progress (if partial)
-                            if (dayDone > 0 && !allDone && !isFuture)
-                              SizedBox(
-                                width: 30, height: 30,
-                                child: CustomPaint(
-                                  painter: _RingPainter(
-                                    progress: pct,
-                                    categories: catDone,
-                                    total: total,
-                                  ),
-                                ),
-                              ),
-                            // Day number
-                            Text('$day',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: isToday || allDone || dayDone > 0
-                                    ? FontWeight.w700 : FontWeight.w500,
-                                color: isFuture
-                                    ? const Color(0xFF4C1D95).withAlpha(30)
-                                    : allDone
-                                        ? const Color(0xFF059669)
-                                        : isToday
-                                            ? const Color(0xFF8B5CF6)
-                                            : dayDone > 0
-                                                ? const Color(0xFF4C1D95)
-                                                : const Color(0xFF4C1D95).withAlpha(100))),
-                          ],
-                        ),
-                      ),
+                // Pick color based on completion
+                final Color circleColor;
+                if (allDone) {
+                  circleColor = AppColors.success;
+                } else if (dayDone > 0) {
+                  circleColor = AppColors.habits;
+                } else {
+                  circleColor = Colors.transparent;
+                }
+
+                return Expanded(child: GestureDetector(
+                  onTap: isFuture ? null : () {
+                    // Toggle all habits for this day
+                    setState(() {
+                      for (final h in habits) {
+                        if (h.completedDates.contains(key)) {
+                          h.completedDates.remove(key);
+                        } else {
+                          h.completedDates.add(key);
+                        }
+                      }
+                    });
+                  },
+                  child: Container(
+                    height: 36,
+                    margin: const EdgeInsets.all(1.5),
+                    decoration: BoxDecoration(
+                      color: circleColor == Colors.transparent
+                          ? null : circleColor,
+                      shape: BoxShape.circle,
+                      border: isToday && circleColor == Colors.transparent
+                          ? Border.all(color: AppColors.habits.withAlpha(120), width: 1.5)
+                          : null,
                     ),
-                  );
-                }),
-              ),
+                    child: Center(child: Text('$day',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: isToday || dayDone > 0
+                            ? FontWeight.w700 : FontWeight.w500,
+                        color: isFuture
+                            ? subCol.withAlpha(60)
+                            : allDone
+                                ? Colors.white
+                                : dayDone > 0
+                                    ? Colors.white
+                                    : isToday
+                                        ? AppColors.habits
+                                        : textCol))),
+                  ),
+                ));
+              }),
             );
           }),
         ]),
       ),
     );
   }
-}
-
-// ── Ring progress painter (multi-color arc per category) ──────────────────────
-
-class _RingPainter extends CustomPainter {
-  final double progress;
-  final Map<HabitCategory, int> categories;
-  final int total;
-
-  _RingPainter({required this.progress, required this.categories, required this.total});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    // Background ring
-    canvas.drawArc(rect, 0, 2 * pi, false,
-        Paint()
-          ..color = const Color(0xFF4C1D95).withAlpha(18)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 3.5
-          ..strokeCap = StrokeCap.round);
-
-    // Colored segments
-    double startAngle = -pi / 2;
-    final totalDone = categories.values.fold(0, (s, v) => s + v);
-    if (totalDone == 0) return;
-
-    for (final cat in HabitCategory.values) {
-      final count = categories[cat] ?? 0;
-      if (count == 0) continue;
-      final sweep = (count / total) * 2 * pi;
-      final paint = Paint()
-        ..color = habitCatColor(cat)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.5
-        ..strokeCap = StrokeCap.round;
-      canvas.drawArc(rect, startAngle, sweep, false, paint);
-      startAngle += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RingPainter old) => true;
 }
 
 // ── Inline stat pill ─────────────────────────────────────────────────────────
