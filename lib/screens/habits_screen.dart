@@ -768,13 +768,13 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
           const SizedBox(height: 8),
 
           // Calendar grid — rounded square cells with ring progress
-          // Calendar grid — same style as detail view
+          // Calendar grid with category pie charts
           ...List.generate(6, (week) {
             return Row(
               children: List.generate(7, (dayOfWeek) {
                 final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
                 if (dayIndex < 0 || dayIndex >= daysInMonth) {
-                  return const Expanded(child: SizedBox(height: 36));
+                  return const Expanded(child: SizedBox(height: 38));
                 }
                 final day = dayIndex + 1;
                 final date = DateTime(_month.year, _month.month, day);
@@ -783,61 +783,61 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                     date.month == now.month && date.year == now.year;
                 final isFuture = date.isAfter(now);
 
-                // Count completions for this day
+                // Per-category completion
                 int dayDone = 0;
+                final Map<HabitCategory, int> catDone = {};
                 for (final h in habits) {
-                  if (h.completedDates.contains(key)) dayDone++;
+                  if (h.completedDates.contains(key)) {
+                    dayDone++;
+                    catDone[h.category] = (catDone[h.category] ?? 0) + 1;
+                  }
                 }
                 final allDone = total > 0 && dayDone >= total;
 
-                // Pick color based on completion
-                final Color circleColor;
-                if (allDone) {
-                  circleColor = AppColors.success;
-                } else if (dayDone > 0) {
-                  circleColor = AppColors.habits;
-                } else {
-                  circleColor = Colors.transparent;
-                }
-
-                return Expanded(child: GestureDetector(
-                  onTap: isFuture ? null : () {
-                    // Toggle all habits for this day
-                    setState(() {
-                      for (final h in habits) {
-                        if (h.completedDates.contains(key)) {
-                          h.completedDates.remove(key);
-                        } else {
-                          h.completedDates.add(key);
-                        }
-                      }
-                    });
-                  },
-                  child: Container(
-                    height: 36,
-                    margin: const EdgeInsets.all(1.5),
-                    decoration: BoxDecoration(
-                      color: circleColor == Colors.transparent
-                          ? null : circleColor,
-                      shape: BoxShape.circle,
-                      border: isToday && circleColor == Colors.transparent
-                          ? Border.all(color: AppColors.habits.withAlpha(120), width: 1.5)
-                          : null,
-                    ),
-                    child: Center(child: Text('$day',
-                      style: GoogleFonts.inter(
+                return Expanded(child: SizedBox(
+                  height: 38,
+                  child: Center(child: total == 0 || isFuture
+                    ? Text('$day', style: GoogleFonts.inter(
                         fontSize: 12,
-                        fontWeight: isToday || dayDone > 0
-                            ? FontWeight.w700 : FontWeight.w500,
-                        color: isFuture
-                            ? subCol.withAlpha(60)
-                            : allDone
-                                ? Colors.white
-                                : dayDone > 0
-                                    ? Colors.white
-                                    : isToday
-                                        ? AppColors.habits
-                                        : textCol))),
+                        fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
+                        color: isFuture ? subCol.withAlpha(50) : subCol))
+                    : SizedBox(
+                        width: 34, height: 34,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Pie chart or empty circle
+                            if (dayDone > 0)
+                              CustomPaint(
+                                size: const Size(34, 34),
+                                painter: _PiePainter(
+                                  categories: catDone,
+                                  total: total,
+                                  allDone: allDone,
+                                ),
+                              )
+                            else
+                              Container(width: 34, height: 34,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: textCol.withAlpha(8),
+                                )),
+                            // Today ring
+                            if (isToday)
+                              Container(width: 34, height: 34,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.habits, width: 2.5),
+                                )),
+                            // Day number
+                            Text('$day', style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: isToday || allDone ? FontWeight.w700 : FontWeight.w500,
+                              color: allDone ? Colors.white : textCol)),
+                          ],
+                        ),
+                      ),
                   ),
                 ));
               }),
@@ -847,6 +847,49 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
       ),
     );
   }
+}
+
+// ── Pie chart painter (category colors per day) ──────────────────────────────
+
+class _PiePainter extends CustomPainter {
+  final Map<HabitCategory, int> categories;
+  final int total;
+  final bool allDone;
+
+  _PiePainter({required this.categories, required this.total, required this.allDone});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    if (allDone) {
+      canvas.drawCircle(center, radius, Paint()..color = const Color(0xFF22C55E));
+      return;
+    }
+
+    // Background
+    canvas.drawCircle(center, radius, Paint()..color = const Color(0xFF2A2318).withAlpha(10));
+
+    // Pie segments per category
+    final totalDone = categories.values.fold(0, (s, v) => s + v);
+    if (totalDone == 0) return;
+
+    double startAngle = -pi / 2;
+    for (final cat in HabitCategory.values) {
+      final count = categories[cat] ?? 0;
+      if (count == 0) continue;
+      final sweep = (count / totalDone) * 2 * pi;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle, sweep, true,
+        Paint()..color = habitCatColor(cat));
+      startAngle += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PiePainter old) => true;
 }
 
 // ── Inline stat pill ─────────────────────────────────────────────────────────
