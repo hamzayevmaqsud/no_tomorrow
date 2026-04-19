@@ -10,6 +10,9 @@ import '../models/game_state.dart';
 import '../models/collection_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
+import '../widgets/jelly_button.dart';
+import '../widgets/animated_empty.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 // ── In-memory store ───────────────────────────────────────────────────────────
 
@@ -829,8 +832,9 @@ class _TasksScreenState extends State<TasksScreen> {
                         };
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
+                          child: JellyButton(
                             onTap: () => setState(() => _filter = f),
+                            pressScale: 0.92,
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(
@@ -1206,8 +1210,9 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                GestureDetector(
+                JellyButton(
                   onTap: widget.onDashboard,
+                  pressScale: 0.88,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     padding: const EdgeInsets.all(8),
@@ -1342,14 +1347,18 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                   ),
                 ),
 
-                GestureDetector(
+                JellyButton(
                   onTap: widget.onToggleView,
-                  child: Icon(
-                    widget.isTimeline
-                        ? Icons.view_list_rounded
-                        : Icons.schedule_rounded,
-                    color: Colors.white.withAlpha(160),
-                    size: 22,
+                  pressScale: 0.85,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      widget.isTimeline
+                          ? Icons.view_list_rounded
+                          : Icons.schedule_rounded,
+                      color: Colors.white.withAlpha(160),
+                      size: 22,
+                    ),
                   ),
                 ),
               ],
@@ -1801,8 +1810,6 @@ class _TaskCard extends StatefulWidget {
 }
 
 class _TaskCardState extends State<_TaskCard> {
-  bool _pressed = false;
-
   @override
   Widget build(BuildContext context) {
     final task = widget.task;
@@ -1823,15 +1830,10 @@ class _TaskCardState extends State<_TaskCard> {
     const subCol = Color(0xFF8A8070);
     final catLabel = isWork ? 'WORK' : 'LIVE';
 
-    return GestureDetector(
+    return JellyButton(
       onTap: onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: AnimatedOpacity(
+      pressScale: 0.97,
+      child: AnimatedOpacity(
           duration: const Duration(milliseconds: 300),
           opacity: done ? 0.55 : 1.0,
           child: Container(
@@ -2098,8 +2100,7 @@ class _TaskCardState extends State<_TaskCard> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -2389,7 +2390,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
 
             // ── Complete button ───────────────────
             if (!done)
-              GestureDetector(onTap: widget.onComplete,
+              JellyButton(onTap: widget.onComplete, pressScale: 0.95,
                 child: Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -2413,89 +2414,20 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
 
 // ── Empty state ───────────────────────────────────────────────────────────────
 
-class _Empty extends StatefulWidget {
+class _Empty extends StatelessWidget {
   final bool isDark;
   final bool hasDateFilter;
   const _Empty({required this.isDark, this.hasDateFilter = false});
 
   @override
-  State<_Empty> createState() => _EmptyState();
-}
-
-class _EmptyState extends State<_Empty> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Center(
-      child: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (context, child) {
-          final y = sin(_ctrl.value * pi) * 8; // float up/down 8px
-          final opacity = 0.7 + 0.3 * sin(_ctrl.value * pi); // pulse 0.7–1.0
-          return Transform.translate(
-            offset: Offset(0, -y),
-            child: Opacity(opacity: opacity, child: child),
-          );
-        },
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(18),
-                border: Border.all(
-                  color: Colors.white.withAlpha(80),
-                  width: 1.5,
-                ),
-              ),
-              child: Icon(
-                Icons.checklist_rounded,
-                size: 26,
-                color: Colors.white.withAlpha(180),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              widget.hasDateFilter ? 'no tasks this day' : 'no tasks yet',
-              style: GoogleFonts.inter(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withAlpha(200),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.hasDateFilter
-                  ? 'tap another day or add a task'
-                  : 'tap + below to add one',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: Colors.white.withAlpha(160),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AnimatedEmpty(
+      icon: Icons.checklist_rounded,
+      title: hasDateFilter ? 'no tasks this day' : 'no tasks yet',
+      subtitle: hasDateFilter
+          ? 'tap another day or add a task'
+          : 'tap + below to add one',
+    ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut);
   }
 }
 
@@ -3293,8 +3225,9 @@ class _AddSheetState extends State<_AddSheet> {
                     Divider(height: 1, thickness: 1, color: _kDivider),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
-                      child: GestureDetector(
+                      child: JellyButton(
                         onTap: _submit,
+                        pressScale: 0.95,
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 14),

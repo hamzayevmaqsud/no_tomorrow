@@ -6,6 +6,8 @@ import '../models/task.dart';
 import '../theme/app_colors.dart';
 import 'tasks_screen.dart';
 import '../widgets/swipe_to_pop.dart';
+import '../widgets/jelly_button.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class TasksMenuScreen extends StatelessWidget {
   const TasksMenuScreen({super.key});
@@ -57,7 +59,10 @@ class TasksMenuScreen extends StatelessWidget {
                       label: 'WORK',
                       imagePath: 'assets/collection/Tasks menu/Work.jpg',
                       color: const Color(0xFF2979FF),
-                    ),
+                    ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut)
+                      .slideX(begin: -0.15, end: 0, duration: 550.ms, curve: Curves.easeOutCubic)
+                      .scale(begin: const Offset(0.94, 0.94), end: const Offset(1, 1),
+                             duration: 550.ms, curve: Curves.easeOutCubic),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -66,7 +71,10 @@ class TasksMenuScreen extends StatelessWidget {
                       label: 'LIVE',
                       imagePath: 'assets/collection/Tasks menu/Live.jpg',
                       color: const Color(0xFF00E676),
-                    ),
+                    ).animate().fadeIn(delay: 90.ms, duration: 500.ms, curve: Curves.easeOut)
+                      .slideX(begin: 0.15, end: 0, delay: 90.ms, duration: 550.ms, curve: Curves.easeOutCubic)
+                      .scale(begin: const Offset(0.94, 0.94), end: const Offset(1, 1),
+                             delay: 90.ms, duration: 550.ms, curve: Curves.easeOutCubic),
                   ),
                 ],
               ),
@@ -119,8 +127,6 @@ class _CategoryCard extends StatefulWidget {
 }
 
 class _CategoryCardState extends State<_CategoryCard> {
-  bool _pressed = false;
-
   void _open() {
     HapticFeedback.mediumImpact();
     Navigator.push(context, PageRouteBuilder(
@@ -155,15 +161,10 @@ class _CategoryCardState extends State<_CategoryCard> {
     final total    = allTasks.length;
     final done     = allTasks.where((t) => t.isCompleted).length;
 
-    return GestureDetector(
+    return JellyButton(
       onTap: _open,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 120),
-        opacity: _pressed ? 0.6 : 1.0,
-        child: ClipRRect(
+      pressScale: 0.95,
+      child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: Stack(
             fit: StackFit.expand,
@@ -227,7 +228,6 @@ class _CategoryCardState extends State<_CategoryCard> {
               ),
             ),
           ],
-        ),
         ),
       ),
     );
