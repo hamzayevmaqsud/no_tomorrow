@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/game_state.dart';
 import '../models/habit.dart';
@@ -8,6 +10,38 @@ import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import 'tasks_screen.dart';
 import 'stats_screen.dart';
+
+void _confirmSignOut(BuildContext context) async {
+  HapticFeedback.mediumImpact();
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: const Color(0xFF1C1C27),
+      title: Text('Sign out?',
+        style: GoogleFonts.inter(
+          fontSize: 16, fontWeight: FontWeight.w700,
+          color: Colors.white)),
+      content: Text('You can sign back in anytime — your data stays in the cloud.',
+        style: GoogleFonts.inter(
+          fontSize: 13, color: Colors.white.withAlpha(180))),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text('Cancel',
+            style: GoogleFonts.inter(color: Colors.white.withAlpha(160)))),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text('Sign out',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFFDC2626)))),
+      ],
+    ),
+  );
+  if (confirmed == true) {
+    await FirebaseAuth.instance.signOut();
+  }
+}
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -46,20 +80,36 @@ class ProfileScreen extends StatelessWidget {
                   ]),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: GestureDetector(
-                      onTap: () => Navigator.push(context, MaterialPageRoute(
-                          builder: (_) => const StatsScreen())),
-                      child: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.action.withAlpha(20),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.action.withAlpha(50)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      GestureDetector(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(
+                            builder: (_) => const StatsScreen())),
+                        child: Container(
+                          width: 36, height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.action.withAlpha(20),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.action.withAlpha(50)),
+                          ),
+                          child: Icon(Icons.insights_rounded,
+                              size: 18, color: AppColors.action),
                         ),
-                        child: Icon(Icons.insights_rounded,
-                            size: 18, color: AppColors.action),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _confirmSignOut(context),
+                        child: Container(
+                          width: 36, height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDC2626).withAlpha(20),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFDC2626).withAlpha(50)),
+                          ),
+                          child: const Icon(Icons.logout_rounded,
+                              size: 16, color: Color(0xFFDC2626)),
+                        ),
+                      ),
+                    ]),
                   ),
                   Align(
                     alignment: Alignment.centerLeft,

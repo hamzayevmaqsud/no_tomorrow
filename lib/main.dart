@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 import 'widgets/phone_frame.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const NoTomorrowApp());
 }
 
@@ -41,7 +46,31 @@ class _NoTomorrowAppState extends State<NoTomorrowApp> {
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       builder: (ctx, child) => PhoneFrame(child: child ?? const SizedBox()),
-      home: _SplashGate(onToggleTheme: _toggleTheme),
+      home: _AuthGate(onToggleTheme: _toggleTheme),
+    );
+  }
+}
+
+class _AuthGate extends StatelessWidget {
+  final VoidCallback onToggleTheme;
+  const _AuthGate({required this.onToggleTheme});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (ctx, snap) {
+        if (snap.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF0A0A0F),
+            body: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2, color: Color(0xFFFF6B35))),
+          );
+        }
+        if (!snap.hasData) return const LoginScreen();
+        return _SplashGate(onToggleTheme: onToggleTheme);
+      },
     );
   }
 }
