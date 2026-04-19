@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'widgets/phone_frame.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ class _NoTomorrowAppState extends State<NoTomorrowApp> {
       themeMode: _themeMode,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
+      builder: (ctx, child) => PhoneFrame(child: child ?? const SizedBox()),
       home: _SplashGate(onToggleTheme: _toggleTheme),
     );
   }
