@@ -31,6 +31,11 @@ class Task {
   RecurType recurType;
   List<int> recurDays; // 1=Mon..7=Sun for custom
 
+  // Analytics / reorder / focus
+  DateTime? completedAt;
+  int sortOrder;
+  int focusMinutes; // minutes spent in focus mode on this task
+
   Task({
     required this.id,
     required this.title,
@@ -45,6 +50,9 @@ class Task {
     List<String>? tags,
     this.recurType = RecurType.none,
     List<int>? recurDays,
+    this.completedAt,
+    this.sortOrder = 0,
+    this.focusMinutes = 0,
   }) : subtasks = subtasks ?? [],
        tags = tags ?? [],
        recurDays = recurDays ?? [];

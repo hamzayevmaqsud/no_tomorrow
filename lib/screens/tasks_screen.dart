@@ -20,6 +20,71 @@ import 'package:flutter_animate/flutter_animate.dart';
 class TaskStore {
   static final List<Task> tasks = [];
   static int nextId = 1;
+
+  /// Count of tasks completed on a given local day.
+  static int completedOn(DateTime day) {
+    return tasks.where((t) =>
+      t.completedAt != null &&
+      t.completedAt!.year == day.year &&
+      t.completedAt!.month == day.month &&
+      t.completedAt!.day == day.day
+    ).length;
+  }
+
+  /// Last N days of completion counts, oldest first.
+  static List<(DateTime, int)> last(int n) {
+    final today = DateTime.now();
+    return List.generate(n, (i) {
+      final d = DateTime(today.year, today.month, today.day - (n - 1 - i));
+      return (d, completedOn(d));
+    });
+  }
+}
+
+/// Streak-freeze state: allows one "skip" per week without breaking combo.
+class TaskCombo {
+  static int current = 0;
+  static DateTime? lastCompletedDay;
+  static DateTime? freezeUsedWeek;
+
+  static double get multiplier {
+    if (current >= 10) return 2.0;
+    if (current >= 5) return 1.5;
+    if (current >= 3) return 1.2;
+    return 1.0;
+  }
+
+  static DateTime _weekStart(DateTime d) {
+    final start = DateTime(d.year, d.month, d.day);
+    return start.subtract(Duration(days: start.weekday - 1));
+  }
+
+  static bool get canFreeze {
+    final w = _weekStart(DateTime.now());
+    return freezeUsedWeek == null || freezeUsedWeek != w;
+  }
+
+  static void onComplete() {
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    if (lastCompletedDay == null) {
+      current = 1;
+    } else {
+      final diff = todayKey.difference(lastCompletedDay!).inDays;
+      if (diff == 0) {
+        current++;
+      } else if (diff == 1) {
+        current++;
+      } else if (diff == 2 && canFreeze) {
+        // auto-freeze the one missed day
+        freezeUsedWeek = _weekStart(today);
+        current++;
+      } else {
+        current = 1;
+      }
+    }
+    lastCompletedDay = todayKey;
+  }
 }
 
 // ── Priority helpers ──────────────────────────────────────────────────────────
@@ -142,7 +207,7 @@ class TasksScreen extends StatefulWidget {
 }
 
 enum _TaskFilter { all, today, priority }
-enum _SortMode { none, dateAsc, dateDesc, priorityHigh, priorityLow, nameAz }
+enum _SortMode { none, manual, dateAsc, dateDesc, priorityHigh, priorityLow, nameAz }
 enum _ViewMode { list, timeline }
 
 class _TasksScreenState extends State<TasksScreen> {
@@ -153,6 +218,65 @@ class _TasksScreenState extends State<TasksScreen> {
   _SortMode _sort = _SortMode.none;
   bool _showSearch = false;
   _ViewMode _viewMode = _ViewMode.list;
+
+  final TextEditingController _quickCtrl = TextEditingController();
+  final FocusNode _quickFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _quickCtrl.dispose();
+    _quickFocus.dispose();
+    super.dispose();
+  }
+
+  void _quickAdd() {
+    final title = _quickCtrl.text.trim();
+    if (title.isEmpty) return;
+    HapticFeedback.lightImpact();
+    setState(() {
+      TaskStore.tasks.add(Task(
+        id: 't${TaskStore.nextId++}',
+        title: title,
+        createdAt: DateTime.now(),
+        category: widget.category,
+        priority: TaskPriority.medium,
+        sortOrder: TaskStore.tasks.length,
+      ));
+      _quickCtrl.clear();
+    });
+    _quickFocus.requestFocus();
+  }
+
+  Widget _buildReorderable(List<Task> pending, List<Task> completed, Color vivid, bool isDark) {
+    // Normalize sortOrder on first render so drag works predictably.
+    for (var i = 0; i < pending.length; i++) {
+      pending[i].sortOrder = i;
+    }
+    return ReorderableListView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+      buildDefaultDragHandles: false,
+      itemCount: pending.length,
+      onReorder: (oldIdx, newIdx) {
+        HapticFeedback.mediumImpact();
+        setState(() {
+          if (newIdx > oldIdx) newIdx--;
+          final moved = pending.removeAt(oldIdx);
+          pending.insert(newIdx, moved);
+          for (var i = 0; i < pending.length; i++) {
+            pending[i].sortOrder = i;
+          }
+        });
+      },
+      itemBuilder: (ctx, i) {
+        final t = pending[i];
+        return ReorderableDragStartListener(
+          key: ValueKey('reorder_${t.id}'),
+          index: i,
+          child: _dismissible(t, isDark),
+        );
+      },
+    );
+  }
 
   List<Task> get _tasks =>
       TaskStore.tasks.where((t) => t.category == widget.category).toList();
@@ -216,6 +340,9 @@ class _TasksScreenState extends State<TasksScreen> {
       case _SortMode.nameAz:
         list = List.of(list)..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
         break;
+      case _SortMode.manual:
+        list = List.of(list)..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+        break;
       case _SortMode.none:
         break;
     }
@@ -226,15 +353,20 @@ class _TasksScreenState extends State<TasksScreen> {
   Future<void> _complete(Task task) async {
     if (task.isCompleted) return;
     HapticFeedback.mediumImpact();
-    setState(() => task.isCompleted = true);
+    setState(() {
+      task.isCompleted = true;
+      task.completedAt = DateTime.now();
+      TaskCombo.onComplete();
+    });
     final color = _pColor(task.priority);
     final fromProgress = GameState.instance.levelProgress;
     final fromLevel = GameState.instance.level;
     GameState.instance.recordCompletion();
-    final didLevelUp = GameState.instance.addXp(task.xp);
+    final xpGain = (task.xp * TaskCombo.multiplier).round();
+    final didLevelUp = GameState.instance.addXp(xpGain);
     final toProgress = didLevelUp ? 1.0 : GameState.instance.levelProgress;
     _showXp(
-      task.xp,
+      xpGain,
       color,
       fromProgress: fromProgress,
       toProgress: toProgress,
@@ -489,31 +621,47 @@ class _TasksScreenState extends State<TasksScreen> {
       return true; // endToStart = delete
     },
     onDismissed: (_) => _delete(task.id),
-    // Swipe right → green complete
+    // Swipe right → green complete (iOS-style vivid)
     background: Container(
       alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.only(left: 18),
+      padding: const EdgeInsets.only(left: 22),
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: AppColors.success.withAlpha(isDark ? 25 : 35),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft, end: Alignment.centerRight,
+          colors: [const Color(0xFF22C55E), const Color(0xFF22C55E).withAlpha(0)],
+          stops: const [0.0, 0.85],
+        ),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Icon(Icons.check_rounded, color: AppColors.success, size: 20),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.check_rounded, color: Colors.white, size: 26),
+        const SizedBox(width: 10),
+        Text('DONE', style: GoogleFonts.jetBrainsMono(
+          fontSize: 12, fontWeight: FontWeight.w800,
+          letterSpacing: 1.5, color: Colors.white)),
+      ]),
     ),
-    // Swipe left → red delete
+    // Swipe left → red delete (iOS-style vivid)
     secondaryBackground: Container(
       alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 18),
+      padding: const EdgeInsets.only(right: 22),
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.red.withAlpha(isDark ? 15 : 25),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft, end: Alignment.centerRight,
+          colors: [const Color(0xFFDC2626).withAlpha(0), const Color(0xFFDC2626)],
+          stops: const [0.15, 1.0],
+        ),
         borderRadius: BorderRadius.circular(24),
       ),
-      child: const Icon(
-        Icons.delete_outline_rounded,
-        color: Colors.red,
-        size: 16,
-      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text('DELETE', style: GoogleFonts.jetBrainsMono(
+          fontSize: 12, fontWeight: FontWeight.w800,
+          letterSpacing: 1.5, color: Colors.white)),
+        const SizedBox(width: 10),
+        const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
+      ]),
     ),
     child: _TaskCard(
       key: ValueKey('k_${task.id}'),
@@ -794,6 +942,7 @@ class _TasksScreenState extends State<TasksScreen> {
                           borderRadius: BorderRadius.circular(16)),
                         itemBuilder: (_) => [
                           _sortItem(_SortMode.none, 'Default', Icons.remove_rounded),
+                          _sortItem(_SortMode.manual, 'Manual (drag)', Icons.drag_handle_rounded),
                           _sortItem(_SortMode.dateAsc, 'Date ↑', Icons.arrow_upward_rounded),
                           _sortItem(_SortMode.dateDesc, 'Date ↓', Icons.arrow_downward_rounded),
                           _sortItem(_SortMode.priorityHigh, 'Priority ↑', Icons.flag_rounded),
@@ -928,7 +1077,9 @@ class _TasksScreenState extends State<TasksScreen> {
                                 const Duration(milliseconds: 400),
                               );
                             },
-                            child: ListView(
+                            child: _sort == _SortMode.manual
+                              ? _buildReorderable(pending, completed, vivid, isDark)
+                              : ListView(
                               padding: const EdgeInsets.fromLTRB(
                                 20,
                                 0,
@@ -936,6 +1087,34 @@ class _TasksScreenState extends State<TasksScreen> {
                                 120,
                               ),
                               children: [
+                                _QuickAddRow(
+                                  controller: _quickCtrl,
+                                  focusNode: _quickFocus,
+                                  accentColor: vivid,
+                                  onSubmit: _quickAdd,
+                                ),
+                                _TemplateChips(
+                                  category: widget.category,
+                                  accentColor: vivid,
+                                  onPick: (title, priority) {
+                                    HapticFeedback.selectionClick();
+                                    setState(() {
+                                      TaskStore.tasks.add(Task(
+                                        id: 't${TaskStore.nextId++}',
+                                        title: title,
+                                        createdAt: DateTime.now(),
+                                        category: widget.category,
+                                        priority: priority,
+                                        sortOrder: TaskStore.tasks.length,
+                                      ));
+                                    });
+                                  },
+                                ),
+                                if (TaskCombo.current >= 3)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: _ComboBadge(accentColor: vivid),
+                                  ),
                                 ...pending.asMap().entries.map(
                                   (e) => _staggered(
                                     e.key,
@@ -1597,85 +1776,374 @@ class _DashboardPanel extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // Weekly activity heatmap
-          Row(
-            children: [
-              Text(
-                'THIS WEEK',
-                style: GoogleFonts.jetBrainsMono(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                  color: subCol,
-                ),
+          // 30-day heatmap (GitHub-style)
+          Row(children: [
+            Text('LAST 30 DAYS',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 8, fontWeight: FontWeight.w700,
+                letterSpacing: 1.5, color: subCol)),
+            const Spacer(),
+            JellyButton(
+              onTap: () => _openWeeklyReview(context, tasks, accentColor),
+              pressScale: 0.9,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: accentColor.withAlpha(60))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.analytics_rounded, size: 11, color: accentColor),
+                  const SizedBox(width: 5),
+                  Text('REVIEW',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w800,
+                      letterSpacing: 1, color: accentColor)),
+                ]),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: List.generate(7, (i) {
-              final today = DateTime.now();
-              final monday = today.subtract(Duration(days: today.weekday - 1));
-              final day = monday.add(Duration(days: i));
-              final dayTasks = tasks
-                  .where(
-                    (t) =>
-                        t.isCompleted &&
-                        t.dueDate != null &&
-                        t.dueDate!.year == day.year &&
-                        t.dueDate!.month == day.month &&
-                        t.dueDate!.day == day.day,
-                  )
-                  .length;
-              final isToday = day.day == today.day && day.month == today.month;
-              final intensity = dayTasks == 0
-                  ? 0.0
-                  : dayTasks == 1
-                  ? 0.3
-                  : dayTasks == 2
-                  ? 0.6
-                  : 1.0;
-              const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-              return Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      dayNames[i],
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 7,
-                        fontWeight: FontWeight.w600,
-                        color: subCol.withAlpha(140),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      height: 18,
-                      margin: EdgeInsets.only(right: i < 6 ? 4 : 0),
-                      decoration: BoxDecoration(
-                        color: intensity > 0
-                            ? Color.lerp(
-                                accentColor.withAlpha(40),
-                                accentColor,
-                                intensity,
-                              )
-                            : textCol.withAlpha(14),
-                        borderRadius: BorderRadius.circular(4),
-                        border: isToday
-                            ? Border.all(
-                                color: accentColor.withAlpha(160),
-                                width: 1.2,
-                              )
-                            : null,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+            ),
+          ]),
+          const SizedBox(height: 10),
+          _Heatmap30(
+            tasks: tasks,
+            accentColor: accentColor,
+            mutedColor: textCol.withAlpha(14),
           ),
         ],
       ),
     );
+  }
+
+  void _openWeeklyReview(BuildContext ctx, List<Task> tasks, Color accent) {
+    HapticFeedback.mediumImpact();
+    showModalBottomSheet(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _WeeklyReviewSheet(tasks: tasks, accentColor: accent),
+    );
+  }
+}
+
+// ── 30-day heatmap (GitHub-style) ─────────────────────────────────────────────
+
+class _Heatmap30 extends StatelessWidget {
+  final List<Task> tasks;
+  final Color accentColor;
+  final Color mutedColor;
+  const _Heatmap30({
+    required this.tasks, required this.accentColor, required this.mutedColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    final days = List.generate(30, (i) {
+      final d = todayKey.subtract(Duration(days: 29 - i));
+      final count = tasks.where((t) =>
+        t.completedAt != null &&
+        t.completedAt!.year == d.year &&
+        t.completedAt!.month == d.month &&
+        t.completedAt!.day == d.day
+      ).length;
+      return (d, count);
+    });
+    final maxCount = days.fold<int>(0, (m, e) => e.$2 > m ? e.$2 : m);
+
+    return LayoutBuilder(builder: (ctx, box) {
+      const cols = 10;
+      const rows = 3;
+      final gap = 4.0;
+      final cellW = (box.maxWidth - gap * (cols - 1)) / cols;
+      final cellH = cellW * 0.85;
+      return SizedBox(
+        height: rows * cellH + (rows - 1) * gap,
+        child: Wrap(
+          spacing: gap, runSpacing: gap,
+          children: days.map((entry) {
+            final (d, count) = entry;
+            final isToday = d.day == today.day && d.month == today.month;
+            final intensity = maxCount == 0 ? 0.0 : count / maxCount;
+            return Container(
+              width: cellW, height: cellH,
+              decoration: BoxDecoration(
+                color: intensity == 0
+                  ? mutedColor
+                  : Color.lerp(accentColor.withAlpha(60), accentColor, intensity),
+                borderRadius: BorderRadius.circular(4),
+                border: isToday
+                  ? Border.all(color: accentColor, width: 1.5) : null,
+                boxShadow: intensity > 0.5 ? [
+                  BoxShadow(color: accentColor.withAlpha(80), blurRadius: 4),
+                ] : null,
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    });
+  }
+}
+
+// ── Weekly review sheet ───────────────────────────────────────────────────────
+
+class _WeeklyReviewSheet extends StatelessWidget {
+  final List<Task> tasks;
+  final Color accentColor;
+  const _WeeklyReviewSheet({required this.tasks, required this.accentColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final todayKey = DateTime(today.year, today.month, today.day);
+    final weekStart = todayKey.subtract(Duration(days: today.weekday - 1));
+
+    // Per-day completion counts for this week
+    final weekDays = List.generate(7, (i) {
+      final d = weekStart.add(Duration(days: i));
+      final count = tasks.where((t) =>
+        t.completedAt != null &&
+        t.completedAt!.year == d.year &&
+        t.completedAt!.month == d.month &&
+        t.completedAt!.day == d.day
+      ).length;
+      return (d, count);
+    });
+    final weekDone = weekDays.fold<int>(0, (s, e) => s + e.$2);
+    final weekCreated = tasks.where((t) =>
+      t.createdAt.isAfter(weekStart) && t.createdAt.isBefore(todayKey.add(const Duration(days: 1)))
+    ).length;
+    final completionRate = weekCreated == 0 ? 0.0 : (weekDone / weekCreated).clamp(0.0, 1.0);
+
+    // Best day
+    final bestDay = weekDays.reduce((a, b) => a.$2 >= b.$2 ? a : b);
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    final bestDayName = bestDay.$2 == 0 ? 'nobody yet' : dayNames[bestDay.$1.weekday - 1];
+
+    // Priority breakdown of completed this week
+    int hi = 0, md = 0, lo = 0;
+    for (final t in tasks) {
+      if (t.completedAt == null || t.completedAt!.isBefore(weekStart)) continue;
+      switch (t.priority) {
+        case TaskPriority.high: hi++; break;
+        case TaskPriority.medium: md++; break;
+        case TaskPriority.low: lo++; break;
+      }
+    }
+    final xp = hi * 50 + md * 25 + lo * 10;
+
+    // Focus time
+    final focusMins = tasks.fold<int>(0, (s, t) => s + t.focusMinutes);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xFFF5F2EB),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(22, 16, 22, 28),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 40, height: 4,
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A2318).withAlpha(40),
+            borderRadius: BorderRadius.circular(2))),
+        const SizedBox(height: 18),
+        Row(children: [
+          Icon(Icons.analytics_rounded, size: 18, color: accentColor),
+          const SizedBox(width: 8),
+          Text('WEEKLY REVIEW',
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 18, fontWeight: FontWeight.w800,
+              fontStyle: FontStyle.italic,
+              color: const Color(0xFF2A2318))),
+        ]),
+        const SizedBox(height: 18),
+
+        // Hero stat
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 22),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [
+              accentColor.withAlpha(220), accentColor]),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [BoxShadow(
+              color: accentColor.withAlpha(120),
+              blurRadius: 18, offset: const Offset(0, 6))],
+          ),
+          child: Column(children: [
+            Text('$weekDone',
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 56, fontWeight: FontWeight.w800,
+                color: Colors.white, height: 1)),
+            const SizedBox(height: 4),
+            Text('COMPLETED THIS WEEK',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 10, fontWeight: FontWeight.w800,
+                letterSpacing: 2, color: Colors.white.withAlpha(220))),
+          ]),
+        ),
+        const SizedBox(height: 14),
+
+        // Stats grid
+        Row(children: [
+          Expanded(child: _ReviewStat(label: 'BEST DAY', value: bestDayName, accent: accentColor)),
+          const SizedBox(width: 10),
+          Expanded(child: _ReviewStat(label: 'RATE', value: '${(completionRate * 100).round()}%', accent: accentColor)),
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          Expanded(child: _ReviewStat(label: 'XP EARNED', value: '+$xp', accent: accentColor)),
+          const SizedBox(width: 10),
+          Expanded(child: _ReviewStat(label: 'FOCUS', value: '${focusMins}m', accent: accentColor)),
+        ]),
+        const SizedBox(height: 14),
+
+        // Priority breakdown
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha(180),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFF2A2318).withAlpha(20))),
+          child: Column(children: [
+            Row(children: [
+              Text('BREAKDOWN',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 9, fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                  color: const Color(0xFF2A2318).withAlpha(140))),
+            ]),
+            const SizedBox(height: 10),
+            _PrioBar(label: 'HIGH', count: hi, total: weekDone, color: const Color(0xFFDC2626)),
+            const SizedBox(height: 6),
+            _PrioBar(label: 'MED', count: md, total: weekDone, color: const Color(0xFFF59E0B)),
+            const SizedBox(height: 6),
+            _PrioBar(label: 'LOW', count: lo, total: weekDone, color: const Color(0xFF10B981)),
+          ]),
+        ),
+        const SizedBox(height: 14),
+
+        // Days strip
+        Row(children: List.generate(7, (i) {
+          final (d, c) = weekDays[i];
+          final isToday = d.day == today.day && d.month == today.month;
+          const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+          final maxC = weekDays.fold<int>(0, (m, e) => e.$2 > m ? e.$2 : m);
+          final h = maxC == 0 ? 6.0 : 6.0 + (c / maxC) * 40;
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: i < 6 ? 2 : 0),
+              child: Column(children: [
+                Text(c == 0 ? '·' : '$c',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 10, fontWeight: FontWeight.w700,
+                    color: c == 0
+                      ? const Color(0xFF2A2318).withAlpha(80)
+                      : const Color(0xFF2A2318))),
+                const SizedBox(height: 4),
+                Container(
+                  height: h,
+                  decoration: BoxDecoration(
+                    color: c == 0
+                      ? const Color(0xFF2A2318).withAlpha(14)
+                      : accentColor,
+                    borderRadius: BorderRadius.circular(4),
+                    border: isToday
+                      ? Border.all(color: accentColor.withAlpha(220), width: 1.5)
+                      : null,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(labels[i],
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 8, fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2A2318).withAlpha(130))),
+              ]),
+            ),
+          );
+        })),
+      ]),
+    );
+  }
+}
+
+class _ReviewStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color accent;
+  const _ReviewStat({required this.label, required this.value, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(180),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2A2318).withAlpha(20))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label,
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 8, fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+            color: const Color(0xFF2A2318).withAlpha(140))),
+        const SizedBox(height: 4),
+        Text(value,
+          maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 18, fontWeight: FontWeight.w800,
+            color: const Color(0xFF2A2318))),
+      ]),
+    );
+  }
+}
+
+class _PrioBar extends StatelessWidget {
+  final String label;
+  final int count;
+  final int total;
+  final Color color;
+  const _PrioBar({
+    required this.label, required this.count, required this.total, required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final frac = total == 0 ? 0.0 : count / total;
+    return Row(children: [
+      SizedBox(
+        width: 36,
+        child: Text(label,
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 9, fontWeight: FontWeight.w800,
+            letterSpacing: 1, color: color)),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Stack(children: [
+          Container(height: 6,
+            decoration: BoxDecoration(
+              color: color.withAlpha(25),
+              borderRadius: BorderRadius.circular(3))),
+          FractionallySizedBox(
+            widthFactor: frac.clamp(0.0, 1.0),
+            child: Container(height: 6,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(3))),
+          ),
+        ]),
+      ),
+      const SizedBox(width: 8),
+      SizedBox(
+        width: 22,
+        child: Text('$count', textAlign: TextAlign.right,
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 10, fontWeight: FontWeight.w700,
+            color: const Color(0xFF2A2318))),
+      ),
+    ]);
   }
 }
 
@@ -1731,6 +2199,186 @@ class _StatBox extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// ── Quick add row ─────────────────────────────────────────────────────────────
+
+class _QuickAddRow extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final Color accentColor;
+  final VoidCallback onSubmit;
+  const _QuickAddRow({
+    required this.controller,
+    required this.focusNode,
+    required this.accentColor,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withAlpha(16),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withAlpha(40), width: 1),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        child: Row(children: [
+          Icon(Icons.add_rounded, size: 20, color: accentColor.withAlpha(220)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => onSubmit(),
+              style: GoogleFonts.inter(
+                fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white),
+              cursorColor: accentColor,
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                hintText: 'quick add — press Enter',
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 13, color: Colors.white.withAlpha(120)),
+              ),
+            ),
+          ),
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (_, v, __) {
+              if (v.text.trim().isEmpty) return const SizedBox.shrink();
+              return JellyButton(
+                onTap: onSubmit,
+                pressScale: 0.9,
+                child: Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(Icons.arrow_upward_rounded,
+                    size: 18, color: accentColor),
+                ),
+              );
+            },
+          ),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Task templates ────────────────────────────────────────────────────────────
+
+class _TemplateChips extends StatelessWidget {
+  final TaskCategory category;
+  final Color accentColor;
+  final void Function(String title, TaskPriority priority) onPick;
+  const _TemplateChips({
+    required this.category, required this.accentColor, required this.onPick,
+  });
+
+  static const List<(String, String, TaskPriority)> workTemplates = [
+    ('📧', 'Reply to emails', TaskPriority.medium),
+    ('👀', 'Review PR', TaskPriority.high),
+    ('📞', 'Call meeting', TaskPriority.medium),
+    ('📝', 'Write report', TaskPriority.high),
+    ('📅', 'Plan week', TaskPriority.low),
+    ('🧹', 'Clean inbox', TaskPriority.low),
+  ];
+  static const List<(String, String, TaskPriority)> liveTemplates = [
+    ('🛒', 'Groceries', TaskPriority.medium),
+    ('💪', 'Workout', TaskPriority.high),
+    ('📚', 'Read 30m', TaskPriority.medium),
+    ('🚿', 'Shower', TaskPriority.low),
+    ('💊', 'Meds', TaskPriority.high),
+    ('🧘', 'Meditate', TaskPriority.low),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final list = category == TaskCategory.work ? workTemplates : liveTemplates;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: SizedBox(
+        height: 34,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: list.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) {
+            final (emoji, title, prio) = list[i];
+            return JellyButton(
+              onTap: () => onPick(title, prio),
+              pressScale: 0.92,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(14),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withAlpha(35))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Text(emoji, style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 6),
+                  Text(title,
+                    style: GoogleFonts.inter(
+                      fontSize: 11, fontWeight: FontWeight.w600,
+                      color: Colors.white.withAlpha(210))),
+                ]),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ── Combo badge ───────────────────────────────────────────────────────────────
+
+class _ComboBadge extends StatelessWidget {
+  final Color accentColor;
+  const _ComboBadge({required this.accentColor});
+
+  @override
+  Widget build(BuildContext context) {
+    final n = TaskCombo.current;
+    final mult = TaskCombo.multiplier;
+    final hot = n >= 5;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: hot
+          ? [const Color(0xFFFF6B35), const Color(0xFFDC2626)]
+          : [accentColor.withAlpha(200), accentColor.withAlpha(120)]),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [BoxShadow(
+          color: (hot ? const Color(0xFFFF6B35) : accentColor).withAlpha(120),
+          blurRadius: 14, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(hot ? Icons.local_fire_department_rounded : Icons.bolt_rounded,
+          size: 16, color: Colors.white),
+        const SizedBox(width: 8),
+        Text('COMBO x$n', style: GoogleFonts.jetBrainsMono(
+          fontSize: 11, fontWeight: FontWeight.w800,
+          letterSpacing: 1.5, color: Colors.white)),
+        const SizedBox(width: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha(60),
+            borderRadius: BorderRadius.circular(10)),
+          child: Text('${mult.toStringAsFixed(mult == mult.roundToDouble() ? 0 : 1)}×XP',
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 9, fontWeight: FontWeight.w800,
+              letterSpacing: 1, color: Colors.white)),
+        ),
+      ]),
+    ).animate(onPlay: (c) => c.repeat(reverse: true))
+      .scaleXY(begin: 1.0, end: 1.03, duration: 900.ms, curve: Curves.easeInOut);
   }
 }
 
@@ -2180,6 +2828,21 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
     widget.onEdit();
   }
 
+  void _openFocus(BuildContext ctx) {
+    HapticFeedback.mediumImpact();
+    Navigator.push(ctx, PageRouteBuilder(
+      opaque: false, barrierColor: Colors.black.withAlpha(200),
+      pageBuilder: (_, __, ___) => _TaskFocusScreen(
+        task: widget.task,
+        accentColor: _pColor(widget.task.priority),
+        onComplete: () {
+          Navigator.pop(ctx);
+          widget.onComplete();
+        },
+      ),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = widget.task;
@@ -2213,7 +2876,14 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                 child: Icon(_editing ? Icons.check_rounded : Icons.edit_rounded,
                     size: 18, color: _editing ? AppColors.action : Colors.white.withAlpha(200)))),
             const SizedBox(width: 8),
-            GestureDetector(onTap: widget.onDelete,
+            JellyButton(onTap: () => _openFocus(context), pressScale: 0.9,
+              child: Container(width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: color.withAlpha(25), borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: color.withAlpha(80))),
+                child: Icon(Icons.timer_outlined, size: 18, color: color))),
+            const SizedBox(width: 8),
+            JellyButton(onTap: widget.onDelete, pressScale: 0.9,
               child: Container(width: 44, height: 44,
                 decoration: BoxDecoration(
                   color: Colors.red.withAlpha(20), borderRadius: BorderRadius.circular(14),
@@ -2408,6 +3078,237 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
           ],
         )),
       ])),
+    );
+  }
+}
+
+// ── Focus mode (Pomodoro per task) ───────────────────────────────────────────
+
+class _TaskFocusScreen extends StatefulWidget {
+  final Task task;
+  final Color accentColor;
+  final VoidCallback onComplete;
+  const _TaskFocusScreen({
+    required this.task,
+    required this.accentColor,
+    required this.onComplete,
+  });
+
+  @override
+  State<_TaskFocusScreen> createState() => _TaskFocusScreenState();
+}
+
+class _TaskFocusScreenState extends State<_TaskFocusScreen>
+    with TickerProviderStateMixin {
+  static const List<int> _presets = [15, 25, 45, 60];
+  int _minutes = 25;
+  late int _secondsLeft = _minutes * 60;
+  int get _totalSeconds => _minutes * 60;
+  bool _running = false;
+  bool _finished = false;
+  late final AnimationController _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    _tick = AnimationController(
+        vsync: this, duration: const Duration(seconds: 1))
+      ..addStatusListener((s) {
+        if (s == AnimationStatus.completed && _running) {
+          setState(() {
+            _secondsLeft--;
+            widget.task.focusMinutes = ((_totalSeconds - _secondsLeft) / 60).floor();
+            if (_secondsLeft <= 0) {
+              _running = false;
+              _finished = true;
+              HapticFeedback.heavyImpact();
+            } else {
+              _tick.forward(from: 0);
+            }
+          });
+        }
+      });
+  }
+
+  @override
+  void dispose() { _tick.dispose(); super.dispose(); }
+
+  void _start() { setState(() => _running = true); _tick.forward(from: 0); }
+  void _pause() { setState(() => _running = false); _tick.stop(); }
+  void _reset() => setState(() {
+    _running = false; _tick.stop(); _secondsLeft = _totalSeconds;
+  });
+  void _setPreset(int m) => setState(() {
+    _running = false; _tick.stop();
+    _minutes = m; _secondsLeft = m * 60; _finished = false;
+  });
+
+  String get _timeDisplay {
+    final m = _secondsLeft ~/ 60;
+    final s = _secondsLeft % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  double get _progress => _totalSeconds == 0
+      ? 0.0 : 1.0 - (_secondsLeft / _totalSeconds);
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.accentColor;
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0F).withAlpha(240),
+      body: SafeArea(
+        child: Column(children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: JellyButton(
+                onTap: () => Navigator.pop(context),
+                pressScale: 0.9,
+                child: Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(15),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withAlpha(30))),
+                  child: Icon(Icons.close_rounded, size: 20,
+                    color: Colors.white.withAlpha(200))),
+              ),
+            ),
+          ),
+
+          const Spacer(),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Text(widget.task.title, textAlign: TextAlign.center,
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 22, fontWeight: FontWeight.w700,
+                fontStyle: FontStyle.italic, color: Colors.white)),
+          ),
+          const SizedBox(height: 8),
+          Text('FOCUS MODE',
+            style: GoogleFonts.jetBrainsMono(
+              fontSize: 10, fontWeight: FontWeight.w800,
+              letterSpacing: 2, color: color)),
+
+          const SizedBox(height: 40),
+
+          // Ring
+          SizedBox(
+            width: 220, height: 220,
+            child: Stack(alignment: Alignment.center, children: [
+              SizedBox(
+                width: 220, height: 220,
+                child: CircularProgressIndicator(
+                  value: _progress, strokeWidth: 8,
+                  backgroundColor: Colors.white.withAlpha(15),
+                  valueColor: AlwaysStoppedAnimation(
+                    _finished ? AppColors.success : color)),
+              ),
+              Column(mainAxisSize: MainAxisSize.min, children: [
+                Text(_finished ? '✓' : _timeDisplay,
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: _finished ? 48 : 42,
+                    fontWeight: FontWeight.w700,
+                    color: _finished ? AppColors.success : Colors.white)),
+                if (!_finished)
+                  Text('REMAINING',
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, fontWeight: FontWeight.w600,
+                      letterSpacing: 2, color: Colors.white.withAlpha(80))),
+              ]),
+            ]),
+          ),
+
+          const SizedBox(height: 28),
+
+          // Presets
+          if (!_running && !_finished)
+            Row(mainAxisAlignment: MainAxisAlignment.center,
+              children: _presets.map((m) {
+                final active = m == _minutes;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: JellyButton(
+                    onTap: () => _setPreset(m),
+                    pressScale: 0.9,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: active ? color.withAlpha(50) : Colors.white.withAlpha(12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: active ? color.withAlpha(180) : Colors.white.withAlpha(30))),
+                      child: Text('${m}m',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 11, fontWeight: FontWeight.w700,
+                          color: active ? color : Colors.white.withAlpha(160))),
+                    ),
+                  ),
+                );
+              }).toList()),
+
+          const SizedBox(height: 28),
+
+          // Controls
+          if (_finished)
+            JellyButton(
+              onTap: widget.onComplete, pressScale: 0.95,
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 40),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.success,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [BoxShadow(
+                    color: AppColors.success.withAlpha(80),
+                    blurRadius: 20, offset: const Offset(0, 6))]),
+                child: Center(child: Row(
+                  mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.check_rounded, size: 20, color: Colors.white),
+                    const SizedBox(width: 10),
+                    Text('COMPLETE MISSION',
+                      style: GoogleFonts.inter(
+                        fontSize: 14, fontWeight: FontWeight.w800,
+                        letterSpacing: 1, color: Colors.white)),
+                  ])),
+              ),
+            )
+          else
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              JellyButton(
+                onTap: _running ? _pause : _start, pressScale: 0.9,
+                child: Container(
+                  width: 64, height: 64,
+                  decoration: BoxDecoration(
+                    color: color, shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(
+                      color: color.withAlpha(100),
+                      blurRadius: 16, spreadRadius: 2)]),
+                  child: Icon(
+                    _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    size: 32, color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: 20),
+              JellyButton(
+                onTap: _reset, pressScale: 0.9,
+                child: Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(12),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withAlpha(30))),
+                  child: Icon(Icons.refresh_rounded, size: 22,
+                    color: Colors.white.withAlpha(180))),
+              ),
+            ]),
+
+          const Spacer(),
+        ]),
+      ),
     );
   }
 }
