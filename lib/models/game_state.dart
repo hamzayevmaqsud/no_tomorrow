@@ -122,4 +122,45 @@ class GameState extends ChangeNotifier {
     notifyListeners();
     return up;
   }
+
+  // ── Profile / sync ──────────────────────────────────────────────────────────
+  String? username;
+
+  Map<String, dynamic> toJson() => {
+    'username': username,
+    'totalXp': _totalXp,
+    'level': _level,
+    'totalCompletions': _totalCompletions,
+    'lastCompletionDate': _lastCompletionDate?.toIso8601String(),
+    'streak': _streak,
+    'bestStreak': _bestStreak,
+    'unlockedBadges': _unlockedBadges.toList(),
+  };
+
+  void loadFromJson(Map<String, dynamic> j) {
+    username = j['username'] as String?;
+    _totalXp = j['totalXp'] ?? 0;
+    _level = j['level'] ?? 1;
+    _totalCompletions = j['totalCompletions'] ?? 0;
+    _lastCompletionDate = j['lastCompletionDate'] != null
+      ? DateTime.parse(j['lastCompletionDate']) : null;
+    _streak = j['streak'] ?? 0;
+    _bestStreak = j['bestStreak'] ?? 0;
+    _unlockedBadges
+      ..clear()
+      ..addAll((j['unlockedBadges'] as List?)?.cast<String>() ?? []);
+    notifyListeners();
+  }
+
+  void reset() {
+    username = null;
+    _totalXp = 0;
+    _level = 1;
+    _totalCompletions = 0;
+    _lastCompletionDate = null;
+    _streak = 0;
+    _bestStreak = 0;
+    _unlockedBadges.clear();
+    notifyListeners();
+  }
 }

@@ -6,6 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/username_screen.dart';
+import 'services/sync_service.dart';
 import 'widgets/phone_frame.dart';
 import 'firebase_options.dart';
 
@@ -17,6 +19,7 @@ void main() async {
     const SystemUiOverlayStyle(statusBarColor: Colors.transparent),
   );
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  SyncService.instance.start();
   runApp(const NoTomorrowApp());
 }
 
@@ -61,15 +64,73 @@ class _AuthGate extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (ctx, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            backgroundColor: Color(0xFF0A0A0F),
-            body: Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2, color: Color(0xFFFF6B35))),
-          );
+          return _loadingScaffold();
         }
         if (!snap.hasData) return const LoginScreen();
-        return _SplashGate(onToggleTheme: onToggleTheme);
+        return _BagLoader(
+          uid: snap.data!.uid,
+          onToggleTheme: onToggleTheme,
+        );
+      },
+    );
+  }
+}
+
+Widget _loadingScaffold() => const Scaffold(
+  backgroundColor: Color(0xFF0A0A0F),
+  body: Center(
+    child: CircularProgressIndicator(
+      strokeWidth: 2, color: Color(0xFFFF6B35))),
+);
+
+/// After auth, load the Firestore bag. If missing → UsernameScreen to set it
+/// up. If present → normal app. Keyed by uid so switching accounts reruns.
+class _BagLoader extends StatefulWidget {
+  final String uid;
+  final VoidCallback onToggleTheme;
+  const _BagLoader({required this.uid, required this.onToggleTheme});
+
+  @override
+  State<_BagLoader> createState() => _BagLoaderState();
+}
+
+class _BagLoaderState extends State<_BagLoader> {
+  late Future<bool> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = SyncService.instance.ensureLoaded();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _future,
+      builder: (ctx, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return _loadingScaffold();
+        }
+        if (snap.hasError) {
+          return Scaffold(
+            backgroundColor: const Color(0xFF0A0A0F),
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text('Failed to load: ${snap.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white70, fontSize: 13)),
+              ),
+            ),
+          );
+        }
+        if (snap.data == false) {
+          // First-time user — ask for username, then rebuild.
+          return UsernameScreen(onDone: () =>
+            setState(() => _future = Future.value(true)));
+        }
+        return _SplashGate(onToggleTheme: widget.onToggleTheme);
       },
     );
   }

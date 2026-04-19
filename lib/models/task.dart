@@ -8,6 +8,10 @@ class SubTask {
   String title;
   bool done;
   SubTask({required this.title, this.done = false});
+
+  Map<String, dynamic> toJson() => {'title': title, 'done': done};
+  factory SubTask.fromJson(Map<String, dynamic> j) =>
+      SubTask(title: j['title'] ?? '', done: j['done'] ?? false);
 }
 
 class Task {
@@ -79,4 +83,48 @@ class Task {
         return recurDays.map((d) => days[d]).join(', ');
     }
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'priority': priority.index,
+    'isCompleted': isCompleted,
+    'createdAt': createdAt.toIso8601String(),
+    'category': category.index,
+    'dueTimeH': dueTime?.hour,
+    'dueTimeM': dueTime?.minute,
+    'dueDate': dueDate?.toIso8601String(),
+    'subtasks': subtasks.map((s) => s.toJson()).toList(),
+    'tags': tags,
+    'recurType': recurType.index,
+    'recurDays': recurDays,
+    'completedAt': completedAt?.toIso8601String(),
+    'sortOrder': sortOrder,
+    'focusMinutes': focusMinutes,
+  };
+
+  factory Task.fromJson(Map<String, dynamic> j) => Task(
+    id: j['id'] ?? '',
+    title: j['title'] ?? '',
+    description: j['description'] ?? '',
+    priority: TaskPriority.values[j['priority'] ?? 1],
+    isCompleted: j['isCompleted'] ?? false,
+    createdAt: j['createdAt'] != null
+      ? DateTime.parse(j['createdAt']) : DateTime.now(),
+    category: TaskCategory.values[j['category'] ?? 0],
+    dueTime: (j['dueTimeH'] != null && j['dueTimeM'] != null)
+      ? TimeOfDay(hour: j['dueTimeH'], minute: j['dueTimeM']) : null,
+    dueDate: j['dueDate'] != null ? DateTime.parse(j['dueDate']) : null,
+    subtasks: (j['subtasks'] as List?)
+      ?.map((e) => SubTask.fromJson(Map<String, dynamic>.from(e)))
+      .toList(),
+    tags: (j['tags'] as List?)?.cast<String>(),
+    recurType: RecurType.values[j['recurType'] ?? 0],
+    recurDays: (j['recurDays'] as List?)?.cast<int>(),
+    completedAt: j['completedAt'] != null
+      ? DateTime.parse(j['completedAt']) : null,
+    sortOrder: j['sortOrder'] ?? 0,
+    focusMinutes: j['focusMinutes'] ?? 0,
+  );
 }

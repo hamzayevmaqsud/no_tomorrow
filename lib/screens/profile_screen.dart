@@ -74,9 +74,13 @@ class ProfileScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 children: [
                   Column(children: [
-                    Text('PROFILE', style: GoogleFonts.playfairDisplay(
-                      fontSize: 26, fontWeight: FontWeight.w800,
-                      letterSpacing: 3, color: const Color(0xFFF0E6D3))),
+                    Text(
+                      (gs.username?.isNotEmpty ?? false)
+                        ? gs.username!.toUpperCase()
+                        : 'PROFILE',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 26, fontWeight: FontWeight.w800,
+                        letterSpacing: 3, color: const Color(0xFFF0E6D3))),
                   ]),
                   Align(
                     alignment: Alignment.centerRight,

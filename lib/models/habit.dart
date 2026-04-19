@@ -126,6 +126,33 @@ class Habit {
   }
 
   int get xpPerCheck => 15;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'category': category.index,
+    'createdAt': createdAt.toIso8601String(),
+    'completedDates': completedDates.toList(),
+    'notes': notes,
+    'scheduleDays': scheduleDays,
+    'routineSlot': routineSlot,
+    'streakFreezes': streakFreezes,
+    'timerMinutes': timerMinutes,
+  };
+
+  factory Habit.fromJson(Map<String, dynamic> j) => Habit(
+    id: j['id'] ?? '',
+    title: j['title'] ?? '',
+    category: HabitCategory.values[j['category'] ?? 0],
+    createdAt: j['createdAt'] != null
+      ? DateTime.parse(j['createdAt']) : DateTime.now(),
+    completedDates: (j['completedDates'] as List?)?.cast<String>().toSet(),
+    notes: (j['notes'] as Map?)?.map((k, v) => MapEntry(k as String, v as String)),
+    scheduleDays: (j['scheduleDays'] as List?)?.cast<int>(),
+    routineSlot: j['routineSlot'] ?? '',
+    streakFreezes: j['streakFreezes'] ?? 0,
+    timerMinutes: j['timerMinutes'] ?? 0,
+  );
 }
 
 class HabitStore {
