@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
+import '../widgets/jelly_button.dart';
 
 // ── Model ────────────────────────────────────────────────────────────────────
 
@@ -135,7 +136,7 @@ class _AbstainScreenState extends State<AbstainScreen> {
         Positioned(bottom: 36, left: 52, right: 52,
           child: ClipRRect(borderRadius: BorderRadius.circular(40),
             child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: GestureDetector(onTap: _showAdd,
+              child: JellyButton(onTap: _showAdd,
                 child: Container(height: 56,
                   decoration: BoxDecoration(color: Colors.white.withAlpha(22),
                     borderRadius: BorderRadius.circular(40),

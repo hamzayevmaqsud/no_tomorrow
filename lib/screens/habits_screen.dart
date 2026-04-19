@@ -7,6 +7,7 @@ import '../models/habit.dart';
 import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
+import '../widgets/jelly_button.dart';
 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
@@ -395,7 +396,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
               borderRadius: BorderRadius.circular(40),
               child: BackdropFilter(
                 filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-                child: GestureDetector(
+                child: JellyButton(
                   onTap: _showAdd,
                   child: Container(
                     height: 56,

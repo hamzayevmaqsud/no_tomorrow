@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
+import '../widgets/jelly_button.dart';
+import '../widgets/animated_empty.dart';
 
 class Meal {
   final String id;
@@ -97,11 +99,10 @@ class _FoodScreenState extends State<FoodScreen> {
           _FoodDashboard(todayCals: todayCals, goal: goal, progress: progress, mealCount: todayMeals.length),
           Expanded(
             child: meals.isEmpty
-                ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.restaurant_rounded, size: 40, color: Colors.white.withAlpha(60)),
-                    const SizedBox(height: 16),
-                    Text('no meals logged', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(180))),
-                  ]))
+                ? const AnimatedEmpty(
+                    icon: Icons.restaurant_rounded,
+                    title: 'no meals logged',
+                    subtitle: 'tap + to log your first meal')
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                     itemCount: meals.length,
@@ -112,7 +113,7 @@ class _FoodScreenState extends State<FoodScreen> {
         Positioned(bottom: 36, left: 52, right: 52,
           child: ClipRRect(borderRadius: BorderRadius.circular(40),
             child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: GestureDetector(onTap: _showAdd,
+              child: JellyButton(onTap: _showAdd,
                 child: Container(height: 56,
                   decoration: BoxDecoration(color: Colors.white.withAlpha(22),
                     borderRadius: BorderRadius.circular(40),
