@@ -2904,18 +2904,27 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                 color: cardBg, borderRadius: BorderRadius.circular(28),
                 boxShadow: [BoxShadow(color: Colors.black.withAlpha(40), blurRadius: 30, offset: const Offset(0, 10))]),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                // Priority + XP + Category
+                // Priority + XP + Category (tap to change)
                 Row(children: [
-                  Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: color.withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: color.withAlpha(80))),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.flag_rounded, size: 11, color: color),
-                      const SizedBox(width: 4),
-                      Text(_pLabel(tk.priority), style: GoogleFonts.jetBrainsMono(
-                        fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: color)),
-                    ])),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      final values = TaskPriority.values;
+                      final next = values[(tk.priority.index + 1) % values.length];
+                      setState(() => widget.task.priority = next);
+                      widget.onEdit();
+                    },
+                    child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: color.withAlpha(25),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: color.withAlpha(80))),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.flag_rounded, size: 11, color: color),
+                        const SizedBox(width: 4),
+                        Text(_pLabel(tk.priority), style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: color)),
+                      ])),
+                  ),
                   const SizedBox(width: 6),
                   Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(color: AppColors.gold.withAlpha(20),
@@ -2923,9 +2932,24 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                     child: Text('+${_pXp(tk.priority)} XP', style: GoogleFonts.jetBrainsMono(
                       fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold))),
                   const Spacer(),
-                  Text(tk.category == TaskCategory.work ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ'),
-                    style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => widget.task.category =
+                        tk.category == TaskCategory.work
+                          ? TaskCategory.live : TaskCategory.work);
+                      widget.onEdit();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: textCol.withAlpha(10),
+                        borderRadius: BorderRadius.circular(10)),
+                      child: Text(tk.category == TaskCategory.work ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ'),
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
+                    ),
+                  ),
                 ]),
 
                 const SizedBox(height: 16),

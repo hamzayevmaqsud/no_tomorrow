@@ -1964,6 +1964,413 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
   }
 }
 
+// ── Edit habit sheet (title / category / schedule / routine / timer / delete) ─
+
+class _EditHabitSheet extends StatefulWidget {
+  final Habit habit;
+  const _EditHabitSheet({required this.habit});
+
+  @override
+  State<_EditHabitSheet> createState() => _EditHabitSheetState();
+}
+
+class _EditHabitSheetState extends State<_EditHabitSheet> {
+  late final TextEditingController _ctrl;
+  late HabitCategory _cat;
+  late Set<int> _days;
+  late String _routine;
+  late int _timer;
+
+  static const _kSheetBg = Color(0xFFF5F1E8);
+  static const _kRowBg   = Color(0xFFEFEBE0);
+  static const _kDivider = Color(0xFFDDD8CB);
+  static const _kCocoa   = Color(0xFF594536);
+
+  @override
+  void initState() {
+    super.initState();
+    final h = widget.habit;
+    _ctrl = TextEditingController(text: h.title);
+    _cat = h.category;
+    _days = h.scheduleDays.toSet();
+    _routine = h.routineSlot;
+    _timer = h.timerMinutes;
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  void _save() {
+    final title = _ctrl.text.trim();
+    if (title.isEmpty) return;
+    HapticFeedback.mediumImpact();
+    final h = widget.habit;
+    h.title = title;
+    h.category = _cat;
+    h.scheduleDays
+      ..clear()
+      ..addAll(_days.toList()..sort());
+    h.routineSlot = _routine;
+    h.timerMinutes = _timer;
+    Navigator.pop(context, true);
+  }
+
+  void _confirmDelete() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: _kSheetBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(t('Delete habit?', 'Удалить привычку?'),
+          style: GoogleFonts.inter(
+            fontSize: 16, fontWeight: FontWeight.w700, color: _kCocoa)),
+        content: Text(t('All check-ins and notes will be lost.',
+            'Все отметки и заметки будут удалены.'),
+          style: GoogleFonts.inter(fontSize: 13, color: _kCocoa.withAlpha(180))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t('Cancel', 'Отмена'),
+              style: GoogleFonts.inter(color: _kCocoa.withAlpha(160)))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t('Delete', 'Удалить'),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFDC2626)))),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    HabitStore.habits.removeWhere((x) => x.id == widget.habit.id);
+    if (mounted) {
+      Navigator.pop(context, true); // close edit sheet
+      Navigator.pop(context);        // close detail view (back to list)
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sw = MediaQuery.of(context).size.width;
+    final kb = MediaQuery.of(context).viewInsets.bottom;
+
+    return Align(
+      alignment: Alignment.center,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(12, 40, 12, kb > 0 ? kb + 12 : 40),
+        child: Material(
+          color: Colors.transparent,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: Container(
+              width: sw < 420 ? sw - 24 : 380,
+              decoration: BoxDecoration(
+                color: _kSheetBg,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [BoxShadow(color: Colors.black.withAlpha(90),
+                  blurRadius: 40, offset: const Offset(6, 8))],
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.habits.withAlpha(25),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(28))),
+                      padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+                      child: Row(children: [
+                        Container(width: 32, height: 32,
+                          decoration: BoxDecoration(
+                            color: AppColors.habits,
+                            borderRadius: BorderRadius.circular(12)),
+                          child: const Icon(Icons.edit_rounded,
+                              color: Colors.white, size: 18)),
+                        const SizedBox(width: 10),
+                        Text(t('EDIT HABIT', 'РЕДАКТИРОВАТЬ'),
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 14, fontWeight: FontWeight.w700,
+                            letterSpacing: 1.2, color: _kCocoa)),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context, false),
+                          child: Container(width: 28, height: 28,
+                            decoration: BoxDecoration(
+                              color: _kDivider,
+                              borderRadius: BorderRadius.circular(10)),
+                            child: Icon(Icons.close_rounded,
+                                color: _kCocoa.withAlpha(150), size: 14))),
+                      ]),
+                    ),
+
+                    // Title field
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: _kRowBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: _kDivider)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
+                        child: TextField(
+                          controller: _ctrl,
+                          style: GoogleFonts.inter(
+                            fontSize: 14, fontWeight: FontWeight.w600,
+                            color: _kCocoa),
+                          decoration: InputDecoration(
+                            hintText: t('Title', 'Название'),
+                            hintStyle: GoogleFonts.inter(
+                              fontSize: 14, color: _kCocoa.withAlpha(100)),
+                            border: InputBorder.none,
+                            isDense: true),
+                          onSubmitted: (_) => _save(),
+                        ),
+                      ),
+                    ),
+
+                    // Category picker
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
+                      child: Row(
+                        children: HabitCategory.values.map((c) {
+                          final active = _cat == c;
+                          final col = habitCatColor(c);
+                          return Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 2),
+                              child: GestureDetector(
+                                onTap: () => setState(() => _cat = c),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: active ? col.withAlpha(35) : _kRowBg,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: active ? col : _kDivider,
+                                      width: active ? 1.4 : 1)),
+                                  child: Column(children: [
+                                    Icon(habitCatIcon(c), size: 14,
+                                        color: active ? col : _kCocoa.withAlpha(140)),
+                                    const SizedBox(height: 3),
+                                    Text(habitCatLabel(c),
+                                      style: GoogleFonts.jetBrainsMono(
+                                        fontSize: 7.5, fontWeight: FontWeight.w700,
+                                        color: active ? col : _kCocoa.withAlpha(140))),
+                                  ]),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                    // Schedule days
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.calendar_today_rounded,
+                              size: 12, color: _kCocoa.withAlpha(130)),
+                            const SizedBox(width: 6),
+                            Text(_days.isEmpty
+                              ? t('Every day', 'Каждый день')
+                              : '${_days.length} ${t('days', 'дн.')}',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9, fontWeight: FontWeight.w600,
+                                color: _kCocoa.withAlpha(150))),
+                          ]),
+                          const SizedBox(height: 6),
+                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [for (final d in [1,2,3,4,5,6,7]) ...[
+                              GestureDetector(
+                                onTap: () => setState(() {
+                                  if (_days.contains(d)) {
+                                    _days.remove(d);
+                                  } else {
+                                    _days.add(d);
+                                  }
+                                }),
+                                child: Container(
+                                  width: 34, height: 34,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _days.contains(d)
+                                      ? habitCatColor(_cat).withAlpha(40)
+                                      : _kRowBg,
+                                    border: Border.all(
+                                      color: _days.contains(d)
+                                        ? habitCatColor(_cat)
+                                        : _kDivider,
+                                      width: _days.contains(d) ? 1.4 : 1)),
+                                  child: Center(
+                                    child: Text(
+                                      [t('M','П'),t('T','В'),t('W','С'),t('T','Ч'),t('F','П'),t('S','С'),t('S','В')][d-1],
+                                      style: GoogleFonts.jetBrainsMono(
+                                        fontSize: 10, fontWeight: FontWeight.w700,
+                                        color: _days.contains(d)
+                                          ? habitCatColor(_cat)
+                                          : _kCocoa.withAlpha(160))),
+                                  ),
+                                ),
+                              ),
+                            ]],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Routine slot
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
+                      child: Row(children: [
+                        for (final entry in [
+                          (slot: '', label: t('ANYTIME', 'В ЛЮБОЕ'), icon: Icons.all_inclusive_rounded),
+                          (slot: 'morning', label: t('MORNING', 'УТРО'), icon: Icons.wb_sunny_rounded),
+                          (slot: 'evening', label: t('EVENING', 'ВЕЧЕР'), icon: Icons.nights_stay_rounded),
+                        ]) Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: GestureDetector(
+                              onTap: () => setState(() => _routine = entry.slot),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: _routine == entry.slot
+                                    ? AppColors.habits.withAlpha(30)
+                                    : _kRowBg,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: _routine == entry.slot
+                                      ? AppColors.habits
+                                      : _kDivider,
+                                    width: _routine == entry.slot ? 1.4 : 1)),
+                                child: Column(children: [
+                                  Icon(entry.icon, size: 13,
+                                    color: _routine == entry.slot
+                                      ? AppColors.habits
+                                      : _kCocoa.withAlpha(140)),
+                                  const SizedBox(height: 3),
+                                  Text(entry.label,
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 7.5, fontWeight: FontWeight.w700,
+                                      color: _routine == entry.slot
+                                        ? AppColors.habits
+                                        : _kCocoa.withAlpha(140))),
+                                ]),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]),
+                    ),
+
+                    // Timer
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.timer_outlined,
+                              size: 12, color: _kCocoa.withAlpha(130)),
+                            const SizedBox(width: 6),
+                            Text(_timer == 0
+                              ? t('No timer', 'Без таймера')
+                              : '$_timer ${t('min', 'мин')}',
+                              style: GoogleFonts.jetBrainsMono(
+                                fontSize: 9, fontWeight: FontWeight.w600,
+                                color: _kCocoa.withAlpha(150))),
+                          ]),
+                          const SizedBox(height: 6),
+                          Wrap(spacing: 6, runSpacing: 6,
+                            children: [0, 5, 10, 15, 20, 30, 45, 60].map((m) {
+                              final active = _timer == m;
+                              return GestureDetector(
+                                onTap: () => setState(() => _timer = m),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: active
+                                      ? AppColors.habits.withAlpha(35)
+                                      : _kRowBg,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: active
+                                        ? AppColors.habits
+                                        : _kDivider,
+                                      width: active ? 1.4 : 1)),
+                                  child: Text(m == 0 ? t('off', 'выкл') : '${m}m',
+                                    style: GoogleFonts.jetBrainsMono(
+                                      fontSize: 10, fontWeight: FontWeight.w700,
+                                      color: active
+                                        ? AppColors.habits
+                                        : _kCocoa.withAlpha(140))),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Divider(height: 1, thickness: 1, color: _kDivider),
+
+                    // Action row: delete + save
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                      child: Row(children: [
+                        GestureDetector(
+                          onTap: _confirmDelete,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDC2626).withAlpha(25),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: const Color(0xFFDC2626).withAlpha(80))),
+                            child: const Icon(Icons.delete_outline_rounded,
+                                size: 18, color: Color(0xFFDC2626)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _save,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: AppColors.habits,
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [BoxShadow(
+                                  color: AppColors.habits.withAlpha(90),
+                                  blurRadius: 12, offset: const Offset(0, 4))]),
+                              child: Center(
+                                child: Text(t('SAVE', 'СОХРАНИТЬ'),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12, fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.4, color: Colors.white)),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Habit detail view (calendar + stats) ─────────────────────────────────────
 
 class _HabitDetailView extends StatefulWidget {
@@ -2024,6 +2431,21 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                 fontSize: 20, fontWeight: FontWeight.w700,
                 fontStyle: FontStyle.italic, color: Colors.white),
                 maxLines: 1, overflow: TextOverflow.ellipsis)),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () async {
+                  HapticFeedback.mediumImpact();
+                  final changed = await showDialog<bool>(
+                    context: context, barrierColor: Colors.black.withAlpha(180),
+                    builder: (_) => _EditHabitSheet(habit: h));
+                  if (changed == true && mounted) setState(() {});
+                },
+                child: Container(width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(25),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: color.withAlpha(80))),
+                  child: Icon(Icons.edit_rounded, size: 18, color: color))),
             ]),
           ),
 
