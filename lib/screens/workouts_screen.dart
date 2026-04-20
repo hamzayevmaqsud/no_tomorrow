@@ -343,9 +343,9 @@ class _WorkoutCard extends StatelessWidget {
             child: isCardio
                 // Cardio display
                 ? Row(children: [
-                    _CardioStat(icon: Icons.timer_rounded, value: '${w.cardioMinutes}', unit: 'min'),
+                    _CardioStat(icon: Icons.timer_rounded, value: '${w.cardioMinutes}', unit: t('min', 'мин')),
                     const SizedBox(width: 16),
-                    _CardioStat(icon: Icons.straighten_rounded, value: w.cardioDistance.toStringAsFixed(1), unit: 'km'),
+                    _CardioStat(icon: Icons.straighten_rounded, value: w.cardioDistance.toStringAsFixed(1), unit: t('km', 'км')),
                     const Spacer(),
                     GestureDetector(
                       onTap: w.cardioCompleted ? null : onCompleteCardio,

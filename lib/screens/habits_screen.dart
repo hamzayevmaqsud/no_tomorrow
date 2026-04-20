@@ -870,8 +870,8 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
     final now = DateTime.now();
     final habits = widget.habits;
     final total = habits.length;
-    const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
-      'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+    final months = [t('JANUARY','ЯНВАРЬ'),t('FEBRUARY','ФЕВРАЛЬ'),t('MARCH','МАРТ'),t('APRIL','АПРЕЛЬ'),t('MAY','МАЙ'),t('JUNE','ИЮНЬ'),
+      t('JULY','ИЮЛЬ'),t('AUGUST','АВГУСТ'),t('SEPTEMBER','СЕНТЯБРЬ'),t('OCTOBER','ОКТЯБРЬ'),t('NOVEMBER','НОЯБРЬ'),t('DECEMBER','ДЕКАБРЬ')];
 
     final firstDay = DateTime(_month.year, _month.month, 1);
     final startWeekday = firstDay.weekday;
@@ -914,7 +914,7 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
           const SizedBox(height: 14),
 
           // Day headers
-          Row(children: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) =>
+          Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
             Expanded(child: Center(child: Text(d,
               style: GoogleFonts.jetBrainsMono(
                 fontSize: 8, fontWeight: FontWeight.w600,
@@ -1129,7 +1129,7 @@ class _DoneDivider extends StatelessWidget {
                 Icon(Icons.check_circle_outline_rounded,
                     size: 11, color: AppColors.success),
                 const SizedBox(width: 5),
-                Text('DONE  $count',
+                Text('${t('DONE', 'ГОТОВО')}  $count',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 9, fontWeight: FontWeight.w700,
                     letterSpacing: 1, color: AppColors.success,
@@ -1299,7 +1299,7 @@ class _HabitCard extends StatelessWidget {
                             Row(children: [
                               Icon(Icons.timer_rounded, size: 10, color: color),
                               const SizedBox(width: 4),
-                              Text('${habit.timerMinutes} min',
+                              Text('${habit.timerMinutes} ${t('min', 'мин')}',
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 8, fontWeight: FontWeight.w700, color: color)),
                             ]),
@@ -1323,7 +1323,7 @@ class _HabitCard extends StatelessWidget {
                                       : Icons.nightlight_round,
                                   size: 9, color: subCol),
                                 const SizedBox(width: 3),
-                                Text(habit.routineSlot.toUpperCase(),
+                                Text(habit.routineSlot == 'morning' ? t('MORNING', 'УТРО') : t('EVENING', 'ВЕЧЕР'),
                                   style: GoogleFonts.jetBrainsMono(
                                     fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
                               ],
@@ -1339,7 +1339,7 @@ class _HabitCard extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   habit.notes[Habit.dateKeyPublic(DateTime.now())]?.isNotEmpty == true
-                                      ? 'View note' : 'Add note',
+                                      ? t('View note', 'Посмотреть заметку') : t('Add note', 'Добавить заметку'),
                                   style: GoogleFonts.inter(
                                     fontSize: 9, fontWeight: FontWeight.w500,
                                     color: subCol.withAlpha(120))),
@@ -1460,13 +1460,13 @@ class _EmptyHabitsState extends State<_EmptyHabits>
                   size: 26, color: Colors.white.withAlpha(180)),
             ),
             const SizedBox(height: 18),
-            Text('no habits yet',
+            Text(t('no habits yet', 'привычек пока нет'),
               style: GoogleFonts.inter(
                 fontSize: 15, fontWeight: FontWeight.w600,
                 color: Colors.white.withAlpha(200),
               )),
             const SizedBox(height: 6),
-            Text('build your daily routine',
+            Text(t('build your daily routine', 'создай свой распорядок дня'),
               style: GoogleFonts.inter(
                 fontSize: 12, color: Colors.white.withAlpha(160),
               )),
@@ -1569,12 +1569,12 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('NEW HABIT',
+                              Text(t('NEW HABIT', 'НОВАЯ ПРИВЫЧКА'),
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 14, fontWeight: FontWeight.w700,
                                   letterSpacing: 1.2, color: _kCocoa,
                                 )),
-                              Text('+${Habit(id: '', title: '', createdAt: DateTime.now()).xpPerCheck} XP / day',
+                              Text('+${Habit(id: '', title: '', createdAt: DateTime.now()).xpPerCheck} ${t('XP / day', 'XP / день')}',
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 9, fontWeight: FontWeight.w600,
                                   color: _kCocoa.withAlpha(140),
@@ -1604,12 +1604,12 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                       child: Wrap(
                         spacing: 6, runSpacing: 6,
                         children: [
-                          ('Meditate', Icons.self_improvement_rounded, HabitCategory.mindset),
-                          ('Drink Water', Icons.water_drop_rounded, HabitCategory.health),
-                          ('Exercise', Icons.fitness_center_rounded, HabitCategory.health),
-                          ('Read', Icons.menu_book_rounded, HabitCategory.productivity),
-                          ('Journal', Icons.edit_note_rounded, HabitCategory.mindset),
-                          ('Walk', Icons.directions_walk_rounded, HabitCategory.health),
+                          (t('Meditate', 'Медитация'), Icons.self_improvement_rounded, HabitCategory.mindset),
+                          (t('Drink Water', 'Пить воду'), Icons.water_drop_rounded, HabitCategory.health),
+                          (t('Exercise', 'Упражнения'), Icons.fitness_center_rounded, HabitCategory.health),
+                          (t('Read', 'Чтение'), Icons.menu_book_rounded, HabitCategory.productivity),
+                          (t('Journal', 'Дневник'), Icons.edit_note_rounded, HabitCategory.mindset),
+                          (t('Walk', 'Прогулка'), Icons.directions_walk_rounded, HabitCategory.health),
                         ].map((p) {
                           final (label, icon, cat) = p;
                           return GestureDetector(
@@ -1654,7 +1654,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                 color: _kCocoa,
                               ),
                               decoration: InputDecoration(
-                                hintText: 'e.g. Meditate 10 min',
+                                hintText: t('e.g. Meditate 10 min', 'напр. Медитация 10 мин'),
                                 hintStyle: GoogleFonts.inter(
                                     fontSize: 15,
                                     color: _kCocoa.withAlpha(100)),
@@ -1682,7 +1682,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                               Icon(Icons.category_rounded,
                                   size: 12, color: _kCocoa.withAlpha(130)),
                               const SizedBox(width: 6),
-                              Text('CATEGORY',
+                              Text(t('CATEGORY', 'КАТЕГОРИЯ'),
                                 style: GoogleFonts.inter(
                                   fontSize: 9, fontWeight: FontWeight.w700,
                                   letterSpacing: 1.2,
@@ -1759,7 +1759,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                       child: Row(children: [
                         Icon(Icons.timer_rounded, size: 12, color: _kCocoa.withAlpha(130)),
                         const SizedBox(width: 6),
-                        Text('TIMER', style: GoogleFonts.inter(
+                        Text(t('TIMER', 'ТАЙМЕР'), style: GoogleFonts.inter(
                           fontSize: 9, fontWeight: FontWeight.w700,
                           letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                         const Spacer(),
@@ -1777,7 +1777,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
                                     color: active ? AppColors.habits.withAlpha(120) : _kDivider)),
-                                child: Text(m == 0 ? 'OFF' : '${m}m',
+                                child: Text(m == 0 ? t('OFF', 'ВЫКЛ') : '${m}${t('m', 'м')}',
                                   style: GoogleFonts.jetBrainsMono(
                                     fontSize: 9, fontWeight: FontWeight.w700,
                                     color: active ? AppColors.habits : _kCocoa.withAlpha(100))),
@@ -1799,11 +1799,11 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                             Icon(Icons.calendar_today_rounded, size: 12,
                                 color: _kCocoa.withAlpha(130)),
                             const SizedBox(width: 6),
-                            Text('REPEAT', style: GoogleFonts.inter(
+                            Text(t('REPEAT', 'ПОВТОР'), style: GoogleFonts.inter(
                               fontSize: 9, fontWeight: FontWeight.w700,
                               letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                             const Spacer(),
-                            Text(_days.isEmpty ? 'Every day' : '${_days.length} days',
+                            Text(_days.isEmpty ? t('Every day', 'Каждый день') : '${_days.length} ${t('days', 'дн.')}',
                               style: GoogleFonts.jetBrainsMono(
                                 fontSize: 9, fontWeight: FontWeight.w600,
                                 color: _kCocoa.withAlpha(100))),
@@ -1812,7 +1812,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                           Row(
                             children: [1, 2, 3, 4, 5, 6, 7].map((d) {
                               final active = _days.contains(d);
-                              const labels = ['', 'M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                              final labels = ['', t('M','П'), t('T','В'), t('W','С'), t('T','Ч'), t('F','П'), t('S','С'), t('S','В')];
                               return Expanded(
                                 child: GestureDetector(
                                   onTap: () => setState(() {
@@ -1861,17 +1861,17 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                             Icon(Icons.wb_sunny_rounded, size: 12,
                                 color: _kCocoa.withAlpha(130)),
                             const SizedBox(width: 6),
-                            Text('ROUTINE', style: GoogleFonts.inter(
+                            Text(t('ROUTINE', 'РАСПОРЯДОК'), style: GoogleFonts.inter(
                               fontSize: 9, fontWeight: FontWeight.w700,
                               letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                           ]),
                           const SizedBox(height: 10),
                           Row(children: [
-                            _RoutineChip(label: 'MORNING', icon: Icons.wb_sunny_rounded,
+                            _RoutineChip(label: t('MORNING', 'УТРО'), icon: Icons.wb_sunny_rounded,
                               active: _routine == 'morning',
                               onTap: () => setState(() => _routine = _routine == 'morning' ? '' : 'morning')),
                             const SizedBox(width: 8),
-                            _RoutineChip(label: 'EVENING', icon: Icons.nightlight_round,
+                            _RoutineChip(label: t('EVENING', 'ВЕЧЕР'), icon: Icons.nightlight_round,
                               active: _routine == 'evening',
                               onTap: () => setState(() => _routine = _routine == 'evening' ? '' : 'evening')),
                           ]),
@@ -1899,7 +1899,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('CREATE HABIT',
+                              Text(t('CREATE HABIT', 'СОЗДАТЬ ПРИВЫЧКУ'),
                                 style: GoogleFonts.inter(
                                   fontSize: 12, fontWeight: FontWeight.w800,
                                   letterSpacing: 1.4, color: Colors.white,
@@ -1961,8 +1961,8 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
     final firstDay = DateTime(_viewMonth.year, _viewMonth.month, 1);
     final startWeekday = firstDay.weekday; // 1=Mon
     final daysInMonth = DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
-    const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE',
-      'JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+    final months = [t('JANUARY','ЯНВАРЬ'),t('FEBRUARY','ФЕВРАЛЬ'),t('MARCH','МАРТ'),t('APRIL','АПРЕЛЬ'),t('MAY','МАЙ'),t('JUNE','ИЮНЬ'),
+      t('JULY','ИЮЛЬ'),t('AUGUST','АВГУСТ'),t('SEPTEMBER','СЕНТЯБРЬ'),t('OCTOBER','ОКТЯБРЬ'),t('NOVEMBER','НОЯБРЬ'),t('DECEMBER','ДЕКАБРЬ')];
 
     return Scaffold(
       backgroundColor: Colors.black.withAlpha(180),
@@ -2003,12 +2003,12 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                   boxShadow: [BoxShadow(color: Colors.black.withAlpha(25),
                     blurRadius: 12, offset: const Offset(0, 5))]),
                 child: Row(children: [
-                  _DetailStat(value: '${h.streak}', label: 'STREAK',
+                  _DetailStat(value: '${h.streak}', label: t('STREAK', 'СЕРИЯ'),
                     icon: Icons.local_fire_department_rounded,
                     color: h.streak >= 7 ? AppColors.action : const Color(0xFFF59E0B)),
-                  _DetailStat(value: '${h.weeklyCount}/7', label: 'THIS WEEK',
+                  _DetailStat(value: '${h.weeklyCount}/7', label: t('THIS WEEK', 'ЭТА НЕДЕЛЯ'),
                     icon: Icons.insights_rounded, color: color),
-                  _DetailStat(value: '${h.completedDates.length}', label: 'TOTAL',
+                  _DetailStat(value: '${h.completedDates.length}', label: t('TOTAL', 'ВСЕГО'),
                     icon: Icons.check_circle_rounded, color: AppColors.success),
                 ]),
               ),
@@ -2043,7 +2043,7 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                   const SizedBox(height: 14),
 
                   // Day headers
-                  Row(children: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d) =>
+                  Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
                     Expanded(child: Center(child: Text(d,
                       style: GoogleFonts.jetBrainsMono(
                         fontSize: 8, fontWeight: FontWeight.w600,
@@ -2131,7 +2131,7 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                           ? Icons.wb_sunny_rounded : Icons.nightlight_round,
                         size: 12, color: subCol),
                       const SizedBox(width: 4),
-                      Text('${h.routineSlot.toUpperCase()} ROUTINE',
+                      Text('${h.routineSlot == 'morning' ? t('MORNING', 'УТРО') : t('EVENING', 'ВЕЧЕР')} ${t('ROUTINE', 'РАСПОРЯДОК')}',
                         style: GoogleFonts.jetBrainsMono(
                           fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
                     ]),
@@ -2142,7 +2142,7 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                     decoration: BoxDecoration(
                       color: AppColors.gold.withAlpha(15),
                       borderRadius: BorderRadius.circular(8)),
-                    child: Text('+${h.xpPerCheck} XP per check-in',
+                    child: Text('+${h.xpPerCheck} ${t('XP per check-in', 'XP за отметку')}',
                       style: GoogleFonts.jetBrainsMono(
                         fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.gold)),
                   ),
@@ -2337,12 +2337,12 @@ class _StreakMilestoneState extends State<_StreakMilestone>
                           Icon(Icons.local_fire_department_rounded,
                               size: 56, color: AppColors.action),
                           const SizedBox(height: 12),
-                          Text('${widget.streak} DAY',
+                          Text('${widget.streak} ${t('DAY', 'ДЕНЬ')}',
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 42, fontWeight: FontWeight.w900,
                               fontStyle: FontStyle.italic,
                               color: AppColors.gold, height: 1)),
-                          Text('STREAK',
+                          Text(t('STREAK', 'СЕРИЯ'),
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 42, fontWeight: FontWeight.w900,
                               fontStyle: FontStyle.italic,
@@ -2501,7 +2501,7 @@ class _HabitTimerScreenState extends State<_HabitTimerScreen>
                           fontWeight: FontWeight.w700,
                           color: _finished ? AppColors.success : Colors.white)),
                       if (!_finished)
-                        Text('REMAINING',
+                        Text(t('REMAINING', 'ОСТАЛОСЬ'),
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 9, fontWeight: FontWeight.w600,
                             letterSpacing: 2,
@@ -2532,7 +2532,7 @@ class _HabitTimerScreenState extends State<_HabitTimerScreen>
                     children: [
                       const Icon(Icons.check_rounded, size: 20, color: Colors.white),
                       const SizedBox(width: 10),
-                      Text('COMPLETE',
+                      Text(t('COMPLETE', 'ЗАВЕРШИТЬ'),
                         style: GoogleFonts.inter(
                           fontSize: 14, fontWeight: FontWeight.w800,
                           letterSpacing: 1, color: Colors.white)),

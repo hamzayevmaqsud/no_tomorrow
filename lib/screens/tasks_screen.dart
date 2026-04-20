@@ -1656,7 +1656,7 @@ class _DashboardPanel extends StatelessWidget {
                   border: Border.all(color: accentColor.withAlpha(60)),
                 ),
                 child: Text(
-                  'LVL ${GameState.instance.level}',
+                  '${t('LVL', 'УР')} ${GameState.instance.level}',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -2029,7 +2029,7 @@ class _WeeklyReviewSheet extends StatelessWidget {
         Row(children: List.generate(7, (i) {
           final (d, c) = weekDays[i];
           final isToday = d.day == today.day && d.month == today.month;
-          const labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+          final labels = [t('M', 'П'), t('T', 'В'), t('W', 'С'), t('T', 'Ч'), t('F', 'П'), t('S', 'С'), t('S', 'В')];
           final maxC = weekDays.fold<int>(0, (m, e) => e.$2 > m ? e.$2 : m);
           final h = maxC == 0 ? 6.0 : 6.0 + (c / maxC) * 40;
           return Expanded(
@@ -2825,7 +2825,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
   }
 
   void _addSubtask() {
-    setState(() => widget.task.subtasks.add(SubTask(title: 'New step')));
+    setState(() => widget.task.subtasks.add(SubTask(title: t('New step', 'Новый шаг'))));
     widget.onEdit();
   }
 
@@ -2846,9 +2846,9 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final t = widget.task;
-    final color = _pColor(t.priority);
-    final done = t.isCompleted;
+    final tk = widget.task;
+    final color = _pColor(tk.priority);
+    final done = tk.isCompleted;
     const cardBg = Color(0xFFF5F2EB);
     const textCol = Color(0xFF2A2318);
     const subCol = Color(0xFF8A8070);
@@ -2913,17 +2913,17 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.flag_rounded, size: 11, color: color),
                       const SizedBox(width: 4),
-                      Text(_pLabel(t.priority), style: GoogleFonts.jetBrainsMono(
+                      Text(_pLabel(tk.priority), style: GoogleFonts.jetBrainsMono(
                         fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: color)),
                     ])),
                   const SizedBox(width: 6),
                   Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(color: AppColors.gold.withAlpha(20),
                       borderRadius: BorderRadius.circular(8)),
-                    child: Text('+${_pXp(t.priority)} XP', style: GoogleFonts.jetBrainsMono(
+                    child: Text('+${_pXp(tk.priority)} XP', style: GoogleFonts.jetBrainsMono(
                       fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold))),
                   const Spacer(),
-                  Text(t.category == TaskCategory.work ? 'WORK' : 'LIVE',
+                  Text(tk.category == TaskCategory.work ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ'),
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
                 ]),
@@ -2936,10 +2936,10 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                         style: GoogleFonts.playfairDisplay(fontSize: 24, fontWeight: FontWeight.w800,
                           fontStyle: FontStyle.italic, color: textCol),
                         decoration: InputDecoration(
-                          hintText: 'Task title', border: InputBorder.none,
+                          hintText: t('Task title', 'Название задачи'), border: InputBorder.none,
                           hintStyle: GoogleFonts.playfairDisplay(fontSize: 24, color: subCol.withAlpha(100)),
                           isDense: true, contentPadding: EdgeInsets.zero))
-                    : Text(t.title, style: GoogleFonts.playfairDisplay(
+                    : Text(tk.title, style: GoogleFonts.playfairDisplay(
                         fontSize: 24, fontWeight: FontWeight.w800, fontStyle: FontStyle.italic,
                         height: 1.15, color: textCol,
                         decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
@@ -2952,11 +2952,11 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                     ? TextField(controller: _descCtrl, maxLines: 4,
                         style: GoogleFonts.inter(fontSize: 13, height: 1.5, color: subCol),
                         decoration: InputDecoration(
-                          hintText: 'Add description...', border: InputBorder.none,
+                          hintText: t('Add description...', 'Добавить описание...'), border: InputBorder.none,
                           hintStyle: GoogleFonts.inter(fontSize: 13, color: subCol.withAlpha(80)),
                           isDense: true, contentPadding: EdgeInsets.zero))
-                    : t.description.isNotEmpty
-                        ? Text(t.description, style: GoogleFonts.inter(
+                    : tk.description.isNotEmpty
+                        ? Text(tk.description, style: GoogleFonts.inter(
                             fontSize: 13, height: 1.5, color: subCol))
                         : Text(t('No description', 'Нет описания'), style: GoogleFonts.inter(
                             fontSize: 13, fontStyle: FontStyle.italic,
@@ -2975,9 +2975,9 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.calendar_today_rounded, size: 13, color: subCol),
                         const SizedBox(width: 6),
-                        Text(t.dueDate != null ? _fmtDate(t.dueDate!) : t('Add date', 'Выбрать дату'),
+                        Text(tk.dueDate != null ? _fmtDate(tk.dueDate!) : t('Add date', 'Выбрать дату'),
                           style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600,
-                            color: t.dueDate != null ? textCol : subCol.withAlpha(100))),
+                            color: tk.dueDate != null ? textCol : subCol.withAlpha(100))),
                       ]))),
                   const SizedBox(width: 8),
                   GestureDetector(
@@ -2989,24 +2989,24 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.access_time_rounded, size: 13, color: subCol),
                         const SizedBox(width: 6),
-                        Text(t.dueTime != null ? _fmt24(t.dueTime!) : 'Add time',
+                        Text(tk.dueTime != null ? _fmt24(tk.dueTime!) : t('Add time', 'Выбрать время'),
                           style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600,
-                            color: t.dueTime != null ? textCol : subCol.withAlpha(100))),
+                            color: tk.dueTime != null ? textCol : subCol.withAlpha(100))),
                       ]))),
                 ]),
 
                 // Subtasks
-                if (t.subtasks.isNotEmpty || _editing) ...[
+                if (tk.subtasks.isNotEmpty || _editing) ...[
                   const SizedBox(height: 16),
                   Row(children: [
-                    Text('SUBTASKS', style: GoogleFonts.jetBrainsMono(
+                    Text(t('SUBTASKS', 'ПОДЗАДАЧИ'), style: GoogleFonts.jetBrainsMono(
                       fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
                     const Spacer(),
                     if (_editing) GestureDetector(onTap: _addSubtask,
                       child: Icon(Icons.add_circle_outline_rounded, size: 18, color: AppColors.action)),
                   ]),
                   const SizedBox(height: 8),
-                  ...t.subtasks.asMap().entries.map((e) {
+                  ...tk.subtasks.asMap().entries.map((e) {
                     final s = e.value;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 6),
@@ -3032,10 +3032,10 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                 ],
 
                 // Tags
-                if (t.tags.isNotEmpty) ...[
+                if (tk.tags.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Wrap(spacing: 6, runSpacing: 4,
-                    children: t.tags.map((tag) => Container(
+                    children: tk.tags.map((tag) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: textCol.withAlpha(8), borderRadius: BorderRadius.circular(8),
@@ -3046,12 +3046,12 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                 ],
 
                 // Recurring
-                if (t.recurType != RecurType.none) ...[
+                if (tk.recurType != RecurType.none) ...[
                   const SizedBox(height: 12),
                   Row(children: [
                     Icon(Icons.repeat_rounded, size: 12, color: subCol),
                     const SizedBox(width: 6),
-                    Text(t.recurLabel, style: GoogleFonts.jetBrainsMono(
+                    Text(tk.recurLabel, style: GoogleFonts.jetBrainsMono(
                       fontSize: 10, fontWeight: FontWeight.w600, color: subCol)),
                   ]),
                 ],
@@ -3070,10 +3070,10 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Icon(Icons.check_rounded, size: 20, color: Colors.white),
                     const SizedBox(width: 10),
-                    Text('COMPLETE MISSION', style: GoogleFonts.inter(
+                    Text(t('COMPLETE MISSION', 'ЗАВЕРШИТЬ МИССИЮ'), style: GoogleFonts.inter(
                       fontSize: 14, fontWeight: FontWeight.w800, letterSpacing: 1, color: Colors.white)),
                     const SizedBox(width: 10),
-                    Text('+${_pXp(t.priority)} XP', style: GoogleFonts.jetBrainsMono(
+                    Text('+${_pXp(tk.priority)} XP', style: GoogleFonts.jetBrainsMono(
                       fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(200))),
                   ]))),
           ],
@@ -3189,7 +3189,7 @@ class _TaskFocusScreenState extends State<_TaskFocusScreen>
                 fontStyle: FontStyle.italic, color: Colors.white)),
           ),
           const SizedBox(height: 8),
-          Text('FOCUS MODE',
+          Text(t('FOCUS MODE', 'РЕЖИМ ФОКУСА'),
             style: GoogleFonts.jetBrainsMono(
               fontSize: 10, fontWeight: FontWeight.w800,
               letterSpacing: 2, color: color)),
@@ -3215,7 +3215,7 @@ class _TaskFocusScreenState extends State<_TaskFocusScreen>
                     fontWeight: FontWeight.w700,
                     color: _finished ? AppColors.success : Colors.white)),
                 if (!_finished)
-                  Text('REMAINING',
+                  Text(t('REMAINING', 'ОСТАЛОСЬ'),
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 9, fontWeight: FontWeight.w600,
                       letterSpacing: 2, color: Colors.white.withAlpha(80))),
@@ -3270,7 +3270,7 @@ class _TaskFocusScreenState extends State<_TaskFocusScreen>
                   mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.check_rounded, size: 20, color: Colors.white),
                     const SizedBox(width: 10),
-                    Text('COMPLETE MISSION',
+                    Text(t('COMPLETE MISSION', 'ЗАВЕРШИТЬ МИССИЮ'),
                       style: GoogleFonts.inter(
                         fontSize: 14, fontWeight: FontWeight.w800,
                         letterSpacing: 1, color: Colors.white)),
@@ -3325,10 +3325,10 @@ class _Empty extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedEmpty(
       icon: Icons.checklist_rounded,
-      title: hasDateFilter ? 'no tasks this day' : 'no tasks yet',
+      title: hasDateFilter ? t('no tasks this day', 'нет задач на этот день') : t('no tasks yet', 'пока нет задач'),
       subtitle: hasDateFilter
-          ? 'tap another day or add a task'
-          : 'tap + below to add one',
+          ? t('tap another day or add a task', 'выберите другой день или добавьте задачу')
+          : t('tap + below to add one', 'нажмите + чтобы добавить'),
     ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut);
   }
 }
@@ -3374,7 +3374,7 @@ class _TimelineView extends StatelessWidget {
         final hour = hours[i];
         final slotTasks = byHour[hour] ?? [];
         final label = hour < 0
-            ? 'NO TIME'
+            ? t('NO TIME', 'БЕЗ ВРЕМЕНИ')
             : '${hour.toString().padLeft(2, '0')}:00';
         final now = TimeOfDay.now();
         final isCurrent = hour == now.hour;
@@ -3452,13 +3452,13 @@ class _TimelineView extends StatelessWidget {
                           ),
                         )
                       : Column(
-                          children: slotTasks.map((t) {
-                            final done = t.isCompleted;
-                            final pColor = _pColor(t.priority);
-                            final accentBg = done ? const Color(0xFFCCCAC4) : _pCardBg(t.priority);
-                            final accentTxt = done ? const Color(0xFF8A8880) : _pCardText(t.priority);
+                          children: slotTasks.map((tk) {
+                            final done = tk.isCompleted;
+                            final pColor = _pColor(tk.priority);
+                            final accentBg = done ? const Color(0xFFCCCAC4) : _pCardBg(tk.priority);
+                            final accentTxt = done ? const Color(0xFF8A8880) : _pCardText(tk.priority);
                             return GestureDetector(
-                              onTap: () => onTap(t),
+                              onTap: () => onTap(tk),
                               child: AnimatedOpacity(
                                 duration: const Duration(milliseconds: 300),
                                 opacity: done ? 0.55 : 1.0,
@@ -3495,14 +3495,14 @@ class _TimelineView extends StatelessWidget {
                                                       borderRadius: BorderRadius.circular(12),
                                                       border: Border.all(color: textCol.withAlpha(20))),
                                                     child: Text(
-                                                      t.category == TaskCategory.work ? 'WORK' : 'LIVE',
+                                                      tk.category == TaskCategory.work ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ'),
                                                       style: GoogleFonts.jetBrainsMono(
                                                         fontSize: 8, fontWeight: FontWeight.w700,
                                                         letterSpacing: 1, color: textCol.withAlpha(130))),
                                                   ),
                                                   const SizedBox(height: 8),
                                                   // Title
-                                                  Text(t.title,
+                                                  Text(tk.title,
                                                     maxLines: 2, overflow: TextOverflow.ellipsis,
                                                     style: GoogleFonts.playfairDisplay(
                                                       fontSize: 16, fontWeight: FontWeight.w700,
@@ -3511,25 +3511,25 @@ class _TimelineView extends StatelessWidget {
                                                       decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
                                                       decorationColor: textCol.withAlpha(100))),
                                                   // Description
-                                                  if (t.description.isNotEmpty) ...[
+                                                  if (tk.description.isNotEmpty) ...[
                                                     const SizedBox(height: 4),
-                                                    Text(t.description, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                                    Text(tk.description, maxLines: 1, overflow: TextOverflow.ellipsis,
                                                       style: GoogleFonts.inter(fontSize: 11, height: 1.3, color: subCol)),
                                                   ],
                                                   const SizedBox(height: 8),
                                                   // Bottom row
                                                   Row(children: [
-                                                    if (t.dueTime != null) ...[
+                                                    if (tk.dueTime != null) ...[
                                                       Icon(Icons.access_time_rounded, size: 10, color: subCol),
                                                       const SizedBox(width: 3),
-                                                      Text(_fmt24(t.dueTime!), style: GoogleFonts.inter(
+                                                      Text(_fmt24(tk.dueTime!), style: GoogleFonts.inter(
                                                         fontSize: 10, fontWeight: FontWeight.w500, color: subCol)),
                                                       const SizedBox(width: 8),
                                                     ],
-                                                    if (t.dueDate != null) ...[
+                                                    if (tk.dueDate != null) ...[
                                                       Icon(Icons.calendar_today_rounded, size: 10, color: subCol),
                                                       const SizedBox(width: 3),
-                                                      Text(_fmtDate(t.dueDate!), style: GoogleFonts.inter(
+                                                      Text(_fmtDate(tk.dueDate!), style: GoogleFonts.inter(
                                                         fontSize: 10, fontWeight: FontWeight.w500, color: subCol)),
                                                     ],
                                                     const Spacer(),
@@ -3539,25 +3539,25 @@ class _TimelineView extends StatelessWidget {
                                                         color: done ? subCol.withAlpha(20) : AppColors.gold.withAlpha(20),
                                                         borderRadius: BorderRadius.circular(8)),
                                                       child: Text(
-                                                        done ? '✓ ${_pXp(t.priority)} XP' : '+${_pXp(t.priority)} XP',
+                                                        done ? '✓ ${_pXp(tk.priority)} XP' : '+${_pXp(tk.priority)} XP',
                                                         style: GoogleFonts.jetBrainsMono(
                                                           fontSize: 8, fontWeight: FontWeight.w700,
                                                           color: done ? subCol : AppColors.gold)),
                                                     ),
                                                   ]),
                                                   // Subtasks progress
-                                                  if (t.subtasks.isNotEmpty) ...[
+                                                  if (tk.subtasks.isNotEmpty) ...[
                                                     const SizedBox(height: 6),
                                                     Row(children: [
                                                       Expanded(child: Stack(children: [
                                                         Container(height: 3, decoration: BoxDecoration(
                                                           color: textCol.withAlpha(15), borderRadius: BorderRadius.circular(2))),
-                                                        FractionallySizedBox(widthFactor: t.subtaskProgress,
+                                                        FractionallySizedBox(widthFactor: tk.subtaskProgress,
                                                           child: Container(height: 3, decoration: BoxDecoration(
                                                             color: AppColors.success, borderRadius: BorderRadius.circular(2)))),
                                                       ])),
                                                       const SizedBox(width: 6),
-                                                      Text('${t.subtasksDone}/${t.subtasks.length}',
+                                                      Text('${tk.subtasksDone}/${tk.subtasks.length}',
                                                         style: GoogleFonts.jetBrainsMono(
                                                           fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
                                                     ]),
@@ -3574,7 +3574,7 @@ class _TimelineView extends StatelessWidget {
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
                                                 GestureDetector(
-                                                  onTap: done ? null : () => onComplete(t),
+                                                  onTap: done ? null : () => onComplete(tk),
                                                   child: AnimatedContainer(
                                                     duration: const Duration(milliseconds: 220),
                                                     width: 26, height: 26,
@@ -3590,7 +3590,7 @@ class _TimelineView extends StatelessWidget {
                                                 ),
                                                 const SizedBox(height: 6),
                                                 RotatedBox(quarterTurns: 1,
-                                                  child: Text(_pLabel(t.priority).toUpperCase(),
+                                                  child: Text(_pLabel(tk.priority).toUpperCase(),
                                                     style: GoogleFonts.jetBrainsMono(
                                                       fontSize: 7, fontWeight: FontWeight.w700,
                                                       letterSpacing: 1.5, color: accentTxt.withAlpha(150)))),
@@ -3859,7 +3859,7 @@ class _AddSheetState extends State<_AddSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'NEW MISSION',
+                                t('NEW MISSION', 'НОВАЯ МИССИЯ'),
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
@@ -3925,7 +3925,7 @@ class _AddSheetState extends State<_AddSheet> {
                               : const Border(),
                         ),
                         child: _tableRow(
-                          label: 'TITLE',
+                          label: t('TITLE', 'НАЗВАНИЕ'),
                           icon: Icons.edit_rounded,
                           topBorder: false,
                           content: TextField(
@@ -3940,8 +3940,8 @@ class _AddSheetState extends State<_AddSheet> {
                             ),
                             decoration: InputDecoration(
                               hintText: _titleError
-                                  ? 'Title is required!'
-                                  : 'What needs to be done?',
+                                  ? t('Title is required!', 'Название обязательно!')
+                                  : t('What needs to be done?', 'Что нужно сделать?'),
                               hintStyle: GoogleFonts.inter(
                                 fontSize: 14,
                                 color: _titleError
@@ -3963,7 +3963,7 @@ class _AddSheetState extends State<_AddSheet> {
                     ),
 
                     _tableRow(
-                      label: 'NOTES',
+                      label: t('NOTES', 'ЗАМЕТКИ'),
                       icon: Icons.sticky_note_2_outlined,
                       content: TextField(
                         controller: _descCtrl,
@@ -3973,7 +3973,7 @@ class _AddSheetState extends State<_AddSheet> {
                           color: _kCocoa.withAlpha(190),
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Optional notes…',
+                          hintText: t('Optional notes…', 'Заметки (необязательно)…'),
                           hintStyle: GoogleFonts.inter(
                             fontSize: 12,
                             color: _kCocoa.withAlpha(120),
@@ -3986,7 +3986,7 @@ class _AddSheetState extends State<_AddSheet> {
                     ),
 
                     _tableRow(
-                      label: 'PRIORITY',
+                      label: t('PRIORITY', 'ПРИОРИТЕТ'),
                       icon: Icons.flag_rounded,
                       content: Wrap(
                         spacing: 7,
@@ -4040,7 +4040,7 @@ class _AddSheetState extends State<_AddSheet> {
                     ),
 
                     _tableRow(
-                      label: 'DATE',
+                      label: t('DATE', 'ДАТА'),
                       icon: Icons.calendar_today_rounded,
                       content: GestureDetector(
                         onTap: _pickDate,
@@ -4053,7 +4053,7 @@ class _AddSheetState extends State<_AddSheet> {
                             ),
                             const SizedBox(width: 7),
                             Text(
-                              _date != null ? _fmtDate(_date!) : 'Pick a date',
+                              _date != null ? _fmtDate(_date!) : t('Pick a date', 'Выбрать дату'),
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: _date != null
@@ -4082,7 +4082,7 @@ class _AddSheetState extends State<_AddSheet> {
                     ),
 
                     _tableRow(
-                      label: 'TIME',
+                      label: t('TIME', 'ВРЕМЯ'),
                       icon: Icons.access_time_rounded,
                       content: GestureDetector(
                         onTap: _pickTime,
@@ -4095,7 +4095,7 @@ class _AddSheetState extends State<_AddSheet> {
                             ),
                             const SizedBox(width: 7),
                             Text(
-                              _time != null ? _fmt24(_time!) : 'Pick a time',
+                              _time != null ? _fmt24(_time!) : t('Pick a time', 'Выбрать время'),
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 color: _time != null
@@ -4154,7 +4154,7 @@ class _AddSheetState extends State<_AddSheet> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'ADD MISSION',
+                                t('ADD MISSION', 'ДОБАВИТЬ МИССИЮ'),
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
@@ -4539,7 +4539,7 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'EXPERIENCE',
+                          t('EXPERIENCE', 'ОПЫТ'),
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
@@ -4548,7 +4548,7 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                           ),
                         ),
                         Text(
-                          'LVL ${widget.level}',
+                          '${t('LVL', 'УР')} ${widget.level}',
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
@@ -4760,7 +4760,7 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
             ),
           ),
           Text(
-            'SET TIME',
+            t('SET TIME', 'УСТАНОВИТЬ ВРЕМЯ'),
             style: GoogleFonts.jetBrainsMono(
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -4838,7 +4838,7 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
               ),
               child: Center(
                 child: Text(
-                  'SET  $hh:$mm',
+                  '${t('SET', 'УСТАНОВИТЬ')}  $hh:$mm',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -5069,9 +5069,9 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                           const SizedBox(height: 28),
                           Opacity(
                             opacity: lvlOp,
-                            child: _neon('LEVEL', _cyan, 56),
+                            child: _neon(t('LEVEL', 'УРОВЕНЬ'), _cyan, 56),
                           ),
-                          Opacity(opacity: upOp, child: _neon('UP', _pink, 82)),
+                          Opacity(opacity: upOp, child: _neon(t('UP', 'ВВЕРХ'), _pink, 82)),
                           const SizedBox(height: 22),
                           Opacity(
                             opacity: bdOp,
@@ -5094,7 +5094,7 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                                   ],
                                 ),
                                 child: Text(
-                                  'LEVEL  ${widget.level}',
+                                  '${t('LEVEL', 'УРОВЕНЬ')}  ${widget.level}',
                                   style: GoogleFonts.jetBrainsMono(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -5115,7 +5115,7 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                           Opacity(
                             opacity: t > 0.65 ? bdOp : 0.0,
                             child: Text(
-                              'PRESS  ANY  KEY',
+                              t('PRESS  ANY  KEY', 'НАЖМИТЕ  ЛЮБУЮ  КЛАВИШУ'),
                               style: GoogleFonts.jetBrainsMono(
                                 fontSize: 11,
                                 letterSpacing: 3,
@@ -5254,7 +5254,7 @@ class _AllDoneOverlayState extends State<_AllDoneOverlay>
                               ),
                               const SizedBox(height: 12),
                               Text(
-                                'QUEST',
+                                t('QUEST', 'КВЕСТ'),
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 42,
                                   fontWeight: FontWeight.w900,
@@ -5264,7 +5264,7 @@ class _AllDoneOverlayState extends State<_AllDoneOverlay>
                                 ),
                               ),
                               Text(
-                                'COMPLETE',
+                                t('COMPLETE', 'ВЫПОЛНЕН'),
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 42,
                                   fontWeight: FontWeight.w900,
@@ -5395,7 +5395,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                       Opacity(
                         opacity: Curves.easeOut.transform(labelT),
                         child: Text(
-                          'NEW  COLLECTIBLE',
+                          t('NEW  COLLECTIBLE', 'НОВЫЙ  ПРЕДМЕТ'),
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -5411,7 +5411,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                       Opacity(
                         opacity: Curves.easeOut.transform(labelT),
                         child: Text(
-                          'UNLOCKED',
+                          t('UNLOCKED', 'РАЗБЛОКИРОВАНО'),
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 36,
                             fontWeight: FontWeight.w900,
@@ -5524,7 +5524,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                       Opacity(
                         opacity: _waitingForTap ? 1.0 : 0.0,
                         child: Text(
-                          'PRESS  ANY  KEY',
+                          t('PRESS  ANY  KEY', 'НАЖМИТЕ  ЛЮБУЮ  КЛАВИШУ'),
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 10,
                             letterSpacing: 3,

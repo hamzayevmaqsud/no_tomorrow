@@ -110,7 +110,7 @@ class _FoodScreenState extends State<FoodScreen> {
           _FoodDashboard(todayCals: todayCals, goal: goal, progress: progress, mealCount: todayMeals.length),
           Expanded(
             child: meals.isEmpty
-                ? const AnimatedEmpty(
+                ? AnimatedEmpty(
                     icon: Icons.restaurant_rounded,
                     title: t('no meals logged', 'нет записей о приёмах пищи'),
                     subtitle: t('tap + to log your first meal', 'нажмите + чтобы добавить первый приём пищи'))

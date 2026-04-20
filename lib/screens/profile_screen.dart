@@ -497,6 +497,19 @@ class _WeeklyActivity extends StatelessWidget {
 
 // ── Level rewards preview ─────────────────────────────────────────────────────
 
+String _translateReward(String label) {
+  switch (label) {
+    case 'Custom Themes':    return t('Custom Themes', 'Пользовательские темы');
+    case 'Habit Categories': return t('Habit Categories', 'Категории привычек');
+    case 'Dark Mode Pro':    return t('Dark Mode Pro', 'Тёмный режим Pro');
+    case 'Weekly Analytics':  return t('Weekly Analytics', 'Еженедельная аналитика');
+    case 'Custom Avatars':    return t('Custom Avatars', 'Пользовательские аватары');
+    case 'Streak Shields':    return t('Streak Shields', 'Щиты серий');
+    case 'Legendary Title':   return t('Legendary Title', 'Легендарный титул');
+    default:                  return label;
+  }
+}
+
 class _LevelRewardsPreview extends StatelessWidget {
   final int currentLevel;
   const _LevelRewardsPreview({required this.currentLevel});
@@ -556,7 +569,7 @@ class _LevelRewardsPreview extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(label, style: GoogleFonts.inter(
+                child: Text(_translateReward(label), style: GoogleFonts.inter(
                   fontSize: 12, fontWeight: FontWeight.w600,
                   color: unlocked
                       ? const Color(0xFF2A2318)
@@ -575,7 +588,7 @@ class _LevelRewardsPreview extends StatelessWidget {
                         ? AppColors.gold.withAlpha(50)
                         : const Color(0xFF2A2318).withAlpha(15)),
                 ),
-                child: Text(unlocked ? '✓ LVL $lvl' : 'LVL $lvl',
+                child: Text(unlocked ? '✓ ${t('LVL', 'УР')} $lvl' : '${t('LVL', 'УР')} $lvl',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 9, fontWeight: FontWeight.w700,
                     color: unlocked
