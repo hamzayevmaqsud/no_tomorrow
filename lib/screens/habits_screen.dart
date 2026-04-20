@@ -1211,10 +1211,10 @@ class _HabitCard extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         opacity: done ? 0.6 : 1.0,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 10),
+          margin: const EdgeInsets.only(bottom: 8),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withAlpha(25),
@@ -1225,7 +1225,7 @@ class _HabitCard extends StatelessWidget {
             ],
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1233,57 +1233,61 @@ class _HabitCard extends StatelessWidget {
                   // ── Left content ─────────────────────────
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                      padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          // Category tag
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 9, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: color.withAlpha(15),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                  color: color.withAlpha(40), width: 0.8),
+                          // Title row: category dot + title + routine icon
+                          Row(children: [
+                            Container(
+                              width: 16, height: 16,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: color.withAlpha(25),
+                                border: Border.all(color: color.withAlpha(70), width: 1)),
+                              child: Icon(habitCatIcon(habit.category),
+                                size: 9, color: color),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(habitCatIcon(habit.category),
-                                    size: 10, color: color),
-                                const SizedBox(width: 4),
-                                Text(habitCatLabel(habit.category),
-                                  style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 8, fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.8, color: color,
-                                  )),
-                              ],
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(habit.title,
+                                maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 16, fontWeight: FontWeight.w700,
+                                  fontStyle: FontStyle.italic,
+                                  height: 1.15, color: textCol,
+                                  decoration: done
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                                  decorationColor: textCol.withAlpha(100),
+                                )),
                             ),
-                          ),
+                            if (habit.routineSlot.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+                              Icon(
+                                habit.routineSlot == 'morning'
+                                  ? Icons.wb_sunny_rounded
+                                  : Icons.nightlight_round,
+                                size: 12, color: subCol.withAlpha(130)),
+                            ],
+                            if (habit.timerMinutes > 0) ...[
+                              const SizedBox(width: 4),
+                              Icon(Icons.timer_rounded,
+                                size: 11, color: color.withAlpha(170)),
+                              const SizedBox(width: 2),
+                              Text('${habit.timerMinutes}m',
+                                style: GoogleFonts.jetBrainsMono(
+                                  fontSize: 8, fontWeight: FontWeight.w700,
+                                  color: color.withAlpha(170))),
+                            ],
+                          ]),
 
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
 
-                          // Title
-                          Text(habit.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 18, fontWeight: FontWeight.w700,
-                              fontStyle: FontStyle.italic,
-                              height: 1.2, color: textCol,
-                              decoration: done
-                                  ? TextDecoration.lineThrough
-                                  : TextDecoration.none,
-                              decorationColor: textCol.withAlpha(100),
-                            )),
-
-                          const SizedBox(height: 10),
-
-                          // Weekly progress bar + streak
+                          // Bar + letters + counter + streak
                           Row(
                             children: [
-                              // 7-day bar (scheduled days stand out)
                               ...List.generate(7, (i) {
                                 final d = DateTime.now().subtract(
                                     Duration(days: 6 - i));
@@ -1298,8 +1302,8 @@ class _HabitCard extends StatelessWidget {
                                   child: Column(mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Container(
-                                        width: 16,
-                                        height: scheduled ? 6 : 3,
+                                        width: 14,
+                                        height: scheduled ? 5 : 2,
                                         decoration: BoxDecoration(
                                           color: filled
                                               ? color
@@ -1317,7 +1321,7 @@ class _HabitCard extends StatelessWidget {
                                       const SizedBox(height: 2),
                                       Text(letters[d.weekday - 1],
                                         style: GoogleFonts.jetBrainsMono(
-                                          fontSize: 7,
+                                          fontSize: 6.5,
                                           fontWeight: scheduled
                                               ? FontWeight.w700
                                               : FontWeight.w500,
@@ -1333,73 +1337,37 @@ class _HabitCard extends StatelessWidget {
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 9, fontWeight: FontWeight.w600,
                                   color: subCol)),
-
                               if (streak >= 2) ...[
                                 const SizedBox(width: 8),
                                 Icon(Icons.local_fire_department_rounded,
-                                    size: 12,
-                                    color: streak >= 7
-                                        ? AppColors.action
-                                        : const Color(0xFFF59E0B)),
-                                const SizedBox(width: 2),
+                                  size: 11,
+                                  color: streak >= 7
+                                    ? AppColors.action
+                                    : const Color(0xFFF59E0B)),
+                                const SizedBox(width: 1),
                                 Text('$streak',
                                   style: GoogleFonts.jetBrainsMono(
                                     fontSize: 9, fontWeight: FontWeight.w700,
                                     color: streak >= 7
-                                        ? AppColors.action
-                                        : const Color(0xFFF59E0B),
-                                  )),
+                                      ? AppColors.action
+                                      : const Color(0xFFF59E0B))),
                               ],
                             ],
                           ),
 
-                          // Timer indicator
-                          if (habit.timerMinutes > 0) ...[
-                            const SizedBox(height: 6),
-                            Row(children: [
-                              Icon(Icons.timer_rounded, size: 10, color: color),
-                              const SizedBox(width: 4),
-                              Text('${habit.timerMinutes} ${t('min', 'мин')}',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 8, fontWeight: FontWeight.w700, color: color)),
-                            ]),
-                          ],
-                          // Schedule + routine
-                          if (habit.scheduleDays.isNotEmpty || habit.routineSlot.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Row(children: [
-                              if (habit.scheduleDays.isNotEmpty) ...[
-                                Icon(Icons.repeat_rounded, size: 9, color: subCol),
-                                const SizedBox(width: 3),
-                                Text(habit.scheduleLabel,
-                                  style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
-                              ],
-                              if (habit.routineSlot.isNotEmpty) ...[
-                                if (habit.scheduleDays.isNotEmpty) const SizedBox(width: 8),
-                                Icon(
-                                  habit.routineSlot == 'morning'
-                                      ? Icons.wb_sunny_rounded
-                                      : Icons.nightlight_round,
-                                  size: 9, color: subCol),
-                                const SizedBox(width: 3),
-                                Text(habit.routineSlot == 'morning' ? t('MORNING', 'УТРО') : t('EVENING', 'ВЕЧЕР'),
-                                  style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
-                              ],
-                            ]),
-                          ],
-                          // Note indicator
+                          // Note indicator (only when done + handler set)
                           if (done && onNote != null) ...[
                             const SizedBox(height: 6),
                             GestureDetector(
                               onTap: onNote,
                               child: Row(children: [
-                                Icon(Icons.edit_note_rounded, size: 12, color: subCol.withAlpha(120)),
-                                const SizedBox(width: 4),
+                                Icon(Icons.edit_note_rounded, size: 11,
+                                    color: subCol.withAlpha(120)),
+                                const SizedBox(width: 3),
                                 Text(
                                   habit.notes[Habit.dateKeyPublic(DateTime.now())]?.isNotEmpty == true
-                                      ? t('View note', 'Посмотреть заметку') : t('Add note', 'Добавить заметку'),
+                                    ? t('note', 'заметка')
+                                    : t('add note', '+ заметка'),
                                   style: GoogleFonts.inter(
                                     fontSize: 9, fontWeight: FontWeight.w500,
                                     color: subCol.withAlpha(120))),
@@ -1413,17 +1381,16 @@ class _HabitCard extends StatelessWidget {
 
                   // ── Right accent block ────────────────────
                   Container(
-                    width: 56,
+                    width: 48,
                     color: done
                         ? const Color(0xFFCCCAC4)
                         : color.withAlpha(30),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Check circle
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 220),
-                          width: 30, height: 30,
+                          width: 26, height: 26,
                           decoration: BoxDecoration(
                             color: done
                                 ? color.withAlpha(60)
@@ -1433,30 +1400,20 @@ class _HabitCard extends StatelessWidget {
                               color: done
                                   ? color.withAlpha(160)
                                   : color.withAlpha(60),
-                              width: 1.5,
+                              width: 1.3,
                             ),
                           ),
                           child: done
                               ? Icon(Icons.check_rounded,
-                                  size: 16, color: color)
+                                  size: 14, color: color)
                               : null,
                         ),
-                        const SizedBox(height: 8),
-                        // XP
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.gold.withAlpha(20),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            done ? '✓' : '+${habit.xpPerCheck}',
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 8, fontWeight: FontWeight.w700,
-                              color: done ? subCol : AppColors.gold,
-                            )),
-                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          done ? '✓' : '+${habit.xpPerCheck}',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 8, fontWeight: FontWeight.w700,
+                            color: done ? subCol : AppColors.gold)),
                       ],
                     ),
                   ),
