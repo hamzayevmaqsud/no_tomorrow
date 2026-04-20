@@ -13,6 +13,7 @@ import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
 import '../widgets/animated_empty.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../l10n/app_locale.dart';
 
 // ── In-memory store ───────────────────────────────────────────────────────────
 
@@ -137,11 +138,11 @@ Color _pCardSub(TaskPriority p) {
 String _pLabel(TaskPriority p) {
   switch (p) {
     case TaskPriority.high:
-      return 'Critical';
+      return t('Critical', 'Важно');
     case TaskPriority.medium:
-      return 'Normal';
+      return t('Normal', 'Обычно');
     case TaskPriority.low:
-      return 'Light';
+      return t('Light', 'Лёгко');
   }
 }
 
@@ -179,19 +180,19 @@ String _fmt24(TimeOfDay t) {
 }
 
 String _fmtDate(DateTime d) {
-  const mo = [
-    'JAN',
-    'FEB',
-    'MAR',
-    'APR',
-    'MAY',
-    'JUN',
-    'JUL',
-    'AUG',
-    'SEP',
-    'OCT',
-    'NOV',
-    'DEC',
+  final mo = [
+    t('JAN', 'ЯНВ'),
+    t('FEB', 'ФЕВ'),
+    t('MAR', 'МАР'),
+    t('APR', 'АПР'),
+    t('MAY', 'МАЙ'),
+    t('JUN', 'ИЮН'),
+    t('JUL', 'ИЮЛ'),
+    t('AUG', 'АВГ'),
+    t('SEP', 'СЕН'),
+    t('OCT', 'ОКТ'),
+    t('NOV', 'НОЯ'),
+    t('DEC', 'ДЕК'),
   ];
   return '${mo[d.month - 1]} ${d.day}';
 }
@@ -422,10 +423,10 @@ class _TasksScreenState extends State<TasksScreen> {
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Deleted "${removed.title}"'),
+        content: Text('${t('Deleted', 'Удалено')} "${removed.title}"'),
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
-          label: 'UNDO',
+          label: t('UNDO', 'ОТМЕНИТЬ'),
           onPressed: () {
             setState(
               () => TaskStore.tasks.insert(
@@ -549,7 +550,7 @@ class _TasksScreenState extends State<TasksScreen> {
                     color: AppColors.success,
                   ),
                   const SizedBox(width: 8),
-                  Text('Mission created!'),
+                  Text(t('Mission created!', 'Миссия создана!')),
                 ],
               ),
               duration: const Duration(seconds: 2),
@@ -637,7 +638,7 @@ class _TasksScreenState extends State<TasksScreen> {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         const Icon(Icons.check_rounded, color: Colors.white, size: 26),
         const SizedBox(width: 10),
-        Text('DONE', style: GoogleFonts.jetBrainsMono(
+        Text(t('DONE', 'ГОТОВО'), style: GoogleFonts.jetBrainsMono(
           fontSize: 12, fontWeight: FontWeight.w800,
           letterSpacing: 1.5, color: Colors.white)),
       ]),
@@ -656,7 +657,7 @@ class _TasksScreenState extends State<TasksScreen> {
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text('DELETE', style: GoogleFonts.jetBrainsMono(
+        Text(t('DELETE', 'УДАЛИТЬ'), style: GoogleFonts.jetBrainsMono(
           fontSize: 12, fontWeight: FontWeight.w800,
           letterSpacing: 1.5, color: Colors.white)),
         const SizedBox(width: 10),
@@ -735,7 +736,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         Column(
                           children: [
                             Text(
-                              isWork ? 'WORK  TASKS' : 'LIVE  TASKS',
+                              isWork ? t('WORK  TASKS', 'РАБОЧИЕ  ЗАДАНИЯ') : t('LIVE  TASKS', 'ЖИЗНЬ  ЗАДАНИЯ'),
                               style: GoogleFonts.playfairDisplay(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
@@ -762,7 +763,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                   ),
                                   const SizedBox(width: 5),
                                   Text(
-                                    '$done / $total completed',
+                                    '$done / $total ${t('completed', 'выполнено')}',
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w700,
@@ -920,7 +921,7 @@ class _TasksScreenState extends State<TasksScreen> {
                               style: GoogleFonts.inter(
                                 fontSize: 12, color: Colors.white),
                               decoration: InputDecoration(
-                                hintText: 'Search tasks...',
+                                hintText: t('Search tasks...', 'Поиск задач...'),
                                 hintStyle: GoogleFonts.inter(
                                   fontSize: 12, color: Colors.white.withAlpha(80)),
                                 border: InputBorder.none,
@@ -941,12 +942,12 @@ class _TasksScreenState extends State<TasksScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16)),
                         itemBuilder: (_) => [
-                          _sortItem(_SortMode.none, 'Default', Icons.remove_rounded),
-                          _sortItem(_SortMode.manual, 'Manual (drag)', Icons.drag_handle_rounded),
-                          _sortItem(_SortMode.dateAsc, 'Date ↑', Icons.arrow_upward_rounded),
-                          _sortItem(_SortMode.dateDesc, 'Date ↓', Icons.arrow_downward_rounded),
-                          _sortItem(_SortMode.priorityHigh, 'Priority ↑', Icons.flag_rounded),
-                          _sortItem(_SortMode.nameAz, 'Name A-Z', Icons.sort_by_alpha_rounded),
+                          _sortItem(_SortMode.none, t('Default', 'По умолч.'), Icons.remove_rounded),
+                          _sortItem(_SortMode.manual, t('Manual (drag)', 'Вручную'), Icons.drag_handle_rounded),
+                          _sortItem(_SortMode.dateAsc, t('Date ↑', 'Дата ↑'), Icons.arrow_upward_rounded),
+                          _sortItem(_SortMode.dateDesc, t('Date ↓', 'Дата ↓'), Icons.arrow_downward_rounded),
+                          _sortItem(_SortMode.priorityHigh, t('Priority ↑', 'Приоритет ↑'), Icons.flag_rounded),
+                          _sortItem(_SortMode.nameAz, t('Name A-Z', 'Имя А-Я'), Icons.sort_by_alpha_rounded),
                         ],
                         child: Container(
                           width: 36, height: 36,
@@ -975,9 +976,9 @@ class _TasksScreenState extends State<TasksScreen> {
                       children: _TaskFilter.values.map((f) {
                         final active = _filter == f;
                         final label = switch (f) {
-                          _TaskFilter.all => 'ALL',
-                          _TaskFilter.today => 'TODAY',
-                          _TaskFilter.priority => 'PRIORITY',
+                          _TaskFilter.all => t('ALL', 'ВСЕ'),
+                          _TaskFilter.today => t('TODAY', 'СЕГОДНЯ'),
+                          _TaskFilter.priority => t('PRIORITY', 'ПРИОРИТЕТ'),
                         };
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
@@ -1184,20 +1185,20 @@ class _CalendarStrip extends StatelessWidget {
     // Always Mon–Sun of the current week
     final monday = today.subtract(Duration(days: today.weekday - 1));
     final days = List.generate(7, (i) => monday.add(Duration(days: i)));
-    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    const months = [
-      'JANUARY',
-      'FEBRUARY',
-      'MARCH',
-      'APRIL',
-      'MAY',
-      'JUNE',
-      'JULY',
-      'AUGUST',
-      'SEPTEMBER',
-      'OCTOBER',
-      'NOVEMBER',
-      'DECEMBER',
+    final dayNames = [t('MON', 'ПН'), t('TUE', 'ВТ'), t('WED', 'СР'), t('THU', 'ЧТ'), t('FRI', 'ПТ'), t('SAT', 'СБ'), t('SUN', 'ВС')];
+    final months = [
+      t('JANUARY', 'ЯНВАРЬ'),
+      t('FEBRUARY', 'ФЕВРАЛЬ'),
+      t('MARCH', 'МАРТ'),
+      t('APRIL', 'АПРЕЛЬ'),
+      t('MAY', 'МАЙ'),
+      t('JUNE', 'ИЮНЬ'),
+      t('JULY', 'ИЮЛЬ'),
+      t('AUGUST', 'АВГУСТ'),
+      t('SEPTEMBER', 'СЕНТЯБРЬ'),
+      t('OCTOBER', 'ОКТЯБРЬ'),
+      t('NOVEMBER', 'НОЯБРЬ'),
+      t('DECEMBER', 'ДЕКАБРЬ'),
     ];
 
     const kRed = Color(0xFF4E0000); // Pantone Red Inferno
@@ -1635,7 +1636,7 @@ class _DashboardPanel extends StatelessWidget {
           Row(
             children: [
               Text(
-                'OVERVIEW',
+                t('OVERVIEW', 'ОБЗОР'),
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
@@ -1672,21 +1673,21 @@ class _DashboardPanel extends StatelessWidget {
           Row(
             children: [
               _StatBox(
-                label: 'TOTAL',
+                label: t('TOTAL', 'ВСЕГО'),
                 value: '$total',
                 color: const Color(0xFF2A2318),
                 isDark: isDark,
               ),
               const SizedBox(width: 8),
               _StatBox(
-                label: 'DONE',
+                label: t('DONE', 'ГОТОВО'),
                 value: '$done',
                 color: const Color(0xFF2E7D32),
                 isDark: isDark,
               ),
               const SizedBox(width: 8),
               _StatBox(
-                label: 'PENDING',
+                label: t('PENDING', 'В ОЖИДАНИИ'),
                 value: '$pending',
                 color: const Color(0xFFE65100),
                 isDark: isDark,
@@ -1721,7 +1722,7 @@ class _DashboardPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '$critical critical mission${critical > 1 ? 's' : ''} remaining',
+                  '$critical ${t('critical mission${critical > 1 ? 's' : ''} remaining', 'важн${critical > 1 ? 'ых' : 'ая'} мисси${critical > 1 ? 'й' : 'я'} осталось')}',
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -1766,7 +1767,7 @@ class _DashboardPanel extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${(progress * 100).round()}% complete',
+            '${(progress * 100).round()}% ${t('complete', 'выполнено')}',
             style: GoogleFonts.jetBrainsMono(
               fontSize: 9,
               fontWeight: FontWeight.w500,
@@ -1778,7 +1779,7 @@ class _DashboardPanel extends StatelessWidget {
 
           // 30-day heatmap (GitHub-style)
           Row(children: [
-            Text('LAST 30 DAYS',
+            Text(t('LAST 30 DAYS', 'ПОСЛЕДНИЕ 30 ДНЕЙ'),
               style: GoogleFonts.jetBrainsMono(
                 fontSize: 8, fontWeight: FontWeight.w700,
                 letterSpacing: 1.5, color: subCol)),
@@ -1795,7 +1796,7 @@ class _DashboardPanel extends StatelessWidget {
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.analytics_rounded, size: 11, color: accentColor),
                   const SizedBox(width: 5),
-                  Text('REVIEW',
+                  Text(t('REVIEW', 'ОБЗОР'),
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 9, fontWeight: FontWeight.w800,
                       letterSpacing: 1, color: accentColor)),
@@ -1918,8 +1919,8 @@ class _WeeklyReviewSheet extends StatelessWidget {
 
     // Best day
     final bestDay = weekDays.reduce((a, b) => a.$2 >= b.$2 ? a : b);
-    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    final bestDayName = bestDay.$2 == 0 ? 'nobody yet' : dayNames[bestDay.$1.weekday - 1];
+    final dayNames = [t('Monday', 'Понедельник'), t('Tuesday', 'Вторник'), t('Wednesday', 'Среда'), t('Thursday', 'Четверг'), t('Friday', 'Пятница'), t('Saturday', 'Суббота'), t('Sunday', 'Воскресенье')];
+    final bestDayName = bestDay.$2 == 0 ? t('nobody yet', 'пока нет') : dayNames[bestDay.$1.weekday - 1];
 
     // Priority breakdown of completed this week
     int hi = 0, md = 0, lo = 0;
@@ -1951,7 +1952,7 @@ class _WeeklyReviewSheet extends StatelessWidget {
         Row(children: [
           Icon(Icons.analytics_rounded, size: 18, color: accentColor),
           const SizedBox(width: 8),
-          Text('WEEKLY REVIEW',
+          Text(t('WEEKLY REVIEW', 'НЕДЕЛЬНЫЙ ОБЗОР'),
             style: GoogleFonts.playfairDisplay(
               fontSize: 18, fontWeight: FontWeight.w800,
               fontStyle: FontStyle.italic,
@@ -1977,7 +1978,7 @@ class _WeeklyReviewSheet extends StatelessWidget {
                 fontSize: 56, fontWeight: FontWeight.w800,
                 color: Colors.white, height: 1)),
             const SizedBox(height: 4),
-            Text('COMPLETED THIS WEEK',
+            Text(t('COMPLETED THIS WEEK', 'ВЫПОЛНЕНО ЗА НЕДЕЛЮ'),
               style: GoogleFonts.jetBrainsMono(
                 fontSize: 10, fontWeight: FontWeight.w800,
                 letterSpacing: 2, color: Colors.white.withAlpha(220))),
@@ -1987,15 +1988,15 @@ class _WeeklyReviewSheet extends StatelessWidget {
 
         // Stats grid
         Row(children: [
-          Expanded(child: _ReviewStat(label: 'BEST DAY', value: bestDayName, accent: accentColor)),
+          Expanded(child: _ReviewStat(label: t('BEST DAY', 'ЛУЧШИЙ ДЕНЬ'), value: bestDayName, accent: accentColor)),
           const SizedBox(width: 10),
-          Expanded(child: _ReviewStat(label: 'RATE', value: '${(completionRate * 100).round()}%', accent: accentColor)),
+          Expanded(child: _ReviewStat(label: t('RATE', 'ТЕМП'), value: '${(completionRate * 100).round()}%', accent: accentColor)),
         ]),
         const SizedBox(height: 10),
         Row(children: [
-          Expanded(child: _ReviewStat(label: 'XP EARNED', value: '+$xp', accent: accentColor)),
+          Expanded(child: _ReviewStat(label: t('XP EARNED', 'XP ЗАРАБОТАНО'), value: '+$xp', accent: accentColor)),
           const SizedBox(width: 10),
-          Expanded(child: _ReviewStat(label: 'FOCUS', value: '${focusMins}m', accent: accentColor)),
+          Expanded(child: _ReviewStat(label: t('FOCUS', 'ФОКУС'), value: '${focusMins}${t('m', 'м')}', accent: accentColor)),
         ]),
         const SizedBox(height: 14),
 
@@ -2008,18 +2009,18 @@ class _WeeklyReviewSheet extends StatelessWidget {
             border: Border.all(color: const Color(0xFF2A2318).withAlpha(20))),
           child: Column(children: [
             Row(children: [
-              Text('BREAKDOWN',
+              Text(t('BREAKDOWN', 'РАЗБИВКА'),
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: 9, fontWeight: FontWeight.w800,
                   letterSpacing: 1.5,
                   color: const Color(0xFF2A2318).withAlpha(140))),
             ]),
             const SizedBox(height: 10),
-            _PrioBar(label: 'HIGH', count: hi, total: weekDone, color: const Color(0xFFDC2626)),
+            _PrioBar(label: t('HIGH', 'ВЫСОК'), count: hi, total: weekDone, color: const Color(0xFFDC2626)),
             const SizedBox(height: 6),
-            _PrioBar(label: 'MED', count: md, total: weekDone, color: const Color(0xFFF59E0B)),
+            _PrioBar(label: t('MED', 'СРЕД'), count: md, total: weekDone, color: const Color(0xFFF59E0B)),
             const SizedBox(height: 6),
-            _PrioBar(label: 'LOW', count: lo, total: weekDone, color: const Color(0xFF10B981)),
+            _PrioBar(label: t('LOW', 'НИЗК'), count: lo, total: weekDone, color: const Color(0xFF10B981)),
           ]),
         ),
         const SizedBox(height: 14),
@@ -2242,7 +2243,7 @@ class _QuickAddRow extends StatelessWidget {
               decoration: InputDecoration(
                 isDense: true,
                 border: InputBorder.none,
-                hintText: 'quick add — press Enter',
+                hintText: t('quick add — press Enter', 'быстрое добавление — Enter'),
                 hintStyle: GoogleFonts.inter(
                   fontSize: 13, color: Colors.white.withAlpha(120)),
               ),
@@ -2279,21 +2280,21 @@ class _TemplateChips extends StatelessWidget {
     required this.category, required this.accentColor, required this.onPick,
   });
 
-  static const List<(String, String, TaskPriority)> workTemplates = [
-    ('📧', 'Reply to emails', TaskPriority.medium),
-    ('👀', 'Review PR', TaskPriority.high),
-    ('📞', 'Call meeting', TaskPriority.medium),
-    ('📝', 'Write report', TaskPriority.high),
-    ('📅', 'Plan week', TaskPriority.low),
-    ('🧹', 'Clean inbox', TaskPriority.low),
+  static final List<(String, String, TaskPriority)> workTemplates = [
+    ('📧', t('Reply to emails', 'Ответить на письма'), TaskPriority.medium),
+    ('👀', t('Review PR', 'Проверить PR'), TaskPriority.high),
+    ('📞', t('Call meeting', 'Созвон'), TaskPriority.medium),
+    ('📝', t('Write report', 'Написать отчёт'), TaskPriority.high),
+    ('📅', t('Plan week', 'Спланировать неделю'), TaskPriority.low),
+    ('🧹', t('Clean inbox', 'Разобрать почту'), TaskPriority.low),
   ];
-  static const List<(String, String, TaskPriority)> liveTemplates = [
-    ('🛒', 'Groceries', TaskPriority.medium),
-    ('💪', 'Workout', TaskPriority.high),
-    ('📚', 'Read 30m', TaskPriority.medium),
-    ('🚿', 'Shower', TaskPriority.low),
-    ('💊', 'Meds', TaskPriority.high),
-    ('🧘', 'Meditate', TaskPriority.low),
+  static final List<(String, String, TaskPriority)> liveTemplates = [
+    ('🛒', t('Groceries', 'Продукты'), TaskPriority.medium),
+    ('💪', t('Workout', 'Тренировка'), TaskPriority.high),
+    ('📚', t('Read 30m', 'Чтение 30м'), TaskPriority.medium),
+    ('🚿', t('Shower', 'Душ'), TaskPriority.low),
+    ('💊', t('Meds', 'Лекарства'), TaskPriority.high),
+    ('🧘', t('Meditate', 'Медитация'), TaskPriority.low),
   ];
 
   @override
@@ -2362,7 +2363,7 @@ class _ComboBadge extends StatelessWidget {
         Icon(hot ? Icons.local_fire_department_rounded : Icons.bolt_rounded,
           size: 16, color: Colors.white),
         const SizedBox(width: 8),
-        Text('COMBO x$n', style: GoogleFonts.jetBrainsMono(
+        Text('${t('COMBO', 'КОМБО')} x$n', style: GoogleFonts.jetBrainsMono(
           fontSize: 11, fontWeight: FontWeight.w800,
           letterSpacing: 1.5, color: Colors.white)),
         const SizedBox(width: 10),
@@ -2419,7 +2420,7 @@ class _DoneDivider extends StatelessWidget {
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  'COMPLETED  $count',
+                  '${t('COMPLETED', 'ВЫПОЛНЕНО')}  $count',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
@@ -2476,7 +2477,7 @@ class _TaskCardState extends State<_TaskCard> {
         ? const Color(0xFF2A2318) // warm brown
         : const Color(0xFF1A2A20); // cool dark green
     const subCol = Color(0xFF8A8070);
-    final catLabel = isWork ? 'WORK' : 'LIVE';
+    final catLabel = isWork ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ');
 
     return JellyButton(
       onTap: onTap,
@@ -2957,7 +2958,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                     : t.description.isNotEmpty
                         ? Text(t.description, style: GoogleFonts.inter(
                             fontSize: 13, height: 1.5, color: subCol))
-                        : Text('No description', style: GoogleFonts.inter(
+                        : Text(t('No description', 'Нет описания'), style: GoogleFonts.inter(
                             fontSize: 13, fontStyle: FontStyle.italic,
                             color: subCol.withAlpha(80))),
 
@@ -2974,7 +2975,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.calendar_today_rounded, size: 13, color: subCol),
                         const SizedBox(width: 6),
-                        Text(t.dueDate != null ? _fmtDate(t.dueDate!) : 'Add date',
+                        Text(t.dueDate != null ? _fmtDate(t.dueDate!) : t('Add date', 'Выбрать дату'),
                           style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600,
                             color: t.dueDate != null ? textCol : subCol.withAlpha(100))),
                       ]))),

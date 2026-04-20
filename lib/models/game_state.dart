@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../l10n/app_locale.dart';
 
 class GameState extends ChangeNotifier {
   static final GameState instance = GameState._();
@@ -26,17 +27,17 @@ class GameState extends ChangeNotifier {
   // Daily quest — changes each day
   String get dailyQuest {
     final day = DateTime.now().day;
-    const quests = [
-      'Complete 3 tasks',
-      'Check in all habits',
-      'Log a workout',
-      'Read 10 pages',
-      'Log all meals',
-      'Maintain your streak',
-      'Earn 50 XP',
-      'Complete a Critical task',
-      'Add a new habit',
-      'Finish a workout fully',
+    final quests = [
+      t('Complete 3 tasks', 'Выполни 3 задания'),
+      t('Check in all habits', 'Отметь все привычки'),
+      t('Log a workout', 'Запиши тренировку'),
+      t('Read 10 pages', 'Прочитай 10 страниц'),
+      t('Log all meals', 'Запиши все приёмы пищи'),
+      t('Maintain your streak', 'Сохрани свою серию'),
+      t('Earn 50 XP', 'Заработай 50 XP'),
+      t('Complete a Critical task', 'Выполни важное задание'),
+      t('Add a new habit', 'Добавь новую привычку'),
+      t('Finish a workout fully', 'Заверши тренировку полностью'),
     ];
     return quests[day % quests.length];
   }

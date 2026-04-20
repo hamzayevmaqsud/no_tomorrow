@@ -6,6 +6,7 @@ import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
+import '../l10n/app_locale.dart';
 
 // ── Model ────────────────────────────────────────────────────────────────────
 
@@ -22,12 +23,12 @@ class Abstinence {
   int get xp => daysClean * 5;
 
   String get milestone {
-    if (daysClean >= 365) return 'LEGENDARY';
-    if (daysClean >= 90)  return 'MASTER';
-    if (daysClean >= 30)  return 'WARRIOR';
-    if (daysClean >= 7)   return 'SURVIVOR';
-    if (daysClean >= 1)   return 'STARTED';
-    return 'DAY ZERO';
+    if (daysClean >= 365) return t('LEGENDARY', 'ЛЕГЕНДА');
+    if (daysClean >= 90)  return t('MASTER', 'МАСТЕР');
+    if (daysClean >= 30)  return t('WARRIOR', 'ВОИН');
+    if (daysClean >= 7)   return t('SURVIVOR', 'ВЫЖИВШИЙ');
+    if (daysClean >= 1)   return t('STARTED', 'НАЧАЛО');
+    return t('DAY ZERO', 'ДЕНЬ НОЛЬ');
   }
 
   Color get milestoneColor {
@@ -95,12 +96,12 @@ class _AbstainScreenState extends State<AbstainScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Stack(alignment: Alignment.center, children: [
               Column(children: [
-                Text('ABSTAIN', style: GoogleFonts.playfairDisplay(
+                Text(t('ABSTAIN', 'ВОЗДЕРЖАНИЕ'), style: GoogleFonts.playfairDisplay(
                   fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 3,
                   color: const Color(0xFFF0D0D0))),
                 const SizedBox(height: 3),
                 if (items.isNotEmpty)
-                  Text('$totalDays total days clean', style: GoogleFonts.inter(
+                  Text('$totalDays ${t('total days clean', 'всего дней чистоты')}', style: GoogleFonts.inter(
                     fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(160))),
               ]),
               Align(alignment: Alignment.centerLeft,
@@ -119,10 +120,10 @@ class _AbstainScreenState extends State<AbstainScreen> {
                 ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.shield_rounded, size: 40, color: Colors.white.withAlpha(60)),
                     const SizedBox(height: 16),
-                    Text('nothing to abstain from', style: GoogleFonts.inter(
+                    Text(t('nothing to abstain from', 'нечего бросать'), style: GoogleFonts.inter(
                       fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(180))),
                     const SizedBox(height: 6),
-                    Text('add something to quit', style: GoogleFonts.inter(
+                    Text(t('add something to quit', 'добавьте привычку'), style: GoogleFonts.inter(
                       fontSize: 12, color: Colors.white.withAlpha(120))),
                   ]))
                 : ListView.builder(
@@ -147,7 +148,7 @@ class _AbstainScreenState extends State<AbstainScreen> {
                         boxShadow: [BoxShadow(color: AppColors.abstinences.withAlpha(100), blurRadius: 12)]),
                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 20)),
                     const SizedBox(width: 12),
-                    Text('NEW  ABSTINENCE', style: GoogleFonts.playfairDisplay(
+                    Text(t('NEW  ABSTINENCE', 'НОВОЕ  ВОЗДЕРЖАНИЕ'), style: GoogleFonts.playfairDisplay(
                       fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 2, color: Colors.white.withAlpha(200))),
                   ])),
                 ),
@@ -215,7 +216,7 @@ class _AbstainCard extends StatelessWidget {
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               Text('${item.daysClean}', style: GoogleFonts.jetBrainsMono(
                 fontSize: 28, fontWeight: FontWeight.w700, color: textCol)),
-              Text('DAYS', style: GoogleFonts.jetBrainsMono(
+              Text(t('DAYS', 'ДНЕЙ'), style: GoogleFonts.jetBrainsMono(
                 fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2, color: subCol)),
             ])),
         ]))),
@@ -274,7 +275,7 @@ class _AddSheetState extends State<_AddSheet> {
                       decoration: BoxDecoration(color: AppColors.abstinences, borderRadius: BorderRadius.circular(14)),
                       child: const Icon(Icons.shield_rounded, color: Colors.white, size: 18)),
                     const SizedBox(width: 12),
-                    Text('QUIT SOMETHING', style: GoogleFonts.playfairDisplay(
+                    Text(t('QUIT SOMETHING', 'БРОСИТЬ ПРИВЫЧКУ'), style: GoogleFonts.playfairDisplay(
                       fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: cocoa)),
                     const Spacer(),
                     GestureDetector(onTap: () => Navigator.pop(context),
@@ -285,14 +286,14 @@ class _AddSheetState extends State<_AddSheet> {
                 Padding(padding: const EdgeInsets.fromLTRB(22, 18, 22, 8),
                   child: TextField(controller: _titleCtrl, autofocus: true,
                     style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: cocoa),
-                    decoration: InputDecoration(hintText: 'e.g. Smoking, Sugar, Social Media',
+                    decoration: InputDecoration(hintText: t('e.g. Smoking, Sugar, Social Media', 'напр. Курение, Сахар, Соцсети'),
                       hintStyle: GoogleFonts.inter(fontSize: 15, color: cocoa.withAlpha(100)),
                       border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero))),
                 Divider(height: 1, thickness: 1, color: divider),
                 Padding(padding: const EdgeInsets.fromLTRB(22, 12, 22, 12),
                   child: TextField(controller: _reasonCtrl, maxLines: 2,
                     style: GoogleFonts.inter(fontSize: 12, color: cocoa.withAlpha(190)),
-                    decoration: InputDecoration(hintText: 'Why are you quitting? (optional)',
+                    decoration: InputDecoration(hintText: t('Why are you quitting? (optional)', 'Почему вы бросаете? (необязательно)'),
                       hintStyle: GoogleFonts.inter(fontSize: 12, color: cocoa.withAlpha(100)),
                       border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero))),
                 Divider(height: 1, thickness: 1, color: divider),
@@ -301,7 +302,7 @@ class _AddSheetState extends State<_AddSheet> {
                     child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(color: AppColors.abstinences, borderRadius: BorderRadius.circular(22),
                         boxShadow: [BoxShadow(color: AppColors.abstinences.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))]),
-                      child: Center(child: Text('START ABSTINENCE', style: GoogleFonts.inter(
+                      child: Center(child: Text(t('START ABSTINENCE', 'НАЧАТЬ ВОЗДЕРЖАНИЕ'), style: GoogleFonts.inter(
                         fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: Colors.white)))))),
               ])),
             ),

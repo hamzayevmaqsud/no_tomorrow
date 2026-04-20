@@ -1,84 +1,88 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_locale.dart';
 
 class AppSection {
   final String id;
-  final String label;
+  final String Function() _label;
   final IconData icon;
   final Color color;
-  final String description;
+  final String Function() _description;
+
+  String get label => _label();
+  String get description => _description();
 
   const AppSection({
     required this.id,
-    required this.label,
+    required String Function() label,
     required this.icon,
     required this.color,
-    required this.description,
-  });
+    required String Function() description,
+  }) : _label = label, _description = description;
 }
 
-const List<AppSection> kSections = [
+List<AppSection> get kSections => [
   AppSection(
     id: 'tasks',
-    label: 'TASKS',
+    label: () => t('TASKS', 'ЗАДАНИЯ'),
     icon: Icons.check_box_outlined,
     color: AppColors.tasks,
-    description: 'Daily & recurring tasks',
+    description: () => t('Daily & recurring tasks', 'Ежедневные задания'),
   ),
   AppSection(
     id: 'habits',
-    label: 'HABITS',
+    label: () => t('HABITS', 'ПРИВЫЧКИ'),
     icon: Icons.loop_rounded,
     color: AppColors.habits,
-    description: 'Build better habits',
+    description: () => t('Build better habits', 'Формируй привычки'),
   ),
   AppSection(
     id: 'workouts',
-    label: 'WORKOUT',
+    label: () => t('WORKOUT', 'ТРЕНИРОВКА'),
     icon: Icons.fitness_center_rounded,
     color: AppColors.workouts,
-    description: 'Track your fitness',
+    description: () => t('Track your fitness', 'Отслеживай тренировки'),
   ),
   AppSection(
     id: 'abstain',
-    label: 'ABSTAIN',
+    label: () => t('ABSTAIN', 'ВОЗДЕРЖАНИЕ'),
     icon: Icons.block_rounded,
     color: AppColors.abstinences,
-    description: 'Break bad habits',
+    description: () => t('Break bad habits', 'Избавляйся от вредного'),
   ),
   AppSection(
     id: 'reading',
-    label: 'READING',
+    label: () => t('READING', 'ЧТЕНИЕ'),
     icon: Icons.menu_book_rounded,
     color: AppColors.reading,
-    description: 'Track your reading',
+    description: () => t('Track your reading', 'Отслеживай чтение'),
   ),
   AppSection(
     id: 'budget',
-    label: 'BUDGET',
+    label: () => t('BUDGET', 'БЮДЖЕТ'),
     icon: Icons.account_balance_wallet_rounded,
     color: AppColors.budget,
-    description: 'Manage finances',
+    description: () => t('Manage finances', 'Управляй финансами'),
   ),
   AppSection(
     id: 'food',
-    label: 'FOOD',
+    label: () => t('FOOD', 'ПИТАНИЕ'),
     icon: Icons.restaurant_rounded,
     color: AppColors.food,
-    description: 'Track nutrition',
+    description: () => t('Track nutrition', 'Следи за питанием'),
   ),
   AppSection(
     id: 'collect',
-    label: 'COLLECT',
+    label: () => t('COLLECT', 'КОЛЛЕКЦИЯ'),
     icon: Icons.stars_rounded,
     color: AppColors.collection,
-    description: 'Your achievements',
+    description: () => t('Your achievements', 'Твои достижения'),
   ),
   AppSection(
     id: 'profile',
-    label: 'PROFILE',
+    label: () => t('PROFILE', 'ПРОФИЛЬ'),
     icon: Icons.person_rounded,
     color: AppColors.profile,
-    description: 'Your progress',
+    description: () => t('Your progress', 'Твой прогресс'),
   ),
 ];

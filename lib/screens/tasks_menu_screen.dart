@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/task.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_locale.dart';
 import 'tasks_screen.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
@@ -56,7 +57,7 @@ class TasksMenuScreen extends StatelessWidget {
                   Expanded(
                     child: _CategoryCard(
                       category: TaskCategory.work,
-                      label: 'WORK',
+                      label: t('WORK', 'РАБОТА'),
                       imagePath: 'assets/collection/Tasks menu/Work.jpg',
                       color: const Color(0xFF2979FF),
                     ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut)
@@ -68,7 +69,7 @@ class TasksMenuScreen extends StatelessWidget {
                   Expanded(
                     child: _CategoryCard(
                       category: TaskCategory.live,
-                      label: 'LIVE',
+                      label: t('LIVE', 'ЖИЗНЬ'),
                       imagePath: 'assets/collection/Tasks menu/Live.jpg',
                       color: const Color(0xFF00E676),
                     ).animate().fadeIn(delay: 90.ms, duration: 500.ms, curve: Curves.easeOut)
@@ -214,8 +215,8 @@ class _CategoryCardState extends State<_CategoryCard> {
                         const SizedBox(width: 10),
                         Text(
                           total == 0
-                              ? 'no tasks'
-                              : '$done / $total done',
+                              ? t('no tasks', 'нет задач')
+                              : '$done / $total ${t('done', 'готово')}',
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 9, fontWeight: FontWeight.w600,
                             letterSpacing: 1.5,

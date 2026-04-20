@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../l10n/app_locale.dart';
 import '../services/sync_service.dart';
 import '../widgets/jelly_button.dart';
 
@@ -36,11 +37,11 @@ class _UsernameScreenState extends State<UsernameScreen> {
   Future<void> _submit() async {
     final name = _ctrl.text.trim();
     if (name.length < 2) {
-      setState(() => _error = 'at least 2 characters');
+      setState(() => _error = t('at least 2 characters', 'минимум 2 символа'));
       return;
     }
     if (name.length > 20) {
-      setState(() => _error = 'max 20 characters');
+      setState(() => _error = t('max 20 characters', 'максимум 20 символов'));
       return;
     }
     setState(() { _loading = true; _error = null; });
@@ -50,7 +51,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
       if (!mounted) return;
       widget.onDone();
     } catch (e) {
-      setState(() { _loading = false; _error = 'failed to save, try again'; });
+      setState(() { _loading = false; _error = t('failed to save, try again', 'не удалось сохранить, попробуй снова'); });
     }
   }
 
@@ -81,14 +82,14 @@ class _UsernameScreenState extends State<UsernameScreen> {
               ),
               const SizedBox(height: 28),
 
-              Text('CHOOSE YOUR NAME',
+              Text(t('CHOOSE YOUR NAME', 'ВЫБЕРИ СВОЁ ИМЯ'),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 24, fontWeight: FontWeight.w800,
                   fontStyle: FontStyle.italic,
                   letterSpacing: 2, color: Colors.white)),
               const SizedBox(height: 10),
-              Text('This is how friends will see you.',
+              Text(t('This is how friends will see you.', 'Так тебя будут видеть друзья.'),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
                   fontSize: 13, fontWeight: FontWeight.w500,
@@ -123,7 +124,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
                         counterText: '',
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                        hintText: 'username',
+                        hintText: t('username', 'имя пользователя'),
                         hintStyle: GoogleFonts.inter(
                           fontSize: 13, color: Colors.white.withAlpha(100))),
                     ),
@@ -151,7 +152,7 @@ class _UsernameScreenState extends State<UsernameScreen> {
                           width: 18, height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                      : Text('BEGIN',
+                      : Text(t('BEGIN', 'НАЧАТЬ'),
                           style: GoogleFonts.inter(
                             fontSize: 13, fontWeight: FontWeight.w800,
                             letterSpacing: 3, color: Colors.white)),

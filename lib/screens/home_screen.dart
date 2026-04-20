@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import '../models/section.dart';
+import '../l10n/app_locale.dart';
 import '../theme/app_colors.dart';
 import '../models/game_state.dart';
 import 'section_screen.dart';
@@ -18,7 +19,7 @@ import 'budget_screen.dart';
 import 'food_screen.dart';
 import 'profile_screen.dart';
 
-const _kQuotes = [
+const _kQuotesEn = [
   '"There is no tomorrow — only today."',
   '"The quest is the reward."',
   '"Level up or stay still."',
@@ -51,6 +52,42 @@ const _kQuotes = [
   '"Hard choices, easy life."',
   '"Be relentless."',
 ];
+
+const _kQuotesRu = [
+  '"Нет завтра — есть только сегодня."',
+  '"Путь и есть награда."',
+  '"Расти или стой на месте."',
+  '"Дисциплина — мост между целью и результатом."',
+  '"Маленькие ежедневные шаги ведут к великим результатам."',
+  '"Ты в одной задаче от лучшей версии себя."',
+  '"Постоянство побеждает интенсивность."',
+  '"Труд не врёт."',
+  '"Твоё будущее я наблюдает."',
+  '"Каждый подход важен. Каждая страница важна. Каждый день важен."',
+  '"Комфорт — враг прогресса."',
+  '"Будь героем своей истории."',
+  '"Ни один XP не потерян."',
+  '"Серия — это святое."',
+  '"Вставай. Работай. Расти. Повторяй."',
+  '"То, что ты делаешь сегодня, отзовётся в вечности."',
+  '"Боль временна, слава вечна."',
+  '"Единственная плохая тренировка — та, которой не было."',
+  '"Строй привычки, а не мечты."',
+  '"Чемпионы рождаются, когда никто не смотрит."',
+  '"Твой потенциал бесконечен — раскрой его."',
+  '"Ещё один подход. Ещё одна страница. Ещё один день."',
+  '"Карта — не территория. Исследуй."',
+  '"Прими путь."',
+  '"Вчера ты сказал завтра."',
+  '"Действуй или оправдывайся."',
+  '"Лучшее время начать было вчера. Следующее лучшее — сейчас."',
+  '"Ты прошёл слишком много, чтобы остановиться."',
+  '"Доверяй процессу."',
+  '"Трудный выбор — лёгкая жизнь."',
+  '"Будь неумолим."',
+];
+
+List<String> get _kQuotes => AppLocale.instance.isRu ? _kQuotesRu : _kQuotesEn;
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -631,7 +668,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ],
                     ),
                     child: Text(
-                      'OPEN  ${section.label}',
+                      '${t('OPEN', 'ОТКРЫТЬ')}  ${section.label}',
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -739,52 +776,52 @@ class _SectionLabel extends StatelessWidget {
     switch (id) {
       case 'tasks':
         return _LabelStyle(
-          fontSize: 52, letterSpacing: 1, badge: '✓  TODAY\'S TASKS',
+          fontSize: 52, letterSpacing: 1, badge: t('✓  TODAY\'S TASKS', '✓  ЗАДАНИЯ НА СЕГОДНЯ'),
           prefixWidget: const Icon(Icons.check_circle_outline, color: Colors.white70, size: 22),
           suffixWidget: const Icon(Icons.check_circle_outline, color: Colors.white70, size: 22),
         );
       case 'habits':
         return _LabelStyle(
-          fontSize: 50, letterSpacing: 1, badge: '↻  DAILY STREAK',
+          fontSize: 50, letterSpacing: 1, badge: t('↻  DAILY STREAK', '↻  ЕЖЕДНЕВНАЯ СЕРИЯ'),
           prefixWidget: const Icon(Icons.loop_rounded, color: Colors.white70, size: 22),
         );
       case 'workouts':
         return _LabelStyle(
-          fontSize: 48, letterSpacing: 1, badge: '🔥  KEEP THE GRIND',
+          fontSize: 48, letterSpacing: 1, badge: t('🔥  KEEP THE GRIND', '🔥  ПРОДОЛЖАЙ ПУТЬ'),
           prefixWidget: const Icon(Icons.local_fire_department_rounded, color: Colors.orange, size: 26),
         );
       case 'abstain':
         return _LabelStyle(
-          fontSize: 48, letterSpacing: 1, badge: '✕  DAYS CLEAN', italic: true,
+          fontSize: 48, letterSpacing: 1, badge: t('✕  DAYS CLEAN', '✕  ДНЕЙ ЧИСТО'), italic: true,
           suffixWidget: const Icon(Icons.block_rounded, color: Colors.white60, size: 22),
         );
       case 'reading':
         return _LabelStyle(
-          fontSize: 50, letterSpacing: 1, badge: '📖  PAGES READ',
+          fontSize: 50, letterSpacing: 1, badge: t('📖  PAGES READ', '📖  СТРАНИЦ ПРОЧИТАНО'),
           prefixWidget: const Text('"', style: TextStyle(color: Colors.white60, fontSize: 36, fontWeight: FontWeight.w900, height: 1)),
           suffixWidget: const Text('"', style: TextStyle(color: Colors.white60, fontSize: 36, fontWeight: FontWeight.w900, height: 1)),
         );
       case 'budget':
         return _LabelStyle(
-          fontSize: 52, letterSpacing: 1, badge: '\$  TRACK MONEY',
+          fontSize: 52, letterSpacing: 1, badge: t('\$  TRACK MONEY', '₽  СЛЕДИ ЗА ДЕНЬГАМИ'),
           prefixWidget: const Text('\$', style: TextStyle(color: Colors.white70, fontSize: 28, fontWeight: FontWeight.w900)),
           suffixWidget: Text('¢', style: TextStyle(color: Colors.white.withAlpha(128), fontSize: 22, fontWeight: FontWeight.w900)),
         );
       case 'food':
         return _LabelStyle(
-          fontSize: 54, letterSpacing: 1, badge: '🥗  KCAL TODAY',
+          fontSize: 54, letterSpacing: 1, badge: t('🥗  KCAL TODAY', '🥗  ККАЛ СЕГОДНЯ'),
           prefixWidget: const Text('🥦', style: TextStyle(fontSize: 24)),
           suffixWidget: const Text('🍎', style: TextStyle(fontSize: 24)),
         );
       case 'collect':
         return _LabelStyle(
-          fontSize: 48, letterSpacing: 1, badge: '⭐  YOUR REWARDS',
+          fontSize: 48, letterSpacing: 1, badge: t('⭐  YOUR REWARDS', '⭐  ТВОИ НАГРАДЫ'),
           prefixWidget: const Text('⭐', style: TextStyle(fontSize: 22)),
           suffixWidget: const Text('💎', style: TextStyle(fontSize: 22)),
         );
       case 'profile':
         return _LabelStyle(
-          fontSize: 50, letterSpacing: 1, badge: '◈  LEVEL 1  XP',
+          fontSize: 50, letterSpacing: 1, badge: t('◈  LEVEL 1  XP', '◈  УРОВЕНЬ 1  XP'),
           prefixWidget: const Icon(Icons.military_tech_rounded, color: Colors.white70, size: 24),
         );
       default:
@@ -1177,16 +1214,16 @@ class _WeeklySummaryPopupState extends State<_WeeklySummaryPopup>
                       Icon(Icons.calendar_month_rounded, size: 16,
                           color: AppColors.action),
                       const SizedBox(width: 8),
-                      Text('WEEKLY RECAP', style: GoogleFonts.jetBrainsMono(
+                      Text(t('WEEKLY RECAP', 'ИТОГИ НЕДЕЛИ'), style: GoogleFonts.jetBrainsMono(
                         fontSize: 10, fontWeight: FontWeight.w700,
                         letterSpacing: 1.5, color: AppColors.action)),
                     ]),
                     const SizedBox(height: 10),
                     Row(children: [
-                      _RecapStat(value: '${gs.totalCompletions}', label: 'DONE'),
+                      _RecapStat(value: '${gs.totalCompletions}', label: t('DONE', 'ГОТОВО')),
                       _RecapStat(value: '${gs.totalXp}', label: 'XP'),
-                      _RecapStat(value: '${gs.bestStreak}d', label: 'STREAK'),
-                      _RecapStat(value: 'LVL ${gs.level}', label: 'RANK'),
+                      _RecapStat(value: '${gs.bestStreak}d', label: t('STREAK', 'СЕРИЯ')),
+                      _RecapStat(value: 'LVL ${gs.level}', label: t('RANK', 'РАНГ')),
                     ]),
                   ],
                 ),
@@ -1303,7 +1340,7 @@ class _DailyQuestPopupState extends State<_DailyQuestPopup>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('DAILY QUEST',
+                          Text(t('DAILY QUEST', 'ЕЖЕДНЕВНЫЙ КВЕСТ'),
                             style: GoogleFonts.jetBrainsMono(
                               fontSize: 8, fontWeight: FontWeight.w700,
                               letterSpacing: 1.5, color: AppColors.gold)),

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../l10n/app_locale.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
+import 'patch_notes_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   final VoidCallback onToggleTheme;
@@ -45,7 +47,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    'SETTINGS',
+                    t('SETTINGS', 'НАСТРОЙКИ'),
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -65,12 +67,12 @@ class SettingsScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // ── Appearance ───────────────────────────────────────────
-                    _SectionTitle(label: 'APPEARANCE'),
+                    _SectionTitle(label: t('APPEARANCE', 'ВНЕШНИЙ ВИД')),
                     const SizedBox(height: 12),
                     _SettingTile(
                       card: card, border: border, text: text, sub: sub,
                       icon: isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-                      label: isDark ? 'DARK MODE' : 'LIGHT MODE',
+                      label: isDark ? t('DARK MODE', 'ТЁМНАЯ ТЕМА') : t('LIGHT MODE', 'СВЕТЛАЯ ТЕМА'),
                       trailing: Switch(
                         value: isDark,
                         onChanged: (_) => onToggleTheme(),
@@ -82,10 +84,10 @@ class SettingsScreen extends StatelessWidget {
                     const SizedBox(height: 32),
 
                     // ── Support ──────────────────────────────────────────────
-                    _SectionTitle(label: 'SUPPORT'),
+                    _SectionTitle(label: t('SUPPORT', 'ПОДДЕРЖКА')),
                     const SizedBox(height: 12),
                     Text(
-                      'No Tomorrow is built solo with no ads\nor subscriptions. If this app helps\nyou grow, consider supporting it.',
+                      t('No Tomorrow is built solo with no ads\nor subscriptions. If this app helps\nyou grow, consider supporting it.', 'No Tomorrow создан одним разработчиком\nбез рекламы и подписок. Если приложение\nпомогает вам расти — поддержите его.'),
                       style: GoogleFonts.outfit(
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
@@ -95,6 +97,39 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     _DonateButton(),
+
+                    const SizedBox(height: 32),
+
+                    // ── Patch Notes ─────────────────────────────────────────
+                    _SectionTitle(label: t('PATCH NOTES', 'ПАТЧ НОУТЫ')),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => const PatchNotesScreen(),
+                      )),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: card,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: border),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.article_outlined, size: 18, color: sub),
+                            const SizedBox(width: 12),
+                            Text(t('VIEW PATCH NOTES', 'ПОСМОТРЕТЬ ПАТЧ НОУТЫ'),
+                              style: GoogleFonts.outfit(
+                                fontSize: 13, fontWeight: FontWeight.w700,
+                                letterSpacing: 2, color: text,
+                              )),
+                            const Spacer(),
+                            Icon(Icons.chevron_right_rounded, size: 18, color: sub),
+                          ],
+                        ),
+                      ),
+                    ),
 
                     const SizedBox(height: 48),
 
@@ -113,7 +148,7 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'v1.0.0  ·  Made with ♥',
+                            t('v1.0.0  ·  Made with ♥', 'v1.0.0  ·  Сделано с ♥'),
                             style: GoogleFonts.outfit(fontSize: 11, color: sub),
                           ),
                         ],
@@ -209,7 +244,7 @@ class _DonateButton extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Donation link coming soon!',
+              t('Donation link coming soon!', 'Ссылка для донатов скоро будет!'),
               style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
             ),
             backgroundColor: AppColors.primary,
@@ -234,7 +269,7 @@ class _DonateButton extends StatelessWidget {
             const Icon(Icons.favorite_rounded, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Text(
-              'SUPPORT THE APP',
+              t('SUPPORT THE APP', 'ПОДДЕРЖАТЬ ПРИЛОЖЕНИЕ'),
               style: GoogleFonts.outfit(
                 fontSize: 14,
                 fontWeight: FontWeight.w900,

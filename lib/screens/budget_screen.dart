@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
 import '../widgets/animated_empty.dart';
+import '../l10n/app_locale.dart';
 
 class Expense {
   final String id;
@@ -22,6 +23,14 @@ class BudgetStore {
   static final List<Expense> expenses = [];
   static int nextId = 1;
   static double monthlyBudget = 1000;
+}
+
+String _catLabel(String c) {
+  const ru = {
+    'Food': 'Еда', 'Transport': 'Транспорт', 'Shopping': 'Покупки',
+    'Bills': 'Счета', 'Health': 'Здоровье', 'Fun': 'Развлечения', 'Other': 'Другое',
+  };
+  return AppLocale.instance.isRu ? (ru[c] ?? c) : c;
 }
 
 class BudgetScreen extends StatefulWidget {
@@ -80,11 +89,11 @@ class _BudgetScreenState extends State<BudgetScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Stack(alignment: Alignment.center, children: [
               Column(children: [
-                Text('BUDGET', style: GoogleFonts.playfairDisplay(
+                Text(t('BUDGET', 'БЮДЖЕТ'), style: GoogleFonts.playfairDisplay(
                   fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 3,
                   color: const Color(0xFFF0E8C8))),
                 const SizedBox(height: 3),
-                Text('\$${remaining.toStringAsFixed(0)} remaining', style: GoogleFonts.inter(
+                Text('\$${remaining.toStringAsFixed(0)} ${t('remaining', 'осталось')}', style: GoogleFonts.inter(
                   fontSize: 11, fontWeight: FontWeight.w700,
                   color: remaining > 0 ? Colors.white.withAlpha(160) : AppColors.danger)),
               ]),
@@ -102,10 +111,10 @@ class _BudgetScreenState extends State<BudgetScreen> {
           _BudgetDashboard(spent: spent, budget: budget, progress: progress, todaySpent: todaySpent),
           Expanded(
             child: expenses.isEmpty
-                ? const AnimatedEmpty(
+                ? AnimatedEmpty(
                     icon: Icons.account_balance_wallet_rounded,
-                    title: 'no expenses yet',
-                    subtitle: 'tap + to log your first expense')
+                    title: t('no expenses yet', 'пока нет расходов'),
+                    subtitle: t('tap + to log your first expense', 'нажмите + чтобы добавить расход'))
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                     itemCount: expenses.length,
@@ -127,7 +136,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         boxShadow: [BoxShadow(color: AppColors.budget.withAlpha(100), blurRadius: 12)]),
                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 20)),
                     const SizedBox(width: 12),
-                    Text('ADD  EXPENSE', style: GoogleFonts.playfairDisplay(
+                    Text(t('ADD  EXPENSE', 'ДОБАВИТЬ  РАСХОД'), style: GoogleFonts.playfairDisplay(
                       fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 2, color: Colors.white.withAlpha(200))),
                   ])),
                 ),
@@ -168,14 +177,14 @@ class _BudgetDashboard extends StatelessWidget {
               Row(children: [
                 Icon(Icons.payments_rounded, size: 12, color: AppColors.budget),
                 const SizedBox(width: 5),
-                Text('\$${spent.toStringAsFixed(0)} SPENT', style: GoogleFonts.jetBrainsMono(
+                Text('\$${spent.toStringAsFixed(0)} ${t('SPENT', 'ПОТРАЧЕНО')}', style: GoogleFonts.jetBrainsMono(
                   fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1, color: AppColors.budget)),
               ]),
               const SizedBox(height: 6),
               Row(children: [
                 Icon(Icons.today_rounded, size: 12, color: AppColors.action),
                 const SizedBox(width: 5),
-                Text('\$${todaySpent.toStringAsFixed(0)} TODAY', style: GoogleFonts.jetBrainsMono(
+                Text('\$${todaySpent.toStringAsFixed(0)} ${t('TODAY', 'СЕГОДНЯ')}', style: GoogleFonts.jetBrainsMono(
                   fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1, color: AppColors.action)),
               ]),
               const SizedBox(height: 6),
@@ -183,7 +192,7 @@ class _BudgetDashboard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: (overBudget ? AppColors.danger : AppColors.success).withAlpha(12),
                   borderRadius: BorderRadius.circular(10)),
-                child: Text(overBudget ? 'OVER BUDGET' : 'ON TRACK', style: GoogleFonts.jetBrainsMono(
+                child: Text(overBudget ? t('OVER BUDGET', 'ПЕРЕРАСХОД') : t('ON TRACK', 'В НОРМЕ'), style: GoogleFonts.jetBrainsMono(
                   fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1.5,
                   color: overBudget ? AppColors.danger : AppColors.success))),
             ])),
@@ -230,7 +239,7 @@ class _ExpenseCard extends StatelessWidget {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(expense.title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: textCol)),
           const SizedBox(height: 2),
-          Text(expense.category, style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600,
+          Text(_catLabel(expense.category), style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600,
             letterSpacing: 0.5, color: subCol)),
         ])),
         Text('\$${expense.amount.toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(
@@ -291,7 +300,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                       decoration: BoxDecoration(color: AppColors.budget, borderRadius: BorderRadius.circular(14)),
                       child: const Icon(Icons.payments_rounded, color: Colors.white, size: 18)),
                     const SizedBox(width: 12),
-                    Text('ADD EXPENSE', style: GoogleFonts.playfairDisplay(
+                    Text(t('ADD EXPENSE', 'ДОБАВИТЬ РАСХОД'), style: GoogleFonts.playfairDisplay(
                       fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: cocoa)),
                     const Spacer(),
                     GestureDetector(onTap: () => Navigator.pop(context),
@@ -302,7 +311,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                 Padding(padding: const EdgeInsets.fromLTRB(22, 18, 22, 8),
                   child: TextField(controller: _titleCtrl, autofocus: true,
                     style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: cocoa),
-                    decoration: InputDecoration(hintText: 'What did you spend on?',
+                    decoration: InputDecoration(hintText: t('What did you spend on?', 'На что потратили?'),
                       hintStyle: GoogleFonts.inter(fontSize: 15, color: cocoa.withAlpha(100)),
                       border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
                     onSubmitted: (_) => _submit())),
@@ -326,7 +335,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                             color: active ? AppColors.budget.withAlpha(25) : const Color(0xFFEFEBE0),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: active ? AppColors.budget.withAlpha(140) : divider)),
-                          child: Text(c, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600,
+                          child: Text(_catLabel(c), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600,
                             color: active ? AppColors.budget : cocoa.withAlpha(130)))));
                     }).toList())),
                 Divider(height: 1, thickness: 1, color: divider),
@@ -335,7 +344,7 @@ class _AddExpenseSheetState extends State<_AddExpenseSheet> {
                     child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(color: AppColors.budget, borderRadius: BorderRadius.circular(22),
                         boxShadow: [BoxShadow(color: AppColors.budget.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))]),
-                      child: Center(child: Text('LOG EXPENSE', style: GoogleFonts.inter(
+                      child: Center(child: Text(t('LOG EXPENSE', 'ЗАПИСАТЬ РАСХОД'), style: GoogleFonts.inter(
                         fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: Colors.white)))))),
               ])),
             ),

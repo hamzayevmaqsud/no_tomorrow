@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../l10n/app_locale.dart';
 import '../widgets/jelly_button.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -29,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
     if (email.isEmpty || pass.length < 6) {
-      setState(() => _error = 'email + password (6+ chars)');
+      setState(() => _error = t('email + password (6+ chars)', 'email + пароль (6+ символов)'));
       return;
     }
     setState(() { _loading = true; _error = null; });
@@ -60,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       setState(() => _error = _prettyError(e));
     } catch (e) {
-      setState(() => _error = 'Google sign-in failed');
+      setState(() => _error = t('Google sign-in failed', 'Ошибка входа через Google'));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -68,13 +69,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String _prettyError(FirebaseAuthException e) {
     switch (e.code) {
-      case 'invalid-email': return 'invalid email';
-      case 'user-not-found': return 'no account with that email';
+      case 'invalid-email': return t('invalid email', 'неверный email');
+      case 'user-not-found': return t('no account with that email', 'аккаунт с таким email не найден');
       case 'wrong-password':
-      case 'invalid-credential': return 'wrong password';
-      case 'email-already-in-use': return 'email already registered';
-      case 'weak-password': return 'password too weak';
-      case 'network-request-failed': return 'network error';
+      case 'invalid-credential': return t('wrong password', 'неверный пароль');
+      case 'email-already-in-use': return t('email already registered', 'email уже зарегистрирован');
+      case 'weak-password': return t('password too weak', 'пароль слишком слабый');
+      case 'network-request-failed': return t('network error', 'ошибка сети');
       default: return e.message ?? e.code;
     }
   }
@@ -107,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     letterSpacing: 6, color: accent, height: 1)),
               ]),
               const SizedBox(height: 8),
-              Text('SIGN  IN  TO  CONTINUE',
+              Text(t('SIGN  IN  TO  CONTINUE', 'ВОЙДИ,  ЧТОБЫ  ПРОДОЛЖИТЬ'),
                 textAlign: TextAlign.center,
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: 10, fontWeight: FontWeight.w600,
@@ -132,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     _GoogleLogo(),
                     const SizedBox(width: 12),
-                    Text('Continue with Google',
+                    Text(t('Continue with Google', 'Войти через Google'),
                       style: GoogleFonts.inter(
                         fontSize: 14, fontWeight: FontWeight.w700,
                         color: const Color(0xFF1F1F1F))),
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Expanded(child: Container(height: 1, color: Colors.white.withAlpha(25))),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Text('OR',
+                  child: Text(t('OR', 'ИЛИ'),
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 9, fontWeight: FontWeight.w700,
                       letterSpacing: 2,
@@ -160,14 +161,14 @@ class _LoginScreenState extends State<LoginScreen> {
               // Email
               _Field(
                 controller: _emailCtrl,
-                hint: 'email',
+                hint: t('email', 'эл. почта'),
                 icon: Icons.mail_outline_rounded,
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 10),
               _Field(
                 controller: _passCtrl,
-                hint: 'password',
+                hint: t('password', 'пароль'),
                 icon: Icons.lock_outline_rounded,
                 obscure: true,
                 onSubmit: _submitEmail,
@@ -194,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           width: 18, height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                      : Text(_isRegister ? 'CREATE ACCOUNT' : 'SIGN IN',
+                      : Text(_isRegister ? t('CREATE ACCOUNT', 'СОЗДАТЬ АККАУНТ') : t('SIGN IN', 'ВОЙТИ'),
                           style: GoogleFonts.inter(
                             fontSize: 13, fontWeight: FontWeight.w800,
                             letterSpacing: 2, color: Colors.white)),
@@ -225,10 +226,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 12, color: Colors.white.withAlpha(140)),
                       children: [
                         TextSpan(text: _isRegister
-                          ? 'Already have account? '
-                          : 'New here? '),
+                          ? t('Already have account? ', 'Уже есть аккаунт? ')
+                          : t('New here? ', 'Впервые здесь? ')),
                         TextSpan(
-                          text: _isRegister ? 'Sign in' : 'Create account',
+                          text: _isRegister ? t('Sign in', 'Войти') : t('Create account', 'Создать аккаунт'),
                           style: GoogleFonts.inter(
                             fontSize: 12, fontWeight: FontWeight.w700,
                             color: accent)),

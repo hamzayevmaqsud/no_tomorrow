@@ -3,9 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
+import '../l10n/app_locale.dart';
 import '../models/collection_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
+
+String _translateRarity(String label) {
+  switch (label) {
+    case 'EPIC':     return t('EPIC', 'ЭПИК');
+    case 'RARE':     return t('RARE', 'РЕДКИЙ');
+    case 'UNCOMMON': return t('UNCOMMON', 'НЕОБЫЧНЫЙ');
+    default:         return label;
+  }
+}
 
 // ── Entry screen — album list ─────────────────────────────────────────────────
 
@@ -55,12 +65,12 @@ class CollectionScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('COLLECTION',
+                            Text(t('COLLECTION', 'КОЛЛЕКЦИЯ'),
                               style: GoogleFonts.playfairDisplay(
                                 fontSize: 20, fontWeight: FontWeight.w800,
                                 letterSpacing: 1.5, color: AppColors.collection,
                               )),
-                            Text('$unlocked / $total unlocked',
+                            Text('$unlocked / $total ${t('unlocked', 'открыто')}',
                               style: GoogleFonts.jetBrainsMono(
                                 fontSize: 9,
                                 color: isDark ? AppColors.darkTextSub : AppColors.lightTextSub,
@@ -246,8 +256,8 @@ class _AlbumListCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           complete
-                              ? 'COMPLETE'
-                              : '$unlocked / $total cards',
+                              ? t('COMPLETE', 'ЗАВЕРШЕНО')
+                              : '$unlocked / $total ${t('cards', 'карт')}',
                           style: GoogleFonts.jetBrainsMono(
                             fontSize: 9, fontWeight: FontWeight.w700,
                             letterSpacing: 1.5,
@@ -340,7 +350,7 @@ class _AlbumDetailScreen extends StatelessWidget {
                                 fontSize: 20, fontWeight: FontWeight.w700,
                                 letterSpacing: 1.5, color: c,
                               )),
-                            Text('$unlocked / ${items.length} cards',
+                            Text('$unlocked / ${items.length} ${t('cards', 'карт')}',
                               style: GoogleFonts.jetBrainsMono(
                                 fontSize: 9,
                                 color: isDark ? AppColors.darkTextSub : AppColors.lightTextSub,
@@ -356,7 +366,7 @@ class _AlbumDetailScreen extends StatelessWidget {
                             border: Border.all(color: c.withAlpha(160)),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text('COMPLETE',
+                          child: Text(t('COMPLETE', 'ЗАВЕРШЕНО'),
                             style: GoogleFonts.jetBrainsMono(
                               fontSize: 9, fontWeight: FontWeight.w700,
                               letterSpacing: 1, color: c,
@@ -663,7 +673,7 @@ class _LockedPlaceholder extends StatelessWidget {
           Icon(Icons.lock_outline_rounded,
               color: Colors.white.withAlpha(35), size: 28),
           const SizedBox(height: 8),
-          Text(item.rarity.label,
+          Text(_translateRarity(item.rarity.label),
             style: GoogleFonts.jetBrainsMono(
               fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2,
               color: Color(item.rarity.color).withAlpha(60),
@@ -744,7 +754,7 @@ class _FullscreenViewState extends State<_FullscreenView> {
                     shadows: [Shadow(color: albumColor.withAlpha(180), blurRadius: 12)],
                   )),
                 const SizedBox(height: 4),
-                Text('${widget.item.rarity.label}  ·  ${widget.item.album.title}',
+                Text('${_translateRarity(widget.item.rarity.label)}  ·  ${widget.item.album.title}',
                   style: GoogleFonts.jetBrainsMono(
                     fontSize: 9, letterSpacing: 2,
                     color: rarityColor.withAlpha(160),
@@ -753,7 +763,7 @@ class _FullscreenViewState extends State<_FullscreenView> {
             ),
             Positioned(
               bottom: 20, left: 0, right: 0,
-              child: Center(child: Text('tap to close',
+              child: Center(child: Text(t('tap to close', 'нажмите чтобы закрыть'),
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: 9, letterSpacing: 2,
                   color: Colors.white.withAlpha(50)))),

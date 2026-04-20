@@ -6,6 +6,7 @@ import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
+import '../l10n/app_locale.dart';
 
 class Book {
   final String id;
@@ -86,12 +87,12 @@ class _ReadingScreenState extends State<ReadingScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             child: Stack(alignment: Alignment.center, children: [
               Column(children: [
-                Text('READING', style: GoogleFonts.playfairDisplay(
+                Text(t('READING', 'ЧТЕНИЕ'), style: GoogleFonts.playfairDisplay(
                   fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 3,
                   color: const Color(0xFFD0E8D0))),
                 const SizedBox(height: 3),
                 if (books.isNotEmpty)
-                  Text('$totalPages pages read', style: GoogleFonts.inter(
+                  Text('$totalPages ${t('pages read', 'страниц прочитано')}', style: GoogleFonts.inter(
                     fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(160))),
               ]),
               Align(alignment: Alignment.centerLeft,
@@ -110,15 +111,15 @@ class _ReadingScreenState extends State<ReadingScreen> {
                 ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.menu_book_rounded, size: 40, color: Colors.white.withAlpha(60)),
                     const SizedBox(height: 16),
-                    Text('no books yet', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(180))),
+                    Text(t('no books yet', 'пока нет книг'), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(180))),
                     const SizedBox(height: 6),
-                    Text('start your reading journey', style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withAlpha(120))),
+                    Text(t('start your reading journey', 'начните свой путь чтения'), style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withAlpha(120))),
                   ]))
                 : ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 100), children: [
                     ...reading.map((b) => _BookCard(book: b, onAddPages: (p) => _addPages(b, p), onDelete: () => _delete(b.id))),
                     if (finished.isNotEmpty) ...[
                       Padding(padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Center(child: Text('FINISHED  ${finished.length}', style: GoogleFonts.jetBrainsMono(
+                        child: Center(child: Text('${t('FINISHED', 'ЗАВЕРШЕНО')}  ${finished.length}', style: GoogleFonts.jetBrainsMono(
                           fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.success)))),
                       ...finished.map((b) => _BookCard(book: b, onAddPages: (_) {}, onDelete: () => _delete(b.id))),
                     ],
@@ -139,7 +140,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
                         boxShadow: [BoxShadow(color: AppColors.reading.withAlpha(100), blurRadius: 12)]),
                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 20)),
                     const SizedBox(width: 12),
-                    Text('ADD  BOOK', style: GoogleFonts.playfairDisplay(
+                    Text(t('ADD  BOOK', 'ДОБАВИТЬ  КНИГУ'), style: GoogleFonts.playfairDisplay(
                       fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 2, color: Colors.white.withAlpha(200))),
                   ])),
                 ),
@@ -177,7 +178,7 @@ class _BookCard extends StatelessWidget {
                 height: 1.2, color: textCol)),
               if (book.author.isNotEmpty) ...[
                 const SizedBox(height: 2),
-                Text('by ${book.author}', style: GoogleFonts.inter(fontSize: 11, color: subCol)),
+                Text('${t('by', 'автор:')} ${book.author}', style: GoogleFonts.inter(fontSize: 11, color: subCol)),
               ],
               const SizedBox(height: 10),
               // Progress bar
@@ -191,7 +192,7 @@ class _BookCard extends StatelessWidget {
               ]),
               const SizedBox(height: 6),
               Row(children: [
-                Text('${book.pagesRead}/${book.totalPages} pages', style: GoogleFonts.jetBrainsMono(
+                Text('${book.pagesRead}/${book.totalPages} ${t('pages', 'стр.')}', style: GoogleFonts.jetBrainsMono(
                   fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
                 const Spacer(),
                 Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
@@ -291,7 +292,7 @@ class _AddBookSheetState extends State<_AddBookSheet> {
                       decoration: BoxDecoration(color: AppColors.reading, borderRadius: BorderRadius.circular(14)),
                       child: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 18)),
                     const SizedBox(width: 12),
-                    Text('ADD BOOK', style: GoogleFonts.playfairDisplay(
+                    Text(t('ADD BOOK', 'ДОБАВИТЬ КНИГУ'), style: GoogleFonts.playfairDisplay(
                       fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: cocoa)),
                     const Spacer(),
                     GestureDetector(onTap: () => Navigator.pop(context),
@@ -302,7 +303,7 @@ class _AddBookSheetState extends State<_AddBookSheet> {
                 Padding(padding: const EdgeInsets.fromLTRB(22, 18, 22, 8),
                   child: TextField(controller: _titleCtrl, autofocus: true,
                     style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: cocoa),
-                    decoration: InputDecoration(hintText: 'Book title',
+                    decoration: InputDecoration(hintText: t('Book title', 'Название книги'),
                       hintStyle: GoogleFonts.inter(fontSize: 15, color: cocoa.withAlpha(100)),
                       border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
                     onSubmitted: (_) => _submit())),
@@ -310,13 +311,13 @@ class _AddBookSheetState extends State<_AddBookSheet> {
                 Padding(padding: const EdgeInsets.fromLTRB(22, 12, 22, 8),
                   child: TextField(controller: _authorCtrl,
                     style: GoogleFonts.inter(fontSize: 13, color: cocoa.withAlpha(180)),
-                    decoration: InputDecoration(hintText: 'Author (optional)',
+                    decoration: InputDecoration(hintText: t('Author (optional)', 'Автор (необязательно)'),
                       hintStyle: GoogleFonts.inter(fontSize: 13, color: cocoa.withAlpha(100)),
                       border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero))),
                 Divider(height: 1, thickness: 1, color: divider),
                 Padding(padding: const EdgeInsets.all(18),
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text('PAGES:', style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w700,
+                    Text(t('PAGES:', 'СТРАНИЦ:'), style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w700,
                       letterSpacing: 1.5, color: cocoa.withAlpha(140))),
                     const SizedBox(width: 12),
                     GestureDetector(onTap: _pages > 50 ? () => setState(() => _pages -= 50) : null,
@@ -334,7 +335,7 @@ class _AddBookSheetState extends State<_AddBookSheet> {
                     child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 14),
                       decoration: BoxDecoration(color: AppColors.reading, borderRadius: BorderRadius.circular(22),
                         boxShadow: [BoxShadow(color: AppColors.reading.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))]),
-                      child: Center(child: Text('START READING', style: GoogleFonts.inter(
+                      child: Center(child: Text(t('START READING', 'НАЧАТЬ ЧТЕНИЕ'), style: GoogleFonts.inter(
                         fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: Colors.white)))))),
               ])),
             ),

@@ -8,6 +8,7 @@ import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
+import '../l10n/app_locale.dart';
 
 // ── Screen ───────────────────────────────────────────────────────────────────
 
@@ -97,23 +98,23 @@ class _HabitsScreenState extends State<HabitsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFFF5F2EB),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Note', style: GoogleFonts.playfairDisplay(
+        title: Text(t('Note', 'Заметка'), style: GoogleFonts.playfairDisplay(
           fontSize: 18, fontWeight: FontWeight.w700, color: const Color(0xFF2A2318))),
         content: TextField(
           controller: ctrl, maxLines: 3, autofocus: true,
           style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2A2318)),
           decoration: InputDecoration(
-            hintText: 'How did it go?',
+            hintText: t('How did it go?', 'Как прошло?'),
             hintStyle: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF8A8070)),
             border: InputBorder.none)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF8A8070)))),
+            child: Text(t('Cancel', 'Отмена'), style: GoogleFonts.inter(color: const Color(0xFF8A8070)))),
           TextButton(onPressed: () {
             habit.notes[Habit.dateKeyPublic(DateTime.now())] = ctrl.text.trim();
             Navigator.pop(ctx);
             setState(() {});
-          }, child: Text('Save', style: GoogleFonts.inter(
+          }, child: Text(t('Save', 'Сохранить'), style: GoogleFonts.inter(
             fontWeight: FontWeight.w700, color: AppColors.habits))),
         ],
       ),
@@ -128,9 +129,9 @@ class _HabitsScreenState extends State<HabitsScreen> {
     setState(() {});
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Deleted "${removed.title}"'),
+      content: Text(t('Deleted "${removed.title}"', 'Удалено "${removed.title}"')),
       duration: const Duration(seconds: 3),
-      action: SnackBarAction(label: 'UNDO', onPressed: () {
+      action: SnackBarAction(label: t('UNDO', 'ОТМЕНИТЬ'), onPressed: () {
         setState(() => HabitStore.habits.insert(idx.clamp(0, HabitStore.habits.length), removed));
       }),
     ));
@@ -218,7 +219,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                     children: [
                       Column(
                         children: [
-                          Text('HABITS',
+                          Text(t('HABITS', 'ПРИВЫЧКИ'),
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 26, fontWeight: FontWeight.w800,
                               letterSpacing: 3,
@@ -238,7 +239,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                                       ? AppColors.success
                                       : Colors.white.withAlpha(140)),
                                 const SizedBox(width: 5),
-                                Text('$doneToday / $total today',
+                                Text('$doneToday / $total ${t('today', 'сегодня')}',
                                   style: GoogleFonts.inter(
                                     fontSize: 11, fontWeight: FontWeight.w700,
                                     color: doneToday == total
@@ -292,19 +293,19 @@ class _HabitsScreenState extends State<HabitsScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(children: [
                     _InlineStat(icon: Icons.check_circle_rounded,
-                      value: '$doneToday/$total', label: 'TODAY',
+                      value: '$doneToday/$total', label: t('TODAY', 'СЕГОДНЯ'),
                       color: doneToday == total && total > 0
                           ? AppColors.success : AppColors.habits),
                     const SizedBox(width: 8),
                     _InlineStat(icon: Icons.local_fire_department_rounded,
                       value: '${GameState.instance.streak}',
-                      label: 'STREAK',
+                      label: t('STREAK', 'СЕРИЯ'),
                       color: GameState.instance.streak >= 7
                           ? AppColors.action : const Color(0xFFF59E0B)),
                     const SizedBox(width: 8),
                     _InlineStat(icon: Icons.star_rounded,
                       value: '+${doneToday * 15}',
-                      label: 'XP TODAY', color: AppColors.gold),
+                      label: t('XP TODAY', 'XP СЕГОДНЯ'), color: AppColors.gold),
                   ]),
                 ),
 
@@ -337,8 +338,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
                       ]),
                       const SizedBox(height: 4),
                       Text(doneToday == total && total > 0
-                          ? 'ALL DONE TODAY!'
-                          : '$doneToday of $total completed',
+                          ? t('ALL DONE TODAY!', 'ВСЁ СДЕЛАНО СЕГОДНЯ!')
+                          : '$doneToday ${t('of', 'из')} $total ${t('completed', 'выполнено')}',
                         style: GoogleFonts.jetBrainsMono(
                           fontSize: 8, fontWeight: FontWeight.w600,
                           color: doneToday == total && total > 0
@@ -357,20 +358,20 @@ class _HabitsScreenState extends State<HabitsScreen> {
                           children: [
                             // Morning routine
                             if (morning.isNotEmpty) ...[
-                              _RoutineHeader(icon: Icons.wb_sunny_rounded, label: 'MORNING'),
+                              _RoutineHeader(icon: Icons.wb_sunny_rounded, label: t('MORNING', 'УТРО')),
                               ...morning.asMap().entries.map((e) =>
                                 _staggered(e.key, _dismissible(e.value))),
                             ],
                             // Evening routine
                             if (evening.isNotEmpty) ...[
-                              _RoutineHeader(icon: Icons.nightlight_round, label: 'EVENING'),
+                              _RoutineHeader(icon: Icons.nightlight_round, label: t('EVENING', 'ВЕЧЕР')),
                               ...evening.asMap().entries.map((e) =>
                                 _staggered(morning.length + e.key, _dismissible(e.value))),
                             ],
                             // Anytime
                             if (anytime.isNotEmpty) ...[
                               if (morning.isNotEmpty || evening.isNotEmpty)
-                                _RoutineHeader(icon: Icons.access_time_rounded, label: 'ANYTIME'),
+                                _RoutineHeader(icon: Icons.access_time_rounded, label: t('ANYTIME', 'ЛЮБОЕ ВРЕМЯ')),
                               ...anytime.asMap().entries.map((e) =>
                                 _staggered(morning.length + evening.length + e.key,
                                     _dismissible(e.value))),
@@ -423,7 +424,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                                 color: Colors.white, size: 20),
                           ),
                           const SizedBox(width: 12),
-                          Text('NEW  HABIT',
+                          Text(t('NEW  HABIT', 'НОВАЯ  ПРИВЫЧКА'),
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 14, fontWeight: FontWeight.w700,
                               letterSpacing: 2,
@@ -546,13 +547,13 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
   void dispose() { _ring.dispose(); super.dispose(); }
 
   String get _motivationMsg {
-    if (widget.total == 0) return 'ADD YOUR FIRST HABIT. BEGIN.';
+    if (widget.total == 0) return t('ADD YOUR FIRST HABIT. BEGIN.', 'ДОБАВЬ ПЕРВУЮ ПРИВЫЧКУ. НАЧНИ.');
     final p = widget.doneToday / widget.total;
-    if (p >= 1.0) return 'ALL HABITS DONE. LEGENDARY.';
-    if (p >= 0.7) return 'ALMOST THERE. FINISH STRONG.';
-    if (p >= 0.4) return 'GOOD MOMENTUM. KEEP GOING.';
-    if (p > 0)    return 'STARTED. DON\'T STOP NOW.';
-    return 'NEW DAY. TIME TO GRIND.';
+    if (p >= 1.0) return t('ALL HABITS DONE. LEGENDARY.', 'ВСЕ ПРИВЫЧКИ ВЫПОЛНЕНЫ. ЛЕГЕНДА.');
+    if (p >= 0.7) return t('ALMOST THERE. FINISH STRONG.', 'ПОЧТИ ГОТОВО. ФИНИШИРУЙ СИЛЬНО.');
+    if (p >= 0.4) return t('GOOD MOMENTUM. KEEP GOING.', 'ХОРОШИЙ ТЕМП. ПРОДОЛЖАЙ.');
+    if (p > 0)    return t('STARTED. DON\'T STOP NOW.', 'НАЧАЛО ПОЛОЖЕНО. НЕ ОСТАНАВЛИВАЙСЯ.');
+    return t('NEW DAY. TIME TO GRIND.', 'НОВЫЙ ДЕНЬ. ВРЕМЯ ДЕЙСТВОВАТЬ.');
   }
 
   int get _bestStreak {
@@ -628,7 +629,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                                   fontSize: 16, fontWeight: FontWeight.w700,
                                   color: const Color(0xFF2A2318),
                                 )),
-                              Text(allDone ? 'DONE' : 'TODAY',
+                              Text(allDone ? t('DONE', 'ГОТОВО') : t('TODAY', 'СЕГОДНЯ'),
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 7, fontWeight: FontWeight.w600,
                                   letterSpacing: 1.5,
@@ -656,14 +657,14 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                         children: [
                           _MiniStat(
                             icon: Icons.star_rounded,
-                            label: 'TODAY XP',
+                            label: t('TODAY XP', 'XP СЕГОДНЯ'),
                             value: '+$todayXp',
                             color: AppColors.gold,
                           ),
                           const SizedBox(width: 12),
                           _MiniStat(
                             icon: Icons.local_fire_department_rounded,
-                            label: 'BEST STREAK',
+                            label: t('BEST STREAK', 'ЛУЧШАЯ СЕРИЯ'),
                             value: '$_bestStreak',
                             color: AppColors.action,
                           ),
@@ -675,14 +676,14 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                         children: [
                           _MiniStat(
                             icon: Icons.insights_rounded,
-                            label: 'THIS WEEK',
+                            label: t('THIS WEEK', 'ЭТА НЕДЕЛЯ'),
                             value: '$weekPct%',
                             color: AppColors.habits,
                           ),
                           const SizedBox(width: 12),
                           _MiniStat(
                             icon: Icons.repeat_rounded,
-                            label: 'TOTAL',
+                            label: t('TOTAL', 'ВСЕГО'),
                             value: '$_totalWeeklyChecks/${weekMax}',
                             color: const Color(0xFF2A2318),
                           ),
@@ -726,7 +727,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Text('THIS WEEK', style: GoogleFonts.jetBrainsMono(
+                  Text(t('THIS WEEK', 'ЭТА НЕДЕЛЯ'), style: GoogleFonts.jetBrainsMono(
                     fontSize: 8, fontWeight: FontWeight.w700,
                     letterSpacing: 1.5, color: const Color(0xFF8A8070))),
                 ],
@@ -741,7 +742,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                     final monday = now.subtract(Duration(days: now.weekday - 1));
                     final day = monday.add(Duration(days: i));
                     final isToday = day.day == now.day && day.month == now.month;
-                    const dayNames = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                    final dayNames = [t('M','П'), t('T','В'), t('W','С'), t('T','Ч'), t('F','П'), t('S','С'), t('S','В')];
 
                     // Count how many habits were done on this day
                     final key = '${day.year}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';

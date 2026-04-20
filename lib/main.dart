@@ -10,6 +10,7 @@ import 'screens/username_screen.dart';
 import 'services/sync_service.dart';
 import 'widgets/phone_frame.dart';
 import 'firebase_options.dart';
+import 'l10n/app_locale.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -150,6 +151,7 @@ class _SplashGateState extends State<_SplashGate>
   late final Animation<double> _fadeIn;
   late final Animation<double> _fadeOut;
   bool _done = false;
+  bool _langPicked = false;
 
   @override
   void initState() {
@@ -175,6 +177,14 @@ class _SplashGateState extends State<_SplashGate>
 
   @override
   Widget build(BuildContext context) {
+    // Language picker — shown once per session after splash
+    if (_done && !_langPicked) {
+      return _LanguagePicker(onPick: (lang) {
+        AppLocale.instance.setLang(lang);
+        setState(() => _langPicked = true);
+      });
+    }
+
     if (_done && !_OnboardingState.hasSeenOnboarding) {
       return _Onboarding(onComplete: () {
         _OnboardingState.hasSeenOnboarding = true;
@@ -225,6 +235,105 @@ class _SplashGateState extends State<_SplashGate>
   }
 }
 
+// ── Language picker ─────────────────────────────────────────────────────────────
+
+class _LanguagePicker extends StatelessWidget {
+  final ValueChanged<AppLang> onPick;
+  const _LanguagePicker({required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0F),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(flex: 2),
+              // Globe icon
+              Container(
+                width: 80, height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFFFF6B35).withAlpha(18),
+                  border: Border.all(
+                      color: const Color(0xFFFF6B35).withAlpha(60), width: 2),
+                ),
+                child: const Icon(Icons.language_rounded, size: 36,
+                    color: Color(0xFFFF6B35)),
+              ),
+              const SizedBox(height: 24),
+              Text('CHOOSE  LANGUAGE',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 24, fontWeight: FontWeight.w800,
+                  fontStyle: FontStyle.italic,
+                  letterSpacing: 2, color: Colors.white,
+                )),
+              const SizedBox(height: 6),
+              Text('ВЫБЕРИТЕ  ЯЗЫК',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 16, fontWeight: FontWeight.w600,
+                  fontStyle: FontStyle.italic,
+                  letterSpacing: 2, color: Colors.white.withAlpha(100),
+                )),
+              const SizedBox(height: 48),
+              // English button
+              _langButton(
+                label: 'ENGLISH',
+                flag: '🇬🇧',
+                onTap: () => onPick(AppLang.en),
+              ),
+              const SizedBox(height: 16),
+              // Russian button
+              _langButton(
+                label: 'РУССКИЙ',
+                flag: '🇷🇺',
+                onTap: () => onPick(AppLang.ru),
+              ),
+              const Spacer(flex: 3),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _langButton({
+    required String label,
+    required String flag,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white.withAlpha(8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withAlpha(30)),
+        ),
+        child: Row(
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 28)),
+            const SizedBox(width: 16),
+            Text(label,
+              style: GoogleFonts.outfit(
+                fontSize: 18, fontWeight: FontWeight.w700,
+                letterSpacing: 3, color: Colors.white,
+              )),
+            const Spacer(),
+            Icon(Icons.arrow_forward_rounded,
+                color: Colors.white.withAlpha(80), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // ── Onboarding ───────────────────────────────────────────────────────────────
 
 class _OnboardingState {
@@ -241,21 +350,24 @@ class _Onboarding extends StatefulWidget {
 class __OnboardingState extends State<_Onboarding> {
   int _page = 0;
 
-  static const _steps = [
+  static List<({IconData icon, String title, String sub})> get _steps => [
     (
       icon: Icons.explore_rounded,
-      title: 'SPIN THE WHEEL',
-      sub: 'Swipe to explore sections.\nTasks, Habits, Workouts and more.',
+      title: t('SPIN THE WHEEL', 'КРУТИ КОЛЕСО'),
+      sub: t('Swipe to explore sections.\nTasks, Habits, Workouts and more.',
+             'Свайпни чтобы исследовать разделы.\nЗадачи, Привычки, Тренировки и другое.'),
     ),
     (
       icon: Icons.add_circle_outline_rounded,
-      title: 'CREATE MISSIONS',
-      sub: 'Add tasks and habits.\nEach completion earns XP.',
+      title: t('CREATE MISSIONS', 'СОЗДАВАЙ МИССИИ'),
+      sub: t('Add tasks and habits.\nEach completion earns XP.',
+             'Добавляй задачи и привычки.\nКаждое выполнение приносит XP.'),
     ),
     (
       icon: Icons.emoji_events_rounded,
-      title: 'LEVEL UP',
-      sub: 'Earn XP, build streaks,\nunlock achievements. No tomorrow.',
+      title: t('LEVEL UP', 'ПОВЫШАЙ УРОВЕНЬ'),
+      sub: t('Earn XP, build streaks,\nunlock achievements. No tomorrow.',
+             'Зарабатывай XP, строй серии,\nоткрывай достижения. Нет завтра.'),
     ),
   ];
 
@@ -340,7 +452,7 @@ class __OnboardingState extends State<_Onboarding> {
                     )],
                   ),
                   child: Center(
-                    child: Text(isLast ? 'BEGIN' : 'NEXT',
+                    child: Text(isLast ? t('BEGIN', 'НАЧАТЬ') : t('NEXT', 'ДАЛЕЕ'),
                       style: GoogleFonts.inter(
                         fontSize: 14, fontWeight: FontWeight.w800,
                         letterSpacing: 2, color: Colors.white,
@@ -352,7 +464,7 @@ class __OnboardingState extends State<_Onboarding> {
               if (!isLast)
                 GestureDetector(
                   onTap: widget.onComplete,
-                  child: Text('SKIP',
+                  child: Text(t('SKIP', 'ПРОПУСТИТЬ'),
                     style: GoogleFonts.inter(
                       fontSize: 12, fontWeight: FontWeight.w600,
                       letterSpacing: 2, color: Colors.white.withAlpha(80),

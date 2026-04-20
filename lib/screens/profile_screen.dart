@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../l10n/app_locale.dart';
 import '../models/game_state.dart';
 import '../models/habit.dart';
 import '../theme/app_colors.dart';
@@ -17,21 +18,21 @@ void _confirmSignOut(BuildContext context) async {
     context: context,
     builder: (ctx) => AlertDialog(
       backgroundColor: const Color(0xFF1C1C27),
-      title: Text('Sign out?',
+      title: Text(t('Sign out?', 'Выйти?'),
         style: GoogleFonts.inter(
           fontSize: 16, fontWeight: FontWeight.w700,
           color: Colors.white)),
-      content: Text('You can sign back in anytime — your data stays in the cloud.',
+      content: Text(t('You can sign back in anytime — your data stays in the cloud.', 'Вы можете войти снова в любое время — данные сохраняются в облаке.'),
         style: GoogleFonts.inter(
           fontSize: 13, color: Colors.white.withAlpha(180))),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: Text('Cancel',
+          child: Text(t('Cancel', 'Отмена'),
             style: GoogleFonts.inter(color: Colors.white.withAlpha(160)))),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text('Sign out',
+          child: Text(t('Sign out', 'Выйти'),
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w700,
               color: const Color(0xFFDC2626)))),
@@ -77,7 +78,7 @@ class ProfileScreen extends StatelessWidget {
                     Text(
                       (gs.username?.isNotEmpty ?? false)
                         ? gs.username!.toUpperCase()
-                        : 'PROFILE',
+                        : t('PROFILE', 'ПРОФИЛЬ'),
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 26, fontWeight: FontWeight.w800,
                         letterSpacing: 3, color: const Color(0xFFF0E6D3))),
@@ -188,13 +189,13 @@ class ProfileScreen extends StatelessWidget {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       const Icon(Icons.shield_rounded, size: 14, color: Color(0xFF1A0E08)),
                       const SizedBox(width: 5),
-                      Text('LEVEL ${gs.level}', style: GoogleFonts.jetBrainsMono(
+                      Text('${t('LEVEL', 'УРОВЕНЬ')} ${gs.level}', style: GoogleFonts.jetBrainsMono(
                         fontSize: 11, fontWeight: FontWeight.w700,
                         letterSpacing: 1.5, color: const Color(0xFF1A0E08))),
                     ]),
                   ),
                   const SizedBox(height: 8),
-                  Text('${gs.xpInLevel} / ${gs.xpForNextLevel} XP to next level',
+                  Text('${gs.xpInLevel} / ${gs.xpForNextLevel} ${t('XP to next level', 'XP до следующего уровня')}',
                     style: GoogleFonts.jetBrainsMono(
                       fontSize: 10, fontWeight: FontWeight.w500,
                       color: Colors.white.withAlpha(120))),
@@ -204,45 +205,45 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 28),
 
               // ── Stats Grid ─────────────────────────────
-              _SectionTitle(label: 'STATISTICS'),
+              _SectionTitle(label: t('STATISTICS', 'СТАТИСТИКА')),
               const SizedBox(height: 12),
               Row(children: [
-                _StatCard(icon: Icons.star_rounded, label: 'TOTAL XP',
+                _StatCard(icon: Icons.star_rounded, label: t('TOTAL XP', 'ВСЕГО XP'),
                   value: '${gs.totalXp}', color: AppColors.gold),
                 const SizedBox(width: 10),
-                _StatCard(icon: Icons.local_fire_department_rounded, label: 'BEST STREAK',
-                  value: '${gs.bestStreak}d', color: AppColors.action),
+                _StatCard(icon: Icons.local_fire_department_rounded, label: t('BEST STREAK', 'ЛУЧШАЯ СЕРИЯ'),
+                  value: '${gs.bestStreak}${t('d', 'д')}', color: AppColors.action),
               ]),
               const SizedBox(height: 10),
               Row(children: [
-                _StatCard(icon: Icons.check_circle_rounded, label: 'COMPLETIONS',
+                _StatCard(icon: Icons.check_circle_rounded, label: t('COMPLETIONS', 'ВЫПОЛНЕНО'),
                   value: '${gs.totalCompletions}', color: AppColors.success),
                 const SizedBox(width: 10),
-                _StatCard(icon: Icons.local_fire_department_rounded, label: 'CURRENT STREAK',
-                  value: '${gs.streak}d', color: const Color(0xFFF59E0B)),
+                _StatCard(icon: Icons.local_fire_department_rounded, label: t('CURRENT STREAK', 'ТЕКУЩАЯ СЕРИЯ'),
+                  value: '${gs.streak}${t('d', 'д')}', color: const Color(0xFFF59E0B)),
               ]),
               const SizedBox(height: 10),
               Row(children: [
-                _StatCard(icon: Icons.task_alt_rounded, label: 'TASKS',
+                _StatCard(icon: Icons.task_alt_rounded, label: t('TASKS', 'ЗАДАЧИ'),
                   value: '$doneTasks / $totalTasks', color: AppColors.tasks),
                 const SizedBox(width: 10),
-                _StatCard(icon: Icons.loop_rounded, label: 'HABITS TODAY',
+                _StatCard(icon: Icons.loop_rounded, label: t('HABITS TODAY', 'ПРИВЫЧКИ СЕГОДНЯ'),
                   value: '$habitsToday / $totalHabits', color: AppColors.habits),
               ]),
 
               const SizedBox(height: 28),
 
               // ── Next Level Preview ─────────────────────
-              _SectionTitle(label: 'LEVEL REWARDS'),
+              _SectionTitle(label: t('LEVEL REWARDS', 'НАГРАДЫ ЗА УРОВНИ')),
               const SizedBox(height: 12),
               _LevelRewardsPreview(currentLevel: gs.level),
 
               const SizedBox(height: 28),
 
               // ── Achievements ───────────────────────────
-              _SectionTitle(label: 'ACHIEVEMENTS'),
+              _SectionTitle(label: t('ACHIEVEMENTS', 'ДОСТИЖЕНИЯ')),
               const SizedBox(height: 4),
-              Text('${gs.unlockedBadges.length} / ${GameState.badgeInfo.length} unlocked',
+              Text('${gs.unlockedBadges.length} / ${GameState.badgeInfo.length} ${t('unlocked', 'открыто')}',
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: 9, fontWeight: FontWeight.w500,
                   color: Colors.white.withAlpha(100))),
@@ -263,23 +264,23 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 28),
 
               // ── Activity Summary ───────────────────────
-              _SectionTitle(label: 'THIS WEEK'),
+              _SectionTitle(label: t('THIS WEEK', 'ЭТА НЕДЕЛЯ')),
               const SizedBox(height: 12),
               _WeeklyActivity(),
 
               const SizedBox(height: 28),
 
               // ── Milestones ─────────────────────────────
-              _SectionTitle(label: 'MILESTONES'),
+              _SectionTitle(label: t('MILESTONES', 'ВЕХИ')),
               const SizedBox(height: 12),
-              _MilestoneRow(label: 'First Task', target: 1, current: gs.totalCompletions, icon: Icons.flag_rounded),
-              _MilestoneRow(label: '10 Completions', target: 10, current: gs.totalCompletions, icon: Icons.trending_up_rounded),
-              _MilestoneRow(label: '50 Completions', target: 50, current: gs.totalCompletions, icon: Icons.rocket_launch_rounded),
+              _MilestoneRow(label: t('First Task', 'Первая задача'), target: 1, current: gs.totalCompletions, icon: Icons.flag_rounded),
+              _MilestoneRow(label: t('10 Completions', '10 выполнений'), target: 10, current: gs.totalCompletions, icon: Icons.trending_up_rounded),
+              _MilestoneRow(label: t('50 Completions', '50 выполнений'), target: 50, current: gs.totalCompletions, icon: Icons.rocket_launch_rounded),
               _MilestoneRow(label: '100 XP', target: 100, current: gs.totalXp, icon: Icons.star_rounded),
               _MilestoneRow(label: '500 XP', target: 500, current: gs.totalXp, icon: Icons.star_rounded),
-              _MilestoneRow(label: '7-Day Streak', target: 7, current: gs.bestStreak, icon: Icons.local_fire_department_rounded),
-              _MilestoneRow(label: 'Level 5', target: 5, current: gs.level, icon: Icons.shield_rounded),
-              _MilestoneRow(label: 'Level 10', target: 10, current: gs.level, icon: Icons.shield_rounded),
+              _MilestoneRow(label: t('7-Day Streak', '7-дневная серия'), target: 7, current: gs.bestStreak, icon: Icons.local_fire_department_rounded),
+              _MilestoneRow(label: '${t('Level', 'Уровень')} 5', target: 5, current: gs.level, icon: Icons.shield_rounded),
+              _MilestoneRow(label: '${t('Level', 'Уровень')} 10', target: 10, current: gs.level, icon: Icons.shield_rounded),
             ],
           ),
         ),
@@ -431,7 +432,7 @@ class _WeeklyActivity extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
-    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    final dayNames = [t('MON', 'ПН'), t('TUE', 'ВТ'), t('WED', 'СР'), t('THU', 'ЧТ'), t('FRI', 'ПТ'), t('SAT', 'СБ'), t('SUN', 'ВС')];
 
     return Container(
       padding: const EdgeInsets.all(16),
