@@ -81,6 +81,49 @@ class SettingsScreen extends StatelessWidget {
                       ),
                     ),
 
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () {
+                        final next = AppLocale.instance.isRu ? AppLang.en : AppLang.ru;
+                        AppLocale.instance.setLang(next);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: card,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: border),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.language_rounded, size: 18, color: sub),
+                            const SizedBox(width: 12),
+                            Text(t('LANGUAGE', 'ЯЗЫК'),
+                              style: GoogleFonts.outfit(
+                                fontSize: 13, fontWeight: FontWeight.w700,
+                                letterSpacing: 2, color: text,
+                              )),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withAlpha(20),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.primary.withAlpha(60)),
+                              ),
+                              child: Text(
+                                AppLocale.instance.isRu ? '🇷🇺  РУС' : '🇬🇧  ENG',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 11, fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 32),
 
                     // ── Support ──────────────────────────────────────────────

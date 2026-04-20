@@ -667,13 +667,17 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ],
                     ),
-                    child: Text(
-                      '${t('OPEN', 'ОТКРЫТЬ')}  ${section.label}',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 2,
-                        color: Colors.white,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${t('OPEN', 'ОТКРЫТЬ')}  ${section.label}',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
+                          color: Colors.white,
+                        ),
+                        maxLines: 1,
                       ),
                     ),
                   ),
@@ -728,25 +732,39 @@ class _SectionLabel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        Text(
-          section.label,
-          style: GoogleFonts.playfairDisplay(
-            fontSize: style.fontSize,
-            fontWeight: FontWeight.w900,
-            letterSpacing: style.letterSpacing,
-            fontStyle: style.italic ? FontStyle.italic : FontStyle.normal,
-            color: Colors.white,
-            height: 1,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              section.label,
+              style: GoogleFonts.playfairDisplay(
+                fontSize: style.fontSize,
+                fontWeight: FontWeight.w900,
+                letterSpacing: style.letterSpacing,
+                fontStyle: style.italic ? FontStyle.italic : FontStyle.normal,
+                color: Colors.white,
+                height: 1,
+              ),
+              maxLines: 1,
+            ),
           ),
         ),
         const SizedBox(height: 8),
-        Text(
-          section.description.toUpperCase(),
-          style: GoogleFonts.outfit(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            letterSpacing: 2,
-            color: Colors.white.withAlpha(160),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              section.description.toUpperCase(),
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 2,
+                color: Colors.white.withAlpha(160),
+              ),
+              maxLines: 1,
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -758,13 +776,17 @@ class _SectionLabel extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: section.color.withAlpha(120)),
             ),
-            child: Text(
-              style.badge!,
-              style: GoogleFonts.outfit(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
-                color: Colors.white.withAlpha(200),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                style.badge!,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                  color: Colors.white.withAlpha(200),
+                ),
+                maxLines: 1,
               ),
             ),
           ),
