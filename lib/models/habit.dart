@@ -125,6 +125,32 @@ class Habit {
     return count;
   }
 
+  /// Number of days in the last 7 that are actually scheduled
+  /// (if no schedule is set, all 7 are scheduled).
+  int get scheduledInWeek {
+    if (scheduleDays.isEmpty) return 7;
+    final now = DateTime.now();
+    int n = 0;
+    for (int i = 0; i < 7; i++) {
+      final d = now.subtract(Duration(days: i));
+      if (scheduleDays.contains(d.weekday)) n++;
+    }
+    return n;
+  }
+
+  /// Completions in the last 7 days that landed on a scheduled day.
+  int get weeklyScheduledDone {
+    if (scheduleDays.isEmpty) return weeklyCount;
+    final now = DateTime.now();
+    int n = 0;
+    for (int i = 0; i < 7; i++) {
+      final d = now.subtract(Duration(days: i));
+      if (scheduleDays.contains(d.weekday) &&
+          completedDates.contains(_dateKey(d))) n++;
+    }
+    return n;
+  }
+
   int get xpPerCheck => 15;
 
   Map<String, dynamic> toJson() => {

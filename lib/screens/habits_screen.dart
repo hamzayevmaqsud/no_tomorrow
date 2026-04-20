@@ -1198,7 +1198,9 @@ class _HabitCard extends StatelessWidget {
     final done = habit.isDoneToday();
     final color = habitCatColor(habit.category);
     final streak = habit.streak;
-    final weekly = habit.weeklyCount;
+    final hasSchedule = habit.scheduleDays.isNotEmpty;
+    final weeklyDone = hasSchedule ? habit.weeklyScheduledDone : habit.weeklyCount;
+    final weeklyTotal = habit.scheduledInWeek;
 
     const cardBg = Color(0xFFF5F2EB);
     const textCol = Color(0xFF2A2318);
@@ -1283,31 +1285,53 @@ class _HabitCard extends StatelessWidget {
                           // Weekly progress bar + streak
                           Row(
                             children: [
-                              // 7-day bar
+                              // 7-day bar (scheduled days stand out)
                               ...List.generate(7, (i) {
                                 final d = DateTime.now().subtract(
                                     Duration(days: 6 - i));
                                 final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
                                 final filled = habit.completedDates.contains(key);
                                 final isToday = i == 6;
-                                return Container(
-                                  width: 16, height: 6,
-                                  margin: const EdgeInsets.only(right: 3),
-                                  decoration: BoxDecoration(
-                                    color: filled
-                                        ? color
-                                        : textCol.withAlpha(18),
-                                    borderRadius: BorderRadius.circular(2),
-                                    border: isToday && !filled
-                                        ? Border.all(
-                                            color: color.withAlpha(80),
-                                            width: 0.8)
-                                        : null,
+                                final scheduled = !hasSchedule ||
+                                    habit.scheduleDays.contains(d.weekday);
+                                const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 3),
+                                  child: Column(mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 16,
+                                        height: scheduled ? 6 : 3,
+                                        decoration: BoxDecoration(
+                                          color: filled
+                                              ? color
+                                              : scheduled
+                                                  ? textCol.withAlpha(22)
+                                                  : textCol.withAlpha(8),
+                                          borderRadius: BorderRadius.circular(2),
+                                          border: isToday && !filled && scheduled
+                                              ? Border.all(
+                                                  color: color.withAlpha(120),
+                                                  width: 0.8)
+                                              : null,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(letters[d.weekday - 1],
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 7,
+                                          fontWeight: scheduled
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                          color: scheduled
+                                              ? (isToday ? color : subCol)
+                                              : subCol.withAlpha(70))),
+                                    ],
                                   ),
                                 );
                               }),
                               const SizedBox(width: 6),
-                              Text('$weekly/7',
+                              Text('$weeklyDone/$weeklyTotal',
                                 style: GoogleFonts.jetBrainsMono(
                                   fontSize: 9, fontWeight: FontWeight.w600,
                                   color: subCol)),
