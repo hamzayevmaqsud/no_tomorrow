@@ -11,6 +11,17 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v1.9',
+      date: '2026-04-20',
+      title: t('Routine Slots — Vertical List', 'Слоты распорядка — вертикальный список'),
+      items: [
+        t('Routine picker in Add and Edit habit sheets is now a full-width vertical list — one slot per row with a check mark on the selected row',
+          'Выбор распорядка в листах добавления и редактирования привычки теперь вертикальный список на всю ширину — один слот на строку с галочкой на выбранном'),
+        t('Bigger icons and text (15px / 11px) for easier tapping on phones',
+          'Иконки и текст больше (15px / 11px) — удобнее нажимать на телефонах'),
+      ],
+    ),
+    _PatchNote(
       version: 'v1.8',
       date: '2026-04-20',
       title: t('Habits Polish & Editing', 'Привычки: полировка и редактирование'),

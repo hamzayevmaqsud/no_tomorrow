@@ -1902,18 +1902,18 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                               letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                           ]),
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 6, runSpacing: 6,
-                            children: [
-                              for (final s in kRoutineSlots)
-                                _RoutineChip(
-                                  label: t(s.labelEn, s.labelRu),
-                                  icon: s.icon,
-                                  active: _routine == s.key,
-                                  onTap: () => setState(() =>
-                                    _routine = _routine == s.key ? '' : s.key)),
+                          Column(children: [
+                            for (final s in kRoutineSlots) ...[
+                              _RoutineChip(
+                                label: t(s.labelEn, s.labelRu),
+                                icon: s.icon,
+                                active: _routine == s.key,
+                                fullWidth: true,
+                                onTap: () => setState(() =>
+                                  _routine = _routine == s.key ? '' : s.key)),
+                              const SizedBox(height: 6),
                             ],
-                          ),
+                          ]),
                         ],
                       ),
                     ),
@@ -2224,46 +2224,53 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
                       ),
                     ),
 
-                    // Routine slot
+                    // Routine slot — full-width vertical list
                     Padding(
                       padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
-                      child: Wrap(spacing: 6, runSpacing: 6, children: [
+                      child: Column(children: [
                         for (final entry in [
                           (slot: '', label: t('ANYTIME', 'ЛЮБОЕ'), icon: Icons.all_inclusive_rounded),
                           ...kRoutineSlots.map((s) =>
                             (slot: s.key, label: t(s.labelEn, s.labelRu), icon: s.icon)),
-                        ])
+                        ]) ...[
                           GestureDetector(
                             onTap: () => setState(() => _routine = entry.slot),
                             child: Container(
+                              width: double.infinity,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 8),
+                                  horizontal: 14, vertical: 12),
                               decoration: BoxDecoration(
                                 color: _routine == entry.slot
                                   ? AppColors.habits.withAlpha(30)
                                   : _kRowBg,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: _routine == entry.slot
                                     ? AppColors.habits
                                     : _kDivider,
                                   width: _routine == entry.slot ? 1.4 : 1)),
-                              child: Row(mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(entry.icon, size: 13,
+                              child: Row(children: [
+                                Icon(entry.icon, size: 15,
+                                  color: _routine == entry.slot
+                                    ? AppColors.habits
+                                    : _kCocoa.withAlpha(140)),
+                                const SizedBox(width: 10),
+                                Text(entry.label,
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 11, fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.8,
                                     color: _routine == entry.slot
                                       ? AppColors.habits
-                                      : _kCocoa.withAlpha(140)),
-                                  const SizedBox(width: 6),
-                                  Text(entry.label,
-                                    style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 9, fontWeight: FontWeight.w700,
-                                      color: _routine == entry.slot
-                                        ? AppColors.habits
-                                        : _kCocoa.withAlpha(140))),
-                                ]),
-                              ),
+                                      : _kCocoa.withAlpha(140))),
+                                const Spacer(),
+                                if (_routine == entry.slot)
+                                  Icon(Icons.check_rounded, size: 14,
+                                    color: AppColors.habits),
+                              ]),
                             ),
+                          ),
+                          const SizedBox(height: 6),
+                        ],
                       ]),
                     ),
 
@@ -2646,8 +2653,12 @@ class _RoutineChip extends StatelessWidget {
   final IconData icon;
   final bool active;
   final VoidCallback onTap;
-  const _RoutineChip({required this.label, required this.icon,
-    required this.active, required this.onTap});
+  final bool fullWidth;
+  const _RoutineChip({
+    required this.label, required this.icon,
+    required this.active, required this.onTap,
+    this.fullWidth = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2655,25 +2666,40 @@ class _RoutineChip extends StatelessWidget {
     const divider = Color(0xFFDDD8CB);
     const rowBg = Color(0xFFEFEBE0);
 
+    final content = AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: EdgeInsets.symmetric(
+        horizontal: 14, vertical: fullWidth ? 12 : 8),
+      decoration: BoxDecoration(
+        color: active ? AppColors.habits.withAlpha(20) : rowBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: active ? AppColors.habits.withAlpha(120) : divider),
+      ),
+      child: Row(
+        mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          Icon(icon, size: fullWidth ? 15 : 13,
+            color: active ? AppColors.habits : cocoa.withAlpha(100)),
+          const SizedBox(width: 10),
+          Text(label, style: GoogleFonts.jetBrainsMono(
+            fontSize: fullWidth ? 11 : 9, fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+            color: active ? AppColors.habits : cocoa.withAlpha(130))),
+          if (fullWidth) ...[
+            const Spacer(),
+            if (active)
+              Icon(Icons.check_rounded, size: 14, color: AppColors.habits),
+          ],
+        ],
+      ),
+    );
+
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? AppColors.habits.withAlpha(20) : rowBg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: active ? AppColors.habits.withAlpha(120) : divider),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 13, color: active ? AppColors.habits : cocoa.withAlpha(100)),
-          const SizedBox(width: 6),
-          Text(label, style: GoogleFonts.jetBrainsMono(
-            fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.8,
-            color: active ? AppColors.habits : cocoa.withAlpha(130))),
-        ]),
-      ),
+      child: fullWidth
+        ? SizedBox(width: double.infinity, child: content)
+        : content,
     );
   }
 }
