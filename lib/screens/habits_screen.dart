@@ -187,10 +187,19 @@ class _HabitsScreenState extends State<HabitsScreen> {
     final pending = habits.where((h) => !h.isDoneToday()).toList();
     final completed = habits.where((h) => h.isDoneToday()).toList();
 
-    // Group by routine
-    final morning = pending.where((h) => h.routineSlot == 'morning').toList();
-    final evening = pending.where((h) => h.routineSlot == 'evening').toList();
-    final anytime = pending.where((h) => h.routineSlot.isEmpty).toList();
+    // Group pending by routine slot (preserving order of kRoutineSlots)
+    final pendingBySlot = <String, List<Habit>>{
+      for (final s in kRoutineSlots) s.key: <Habit>[],
+    };
+    final anytime = <Habit>[];
+    for (final h in pending) {
+      if (h.routineSlot.isEmpty) {
+        anytime.add(h);
+      } else {
+        (pendingBySlot[h.routineSlot] ??= <Habit>[]).add(h);
+      }
+    }
+    final hasAnyRoutine = pendingBySlot.values.any((l) => l.isNotEmpty);
 
     return SwipeToPop(child: Scaffold(
       backgroundColor: const Color(0xFF0E0A16),
@@ -354,25 +363,26 @@ class _HabitsScreenState extends State<HabitsScreen> {
                       : ListView(
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                           children: [
-                            // Morning routine
-                            if (morning.isNotEmpty) ...[
-                              _RoutineHeader(icon: Icons.wb_sunny_rounded, label: t('MORNING', 'УТРО')),
-                              ...morning.asMap().entries.map((e) =>
-                                _staggered(e.key, _dismissible(e.value))),
-                            ],
-                            // Evening routine
-                            if (evening.isNotEmpty) ...[
-                              _RoutineHeader(icon: Icons.nightlight_round, label: t('EVENING', 'ВЕЧЕР')),
-                              ...evening.asMap().entries.map((e) =>
-                                _staggered(morning.length + e.key, _dismissible(e.value))),
-                            ],
+                            // Grouped by routine slot (in canonical order)
+                            for (final slot in kRoutineSlots)
+                              if ((pendingBySlot[slot.key] ?? const []).isNotEmpty) ...[
+                                _RoutineHeader(icon: slot.icon,
+                                  label: t(slot.labelEn, slot.labelRu)),
+                                ...(pendingBySlot[slot.key]!).asMap().entries.map((e) {
+                                  final before = _slotsBefore(slot.key, pendingBySlot);
+                                  return _staggered(before + e.key, _dismissible(e.value));
+                                }),
+                              ],
                             // Anytime
                             if (anytime.isNotEmpty) ...[
-                              if (morning.isNotEmpty || evening.isNotEmpty)
-                                _RoutineHeader(icon: Icons.access_time_rounded, label: t('ANYTIME', 'ЛЮБОЕ ВРЕМЯ')),
-                              ...anytime.asMap().entries.map((e) =>
-                                _staggered(morning.length + evening.length + e.key,
-                                    _dismissible(e.value))),
+                              if (hasAnyRoutine)
+                                _RoutineHeader(icon: Icons.access_time_rounded,
+                                  label: t('ANYTIME', 'ЛЮБОЕ ВРЕМЯ')),
+                              ...anytime.asMap().entries.map((e) {
+                                final before = pending.length - anytime.length;
+                                return _staggered(before + e.key,
+                                  _dismissible(e.value));
+                              }),
                             ],
                             // Completed
                             if (completed.isNotEmpty) ...[
@@ -439,6 +449,18 @@ class _HabitsScreenState extends State<HabitsScreen> {
         ],
       ),
     ));
+  }
+
+  /// Count of pending habits in slots that come before [slotKey] in
+  /// the canonical kRoutineSlots order — used to stagger animations
+  /// correctly across grouped sections.
+  int _slotsBefore(String slotKey, Map<String, List<Habit>> bySlot) {
+    int n = 0;
+    for (final s in kRoutineSlots) {
+      if (s.key == slotKey) break;
+      n += (bySlot[s.key] ?? const <Habit>[]).length;
+    }
+    return n;
   }
 
   Widget _staggered(int index, Widget child) {
@@ -1265,10 +1287,7 @@ class _HabitCard extends StatelessWidget {
                             ),
                             if (habit.routineSlot.isNotEmpty) ...[
                               const SizedBox(width: 6),
-                              Icon(
-                                habit.routineSlot == 'morning'
-                                  ? Icons.wb_sunny_rounded
-                                  : Icons.nightlight_round,
+                              Icon(routineSlotIcon(habit.routineSlot),
                                 size: 12, color: subCol.withAlpha(130)),
                             ],
                             if (habit.timerMinutes > 0) ...[
@@ -1883,15 +1902,18 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                               letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                           ]),
                           const SizedBox(height: 10),
-                          Row(children: [
-                            _RoutineChip(label: t('MORNING', 'УТРО'), icon: Icons.wb_sunny_rounded,
-                              active: _routine == 'morning',
-                              onTap: () => setState(() => _routine = _routine == 'morning' ? '' : 'morning')),
-                            const SizedBox(width: 8),
-                            _RoutineChip(label: t('EVENING', 'ВЕЧЕР'), icon: Icons.nightlight_round,
-                              active: _routine == 'evening',
-                              onTap: () => setState(() => _routine = _routine == 'evening' ? '' : 'evening')),
-                          ]),
+                          Wrap(
+                            spacing: 6, runSpacing: 6,
+                            children: [
+                              for (final s in kRoutineSlots)
+                                _RoutineChip(
+                                  label: t(s.labelEn, s.labelRu),
+                                  icon: s.icon,
+                                  active: _routine == s.key,
+                                  onTap: () => setState(() =>
+                                    _routine = _routine == s.key ? '' : s.key)),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -2205,45 +2227,43 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
                     // Routine slot
                     Padding(
                       padding: const EdgeInsets.fromLTRB(18, 6, 18, 10),
-                      child: Row(children: [
+                      child: Wrap(spacing: 6, runSpacing: 6, children: [
                         for (final entry in [
-                          (slot: '', label: t('ANYTIME', 'В ЛЮБОЕ'), icon: Icons.all_inclusive_rounded),
-                          (slot: 'morning', label: t('MORNING', 'УТРО'), icon: Icons.wb_sunny_rounded),
-                          (slot: 'evening', label: t('EVENING', 'ВЕЧЕР'), icon: Icons.nights_stay_rounded),
-                        ]) Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2),
-                            child: GestureDetector(
-                              onTap: () => setState(() => _routine = entry.slot),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
+                          (slot: '', label: t('ANYTIME', 'ЛЮБОЕ'), icon: Icons.all_inclusive_rounded),
+                          ...kRoutineSlots.map((s) =>
+                            (slot: s.key, label: t(s.labelEn, s.labelRu), icon: s.icon)),
+                        ])
+                          GestureDetector(
+                            onTap: () => setState(() => _routine = entry.slot),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: _routine == entry.slot
+                                  ? AppColors.habits.withAlpha(30)
+                                  : _kRowBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
                                   color: _routine == entry.slot
-                                    ? AppColors.habits.withAlpha(30)
-                                    : _kRowBg,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: _routine == entry.slot
-                                      ? AppColors.habits
-                                      : _kDivider,
-                                    width: _routine == entry.slot ? 1.4 : 1)),
-                                child: Column(children: [
+                                    ? AppColors.habits
+                                    : _kDivider,
+                                  width: _routine == entry.slot ? 1.4 : 1)),
+                              child: Row(mainAxisSize: MainAxisSize.min,
+                                children: [
                                   Icon(entry.icon, size: 13,
                                     color: _routine == entry.slot
                                       ? AppColors.habits
                                       : _kCocoa.withAlpha(140)),
-                                  const SizedBox(height: 3),
+                                  const SizedBox(width: 6),
                                   Text(entry.label,
                                     style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 7.5, fontWeight: FontWeight.w700,
+                                      fontSize: 9, fontWeight: FontWeight.w700,
                                       color: _routine == entry.slot
                                         ? AppColors.habits
                                         : _kCocoa.withAlpha(140))),
                                 ]),
                               ),
                             ),
-                          ),
-                        ),
                       ]),
                     ),
 
@@ -2565,15 +2585,17 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                   ]),
                   if (h.routineSlot.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    Row(children: [
-                      Icon(h.routineSlot == 'morning'
-                          ? Icons.wb_sunny_rounded : Icons.nightlight_round,
-                        size: 12, color: subCol),
-                      const SizedBox(width: 4),
-                      Text('${h.routineSlot == 'morning' ? t('MORNING', 'УТРО') : t('EVENING', 'ВЕЧЕР')} ${t('ROUTINE', 'РАСПОРЯДОК')}',
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
-                    ]),
+                    Builder(builder: (_) {
+                      final s = findRoutineSlot(h.routineSlot);
+                      return Row(children: [
+                        Icon(s?.icon ?? Icons.access_time_rounded,
+                          size: 12, color: subCol),
+                        const SizedBox(width: 4),
+                        Text('${s != null ? t(s.labelEn, s.labelRu) : ''} ${t('ROUTINE', 'РАСПОРЯДОК')}',
+                          style: GoogleFonts.jetBrainsMono(
+                            fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                      ]);
+                    }),
                   ],
                   const SizedBox(height: 12),
                   Container(

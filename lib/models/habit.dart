@@ -29,6 +29,34 @@ IconData habitCatIcon(HabitCategory c) {
   }
 }
 
+// ── Routine slots ────────────────────────────────────────────────────────────
+
+class RoutineSlot {
+  final String key;
+  final String labelEn;
+  final String labelRu;
+  final IconData icon;
+  const RoutineSlot(this.key, this.labelEn, this.labelRu, this.icon);
+}
+
+const List<RoutineSlot> kRoutineSlots = [
+  RoutineSlot('morning',     'MORNING',      'УТРО',        Icons.wb_sunny_rounded),
+  RoutineSlot('afternoon',   'AFTERNOON',    'ДЕНЬ',        Icons.light_mode_rounded),
+  RoutineSlot('evening',     'EVENING',      'ВЕЧЕР',       Icons.wb_twilight_rounded),
+  RoutineSlot('night',       'NIGHT',        'НОЧЬ',        Icons.nightlight_round),
+  RoutineSlot('beforeSleep', 'BEFORE SLEEP', 'ПЕРЕД СНОМ',  Icons.bedtime_rounded),
+];
+
+RoutineSlot? findRoutineSlot(String key) {
+  for (final s in kRoutineSlots) {
+    if (s.key == key) return s;
+  }
+  return null;
+}
+
+IconData routineSlotIcon(String key) =>
+    findRoutineSlot(key)?.icon ?? Icons.all_inclusive_rounded;
+
 class Habit {
   final String id;
   String title;
