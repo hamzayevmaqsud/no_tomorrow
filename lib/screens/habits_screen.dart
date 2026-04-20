@@ -854,6 +854,7 @@ class _HabitCalendarBar extends StatefulWidget {
 
 class _HabitCalendarBarState extends State<_HabitCalendarBar> {
   late DateTime _month;
+  bool _expanded = false;
 
   @override
   void initState() {
@@ -896,34 +897,74 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
           ],
         ),
         child: Column(children: [
-          // Month nav
+          // Month nav (tap center to expand/collapse)
           Row(children: [
             GestureDetector(
-              onTap: () => setState(() => _month = DateTime(_month.year, _month.month - 1)),
-              child: Icon(Icons.chevron_left_rounded, size: 22, color: textCol)),
-            const Spacer(),
-            Text('${months[_month.month - 1]}  ${_month.year}',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 11, fontWeight: FontWeight.w700,
-                letterSpacing: 2, color: textCol)),
+              onTap: _expanded
+                ? () => setState(() => _month = DateTime(_month.year, _month.month - 1))
+                : null,
+              child: Icon(Icons.chevron_left_rounded, size: 22,
+                color: _expanded ? textCol : textCol.withAlpha(60))),
             const Spacer(),
             GestureDetector(
-              onTap: () => setState(() => _month = DateTime(_month.year, _month.month + 1)),
-              child: Icon(Icons.chevron_right_rounded, size: 22, color: textCol)),
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _expanded = !_expanded);
+              },
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('${months[_month.month - 1]}  ${_month.year}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 11, fontWeight: FontWeight.w700,
+                    letterSpacing: 2, color: textCol)),
+                const SizedBox(width: 6),
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 220),
+                  child: Icon(Icons.expand_more_rounded,
+                    size: 18, color: textCol.withAlpha(160)),
+                ),
+              ]),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: _expanded
+                ? () => setState(() => _month = DateTime(_month.year, _month.month + 1))
+                : null,
+              child: Icon(Icons.chevron_right_rounded, size: 22,
+                color: _expanded ? textCol : textCol.withAlpha(60))),
           ]),
-          const SizedBox(height: 14),
 
-          // Day headers
-          Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
-            Expanded(child: Center(child: Text(d,
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w600,
-                color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
-          const SizedBox(height: 8),
+          // Collapsible body — day headers + grid
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _expanded
+              ? Column(children: [
+                  const SizedBox(height: 14),
+                  // Day headers
+                  Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
+                    Expanded(child: Center(child: Text(d,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 8, fontWeight: FontWeight.w600,
+                        color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
+                  const SizedBox(height: 8),
+                  ..._buildGrid(now, habits, total, subCol, textCol,
+                    firstDay: firstDay, startWeekday: startWeekday, daysInMonth: daysInMonth),
+                ])
+              : const SizedBox.shrink(),
+          ),
+        ]),
+      ),
+    );
+  }
 
-          // Calendar grid — rounded square cells with ring progress
-          // Calendar grid with category pie charts
-          ...List.generate(6, (week) {
+  /// Weeks of the currently shown month (factored out so collapse stays clean).
+  List<Widget> _buildGrid(DateTime now, List<Habit> habits, int total,
+      Color subCol, Color textCol,
+      {required DateTime firstDay, required int startWeekday, required int daysInMonth}) {
+    return List.generate(6, (week) {
             return Row(
               children: List.generate(7, (dayOfWeek) {
                 final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
@@ -996,10 +1037,7 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                 ));
               }),
             );
-          }),
-        ]),
-      ),
-    );
+          });
   }
 }
 
