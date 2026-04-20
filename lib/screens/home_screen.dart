@@ -906,27 +906,20 @@ class _ColorNavBar extends StatelessWidget {
                       : section.color.withAlpha(70),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: isSelected
-                    ? Center(
-                        child: Text(
-                          section.label.length > 4
-                              ? section.label.substring(0, 4)
-                              : section.label,
-                          style: GoogleFonts.outfit(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    : Center(
-                        child: Icon(
-                          section.icon,
-                          size: 12,
-                          color: Colors.white.withAlpha(160),
-                        ),
-                      ),
+                child: Center(
+                  child: AnimatedScale(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    scale: isSelected ? 1.6 : 1.0,
+                    child: Icon(
+                      section.icon,
+                      size: 12,
+                      color: isSelected
+                          ? Colors.white
+                          : Colors.white.withAlpha(160),
+                    ),
+                  ),
+                ),
               ),
             ),
           );

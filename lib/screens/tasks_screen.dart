@@ -905,7 +905,53 @@ class _TasksScreenState extends State<TasksScreen> {
                           ),
                         ),
                       ],
-                      if (!_showSearch) const Spacer(),
+                      if (!_showSearch) ...[
+                        const SizedBox(width: 8),
+                        // Inline filter tabs (ALL / TODAY / PRIORITY)
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: _TaskFilter.values.map((f) {
+                                final active = _filter == f;
+                                final label = switch (f) {
+                                  _TaskFilter.all => t('ALL', 'ВСЕ'),
+                                  _TaskFilter.today => t('TODAY', 'СЕГОДНЯ'),
+                                  _TaskFilter.priority => t('PRIORITY', 'ПРИОРИТЕТ'),
+                                };
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: JellyButton(
+                                    onTap: () => setState(() => _filter = f),
+                                    pressScale: 0.92,
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 200),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: active
+                                          ? vivid.withAlpha(40)
+                                          : Colors.white.withAlpha(14),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: active
+                                            ? vivid.withAlpha(180)
+                                            : Colors.white.withAlpha(40),
+                                          width: 1)),
+                                      child: Text(label,
+                                        style: GoogleFonts.jetBrainsMono(
+                                          fontSize: 9, fontWeight: FontWeight.w700,
+                                          letterSpacing: 1,
+                                          color: active
+                                            ? vivid : Colors.white.withAlpha(180))),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(width: 8),
                       // Sort button
                       PopupMenuButton<_SortMode>(
@@ -937,60 +983,6 @@ class _TasksScreenState extends State<TasksScreen> {
                         ),
                       ),
                     ]),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── Filter tabs ──────────────────────────────────────
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: _TaskFilter.values.map((f) {
-                        final active = _filter == f;
-                        final label = switch (f) {
-                          _TaskFilter.all => t('ALL', 'ВСЕ'),
-                          _TaskFilter.today => t('TODAY', 'СЕГОДНЯ'),
-                          _TaskFilter.priority => t('PRIORITY', 'ПРИОРИТЕТ'),
-                        };
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: JellyButton(
-                            onTap: () => setState(() => _filter = f),
-                            pressScale: 0.92,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: active
-                                    ? vivid.withAlpha(40)
-                                    : Colors.white.withAlpha(14),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: active
-                                      ? vivid.withAlpha(180)
-                                      : Colors.white.withAlpha(40),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Text(
-                                label,
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                  color: active
-                                      ? vivid
-                                      : Colors.white.withAlpha(180),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
                   ),
 
                   const SizedBox(height: 12),
@@ -1209,30 +1201,33 @@ class _CalendarStrip extends StatelessWidget {
                   selectedDate!.month == day.month;
 
               return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onDateSelected(day);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    margin: EdgeInsets.only(right: i < 6 ? 6 : 0),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected || isToday
-                          ? kBeige
-                          : kBeige.withAlpha(45),
-                      borderRadius: BorderRadius.circular(40),
-                      border: Border.all(
-                        color: isSelected
-                            ? kRed
-                            : isToday
-                            ? kBeigeS
-                            : kBeige.withAlpha(65),
-                        width: isSelected ? 1.8 : 1.2,
-                      ),
-                    ),
-                    child: Column(
+                child: Padding(
+                  padding: EdgeInsets.only(right: i < 6 ? 6 : 0),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onDateSelected(day);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isSelected || isToday
+                              ? kBeige
+                              : kBeige.withAlpha(45),
+                          border: Border.all(
+                            color: isSelected
+                                ? kRed
+                                : isToday
+                                ? kBeigeS
+                                : kBeige.withAlpha(65),
+                            width: isSelected ? 1.8 : 1.2,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           dayNames[i],
@@ -1245,11 +1240,11 @@ class _CalendarStrip extends StatelessWidget {
                                 : kBeige.withAlpha(180),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           '${day.day}',
                           style: GoogleFonts.inter(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w700,
                             height: 1,
                             color: isSelected
@@ -1261,6 +1256,8 @@ class _CalendarStrip extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                ),
                   ),
                 ),
               );

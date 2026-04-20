@@ -11,6 +11,19 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v2.0',
+      date: '2026-04-20',
+      title: t('Tasks Header & Home Dock Polish', 'Полировка шапки задач и дока главной'),
+      items: [
+        t('Filter chips (All / Today / Priority) moved inline between the search toggle and sort button — saves a whole row above the calendar',
+          'Чипы фильтра (Все / Сегодня / Приоритет) переехали в одну строку между поиском и сортировкой — экономия целого ряда над календарём'),
+        t('Calendar strip days are now perfect circles (AspectRatio 1:1) instead of ovals',
+          'Дни в календаре теперь идеально круглые (AspectRatio 1:1), а не овальные'),
+        t('Home dock: selected section no longer shows a text label — just enlarges the icon (AnimatedScale x1.6)',
+          'Док главного экрана: выбранная секция больше не показывает текстовый лейбл — только увеличивает иконку (AnimatedScale x1.6)'),
+      ],
+    ),
+    _PatchNote(
       version: 'v1.9',
       date: '2026-04-20',
       title: t('Routine Slots — Vertical List', 'Слоты распорядка — вертикальный список'),
