@@ -5,7 +5,9 @@ import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 
 class PatchNotesScreen extends StatelessWidget {
-  const PatchNotesScreen({super.key});
+  /// If provided, shows a "CONTINUE" button instead of a back arrow.
+  final VoidCallback? onContinue;
+  const PatchNotesScreen({super.key, this.onContinue});
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
@@ -109,19 +111,20 @@ class PatchNotesScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                 child: Row(
                   children: [
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 34, height: 34,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: borderColor),
-                          borderRadius: BorderRadius.circular(8),
+                    if (onContinue == null)
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 34, height: 34,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: borderColor),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(Icons.arrow_back_rounded,
+                              size: 15, color: textColor),
                         ),
-                        child: Icon(Icons.arrow_back_rounded,
-                            size: 15, color: textColor),
                       ),
-                    ),
-                    const SizedBox(width: 14),
+                    if (onContinue == null) const SizedBox(width: 14),
                     Text(t('PATCH NOTES', 'ПАТЧ НОУТЫ'),
                       style: GoogleFonts.inter(
                         fontSize: 20, fontWeight: FontWeight.w700,
@@ -219,6 +222,34 @@ class PatchNotesScreen extends StatelessWidget {
                   },
                 ),
               ),
+
+              // Continue button (only on launch flow)
+              if (onContinue != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  child: GestureDetector(
+                    onTap: onContinue,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.action,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [BoxShadow(
+                          color: AppColors.action.withAlpha(80),
+                          blurRadius: 20, offset: const Offset(0, 6),
+                        )],
+                      ),
+                      child: Center(
+                        child: Text(t('CONTINUE', 'ПРОДОЛЖИТЬ'),
+                          style: GoogleFonts.inter(
+                            fontSize: 14, fontWeight: FontWeight.w800,
+                            letterSpacing: 2, color: Colors.white,
+                          )),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

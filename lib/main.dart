@@ -7,6 +7,7 @@ import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/username_screen.dart';
+import 'screens/patch_notes_screen.dart';
 import 'services/sync_service.dart';
 import 'widgets/phone_frame.dart';
 import 'firebase_options.dart';
@@ -166,6 +167,7 @@ class _SplashGateState extends State<_SplashGate>
   late final Animation<double> _fadeOut;
   bool _done = false;
   bool _langPicked = false;
+  bool _notesSeen = false;
 
   @override
   void initState() {
@@ -197,6 +199,13 @@ class _SplashGateState extends State<_SplashGate>
         AppLocale.instance.setLang(lang);
         setState(() => _langPicked = true);
       });
+    }
+
+    // Patch notes — shown right after language pick
+    if (_done && _langPicked && !_notesSeen) {
+      return PatchNotesScreen(
+        onContinue: () => setState(() => _notesSeen = true),
+      );
     }
 
     if (_done && !_OnboardingState.hasSeenOnboarding) {
