@@ -86,24 +86,24 @@ class _BudgetScreenState extends State<BudgetScreen> {
           )),
         )),
         SafeArea(child: Column(children: [
-          Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: Stack(alignment: Alignment.center, children: [
-              Column(children: [
-                Text(t('BUDGET', 'БЮДЖЕТ'), style: GoogleFonts.playfairDisplay(
-                  fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 3,
-                  color: const Color(0xFFF0E8C8))),
-                const SizedBox(height: 3),
-                Text('\$${remaining.toStringAsFixed(0)} ${t('remaining', 'осталось')}', style: GoogleFonts.inter(
-                  fontSize: 11, fontWeight: FontWeight.w700,
-                  color: remaining > 0 ? Colors.white.withAlpha(160) : AppColors.danger)),
-              ]),
-              Align(alignment: Alignment.centerLeft,
-                child: GestureDetector(onTap: () => Navigator.pop(context),
-                  child: Container(width: 36, height: 36,
-                    decoration: BoxDecoration(color: Colors.white.withAlpha(18),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withAlpha(40))),
-                    child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200))))),
+          Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Row(children: [
+              GestureDetector(onTap: () => Navigator.pop(context),
+                child: Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(18),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withAlpha(40))),
+                  child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200)))),
+              const Spacer(),
+              Text(t('BUDGET', 'БЮДЖЕТ'), style: GoogleFonts.playfairDisplay(
+                fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+                letterSpacing: 2, color: const Color(0xFFF0E8C8))),
+            ])),
+          Padding(padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Text('\$${remaining.toStringAsFixed(0)} ${t('remaining', 'осталось')}', style: GoogleFonts.inter(
+                fontSize: 11, fontWeight: FontWeight.w700,
+                color: remaining > 0 ? Colors.white.withAlpha(160) : AppColors.danger)),
             ])),
           const SizedBox(height: 14),
           Container(height: 1, color: Colors.white.withAlpha(12)),

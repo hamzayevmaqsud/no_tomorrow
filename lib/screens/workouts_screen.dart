@@ -183,23 +183,26 @@ class _Header extends StatelessWidget {
   const _Header({required this.totalSets, required this.doneSets, required this.totalVol});
   @override
   Widget build(BuildContext context) {
-    return Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Stack(alignment: Alignment.center, children: [
-        Column(children: [
-          Text(t('WORKOUT', 'ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
-            fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 3, color: const Color(0xFFF0D4C0))),
-          const SizedBox(height: 3),
-          if (totalSets > 0) Text('$doneSets / $totalSets ${t('sets', 'подх.')}', style: GoogleFonts.inter(
-            fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(160))),
-        ]),
-        Align(alignment: Alignment.centerLeft,
-          child: GestureDetector(onTap: () => Navigator.pop(context),
+    return Column(children: [
+      Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Row(children: [
+          GestureDetector(onTap: () => Navigator.pop(context),
             child: Container(width: 36, height: 36,
               decoration: BoxDecoration(color: Colors.white.withAlpha(18),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white.withAlpha(40))),
-              child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200))))),
-      ]));
+              child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200)))),
+          const Spacer(),
+          Text(t('WORKOUT', 'ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
+            fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+            letterSpacing: 2, color: const Color(0xFFF0D4C0))),
+        ])),
+      if (totalSets > 0) Padding(padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text('$doneSets / $totalSets ${t('sets', 'подх.')}', style: GoogleFonts.inter(
+            fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(160))),
+        ])),
+    ]);
   }
 }
 

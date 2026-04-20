@@ -728,139 +728,111 @@ class _TasksScreenState extends State<TasksScreen> {
                 children: [
                   // ── Header ──────────────────────────────────────────────
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                    child: Stack(
-                      alignment: Alignment.center,
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Row(
                       children: [
-                        // Centred title
-                        Column(
-                          children: [
-                            Text(
-                              isWork ? t('WORK  TASKS', 'РАБОЧИЕ  ЗАДАНИЯ') : t('LIVE  TASKS', 'ЖИЗНЬ  ЗАДАНИЯ'),
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 3,
-                                color: isWork
-                                    ? const Color(0xFFF0E6D3) // warm cream
-                                    : const Color(0xFFD0ECDF), // fresh mint
-                                height: 1,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            if (total > 0)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    done == total
-                                        ? Icons.check_circle_rounded
-                                        : Icons.check_circle_outline_rounded,
-                                    size: 12,
-                                    color: done == total
-                                        ? AppColors.success
-                                        : Colors.white.withAlpha(140),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Text(
-                                    '$done / $total ${t('completed', 'выполнено')}',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.5,
-                                      color: done == total
-                                          ? AppColors.success
-                                          : Colors.white.withAlpha(160),
-                                    ),
-                                  ),
-                                  if (GameState.instance.streak >= 2) ...[
-                                    const SizedBox(width: 10),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: GameState.instance.streak >= 7
-                                            ? AppColors.action.withAlpha(40)
-                                            : GameState.instance.streak >= 3
-                                            ? const Color(
-                                                0xFFF59E0B,
-                                              ).withAlpha(35)
-                                            : Colors.white.withAlpha(15),
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: GameState.instance.streak >= 7
-                                              ? AppColors.action.withAlpha(120)
-                                              : GameState.instance.streak >= 3
-                                              ? const Color(
-                                                  0xFFF59E0B,
-                                                ).withAlpha(100)
-                                              : Colors.white.withAlpha(40),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.local_fire_department_rounded,
-                                            size: 12,
-                                            color:
-                                                GameState.instance.streak >= 7
-                                                ? AppColors.action
-                                                : GameState.instance.streak >= 3
-                                                ? const Color(0xFFF59E0B)
-                                                : Colors.white.withAlpha(120),
-                                          ),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            '${GameState.instance.streak}',
-                                            style: GoogleFonts.jetBrainsMono(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w700,
-                                              color:
-                                                  GameState.instance.streak >= 7
-                                                  ? AppColors.action
-                                                  : GameState.instance.streak >=
-                                                        3
-                                                  ? const Color(0xFFF59E0B)
-                                                  : Colors.white.withAlpha(140),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                          ],
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            width: 36, height: 36,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withAlpha(18),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white.withAlpha(40))),
+                            child: Icon(Icons.chevron_left_rounded,
+                                size: 22, color: Colors.white.withAlpha(200)),
+                          ),
                         ),
-                        // Back button — pinned left
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha(18),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.white.withAlpha(40),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.chevron_left_rounded,
-                                size: 22,
-                                color: Colors.white.withAlpha(200),
-                              ),
-                            ),
+                        const Spacer(),
+                        Text(
+                          isWork ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ'),
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 16, fontWeight: FontWeight.w700,
+                            fontStyle: FontStyle.italic,
+                            letterSpacing: 2,
+                            color: isWork
+                                ? const Color(0xFFF0E6D3)
+                                : const Color(0xFFD0ECDF),
                           ),
                         ),
                       ],
                     ),
                   ),
+                  // ── Today stats row ─────────────────────────
+                  if (total > 0)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            done == total
+                                ? Icons.check_circle_rounded
+                                : Icons.check_circle_outline_rounded,
+                            size: 12,
+                            color: done == total
+                                ? AppColors.success
+                                : Colors.white.withAlpha(140),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '$done / $total ${t('completed', 'выполнено')}',
+                            style: GoogleFonts.inter(
+                              fontSize: 11, fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                              color: done == total
+                                  ? AppColors.success
+                                  : Colors.white.withAlpha(160),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: GameState.instance.streak >= 7
+                                  ? AppColors.action.withAlpha(40)
+                                  : GameState.instance.streak >= 3
+                                  ? const Color(0xFFF59E0B).withAlpha(35)
+                                  : Colors.white.withAlpha(15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: GameState.instance.streak >= 7
+                                    ? AppColors.action.withAlpha(120)
+                                    : GameState.instance.streak >= 3
+                                    ? const Color(0xFFF59E0B).withAlpha(100)
+                                    : Colors.white.withAlpha(40)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.local_fire_department_rounded,
+                                  size: 12,
+                                  color: GameState.instance.streak >= 7
+                                      ? AppColors.action
+                                      : GameState.instance.streak >= 3
+                                      ? const Color(0xFFF59E0B)
+                                      : Colors.white.withAlpha(120),
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  '${GameState.instance.streak}',
+                                  style: GoogleFonts.jetBrainsMono(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: GameState.instance.streak >= 7
+                                        ? AppColors.action
+                                        : GameState.instance.streak >= 3
+                                        ? const Color(0xFFF59E0B)
+                                        : Colors.white.withAlpha(140),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                   // ── Progress bar ─────────────────────────────────────────
                   const SizedBox(height: 14),

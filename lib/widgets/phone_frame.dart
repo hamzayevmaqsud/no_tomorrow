@@ -48,8 +48,8 @@ class PhoneFrame extends StatelessWidget {
                 child: MediaQuery(
                   data: MediaQuery.of(context).copyWith(
                     size: const Size(_phoneW, _phoneH),
-                    padding: const EdgeInsets.only(top: 47, bottom: 34),
-                    viewPadding: const EdgeInsets.only(top: 47, bottom: 34),
+                    padding: const EdgeInsets.only(top: 14, bottom: 24),
+                    viewPadding: const EdgeInsets.only(top: 14, bottom: 24),
                   ),
                   child: child,
                 ),

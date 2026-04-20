@@ -193,72 +193,62 @@ class ProfileScreen extends StatelessWidget {
 
         SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
             children: [
               // ── Header ─────────────────────────────────
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Column(children: [
-                    Text(
-                      (gs.username?.isNotEmpty ?? false)
-                        ? gs.username!.toUpperCase()
-                        : t('PROFILE', 'ПРОФИЛЬ'),
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 26, fontWeight: FontWeight.w800,
-                        letterSpacing: 3, color: const Color(0xFFF0E6D3))),
-                  ]),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      GestureDetector(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => const StatsScreen())),
-                        child: Container(
-                          width: 36, height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.action.withAlpha(20),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.action.withAlpha(50)),
-                          ),
-                          child: Icon(Icons.insights_rounded,
-                              size: 18, color: AppColors.action),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => _confirmSignOut(context),
-                        child: Container(
-                          width: 36, height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDC2626).withAlpha(20),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFDC2626).withAlpha(50)),
-                          ),
-                          child: const Icon(Icons.logout_rounded,
-                              size: 16, color: Color(0xFFDC2626)),
-                        ),
-                      ),
-                    ]),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(18),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withAlpha(40)),
-                        ),
-                        child: Icon(Icons.chevron_left_rounded,
-                            size: 22, color: Colors.white.withAlpha(200)),
-                      ),
+              Row(children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(18),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withAlpha(40)),
                     ),
+                    child: Icon(Icons.chevron_left_rounded,
+                        size: 22, color: Colors.white.withAlpha(200)),
                   ),
-                ],
-              ),
+                ),
+                const Spacer(),
+                Text(
+                  (gs.username?.isNotEmpty ?? false)
+                    ? gs.username!.toUpperCase()
+                    : t('PROFILE', 'ПРОФИЛЬ'),
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 16, fontWeight: FontWeight.w700,
+                    fontStyle: FontStyle.italic,
+                    letterSpacing: 2, color: const Color(0xFFF0E6D3))),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => const StatsScreen())),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.action.withAlpha(20),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.action.withAlpha(50)),
+                    ),
+                    child: Icon(Icons.insights_rounded,
+                        size: 18, color: AppColors.action),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _confirmSignOut(context),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626).withAlpha(20),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFDC2626).withAlpha(50)),
+                    ),
+                    child: const Icon(Icons.logout_rounded,
+                        size: 16, color: Color(0xFFDC2626)),
+                  ),
+                ),
+              ]),
 
               const SizedBox(height: 28),
 

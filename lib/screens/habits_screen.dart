@@ -213,73 +213,71 @@ class _HabitsScreenState extends State<HabitsScreen> {
               children: [
                 // ── Header ─────────────────────────────────
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Stack(
-                    alignment: Alignment.center,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Row(
                     children: [
-                      Column(
-                        children: [
-                          Text(t('HABITS', 'ПРИВЫЧКИ'),
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 26, fontWeight: FontWeight.w800,
-                              letterSpacing: 3,
-                              color: const Color(0xFFE8D4F0),
-                            )),
-                          const SizedBox(height: 3),
-                          if (total > 0)
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  doneToday == total
-                                      ? Icons.check_circle_rounded
-                                      : Icons.check_circle_outline_rounded,
-                                  size: 12,
-                                  color: doneToday == total
-                                      ? AppColors.success
-                                      : Colors.white.withAlpha(140)),
-                                const SizedBox(width: 5),
-                                Text('$doneToday / $total ${t('today', 'сегодня')}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11, fontWeight: FontWeight.w700,
-                                    color: doneToday == total
-                                        ? AppColors.success
-                                        : Colors.white.withAlpha(160),
-                                  )),
-                                if (GameState.instance.streak >= 2) ...[
-                                  const SizedBox(width: 10),
-                                  Icon(Icons.local_fire_department_rounded,
-                                      size: 12, color: const Color(0xFFF59E0B)),
-                                  const SizedBox(width: 2),
-                                  Text('${GameState.instance.streak}',
-                                    style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 10, fontWeight: FontWeight.w700,
-                                      color: const Color(0xFFF59E0B),
-                                    )),
-                                ],
-                              ],
-                            ),
-                        ],
-                      ),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            width: 36, height: 36,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withAlpha(18),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white.withAlpha(40)),
-                            ),
-                            child: Icon(Icons.chevron_left_rounded,
-                                size: 22, color: Colors.white.withAlpha(200)),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36, height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(18),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.white.withAlpha(40)),
                           ),
+                          child: Icon(Icons.chevron_left_rounded,
+                              size: 22, color: Colors.white.withAlpha(200)),
                         ),
                       ),
+                      const Spacer(),
+                      Text(t('HABITS', 'ПРИВЫЧКИ'),
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 16, fontWeight: FontWeight.w700,
+                          fontStyle: FontStyle.italic,
+                          letterSpacing: 2,
+                          color: const Color(0xFFE8D4F0),
+                        )),
                     ],
                   ),
                 ),
+
+                // ── Today stats row ─────────────────────────
+                if (total > 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          doneToday == total
+                              ? Icons.check_circle_rounded
+                              : Icons.check_circle_outline_rounded,
+                          size: 12,
+                          color: doneToday == total
+                              ? AppColors.success
+                              : Colors.white.withAlpha(140)),
+                        const SizedBox(width: 5),
+                        Text('$doneToday / $total ${t('today', 'сегодня')}',
+                          style: GoogleFonts.inter(
+                            fontSize: 11, fontWeight: FontWeight.w700,
+                            color: doneToday == total
+                                ? AppColors.success
+                                : Colors.white.withAlpha(160),
+                          )),
+                        if (GameState.instance.streak >= 2) ...[
+                          const SizedBox(width: 10),
+                          Icon(Icons.local_fire_department_rounded,
+                              size: 12, color: const Color(0xFFF59E0B)),
+                          const SizedBox(width: 2),
+                          Text('${GameState.instance.streak}',
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 10, fontWeight: FontWeight.w700,
+                              color: const Color(0xFFF59E0B),
+                            )),
+                        ],
+                      ],
+                    ),
+                  ),
 
                 const SizedBox(height: 10),
 

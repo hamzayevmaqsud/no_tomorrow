@@ -84,25 +84,25 @@ class _ReadingScreenState extends State<ReadingScreen> {
           )),
         )),
         SafeArea(child: Column(children: [
-          Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            child: Stack(alignment: Alignment.center, children: [
-              Column(children: [
-                Text(t('READING', 'ЧТЕНИЕ'), style: GoogleFonts.playfairDisplay(
-                  fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: 3,
-                  color: const Color(0xFFD0E8D0))),
-                const SizedBox(height: 3),
-                if (books.isNotEmpty)
-                  Text('$totalPages ${t('pages read', 'страниц прочитано')}', style: GoogleFonts.inter(
-                    fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(160))),
-              ]),
-              Align(alignment: Alignment.centerLeft,
-                child: GestureDetector(onTap: () => Navigator.pop(context),
-                  child: Container(width: 36, height: 36,
-                    decoration: BoxDecoration(color: Colors.white.withAlpha(18),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withAlpha(40))),
-                    child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200))))),
+          Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Row(children: [
+              GestureDetector(onTap: () => Navigator.pop(context),
+                child: Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(18),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withAlpha(40))),
+                  child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200)))),
+              const Spacer(),
+              Text(t('READING', 'ЧТЕНИЕ'), style: GoogleFonts.playfairDisplay(
+                fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+                letterSpacing: 2, color: const Color(0xFFD0E8D0))),
             ])),
+          if (books.isNotEmpty)
+            Padding(padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Text('$totalPages ${t('pages read', 'страниц прочитано')}', style: GoogleFonts.inter(
+                  fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(160))),
+              ])),
           const SizedBox(height: 14),
           Container(height: 1, color: Colors.white.withAlpha(12)),
           const SizedBox(height: 16),
