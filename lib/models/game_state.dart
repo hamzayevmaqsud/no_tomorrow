@@ -126,9 +126,24 @@ class GameState extends ChangeNotifier {
 
   // ── Profile / sync ──────────────────────────────────────────────────────────
   String? username;
+  int avatarIndex = 0;
+
+  static const avatarEmojis = [
+    '😎', '🧑‍💻', '🦊', '🐺', '🦁', '🐉', '👑', '🎮',
+    '⚔️', '🛡️', '🧙', '🥷', '🦸', '🧛', '🤖', '👽',
+    '🔥', '💀', '🎯', '🌟', '🏆', '💎', '🦅', '🐍',
+  ];
+
+  String get avatarEmoji => avatarEmojis[avatarIndex % avatarEmojis.length];
+
+  void setAvatar(int index) {
+    avatarIndex = index;
+    notifyListeners();
+  }
 
   Map<String, dynamic> toJson() => {
     'username': username,
+    'avatarIndex': avatarIndex,
     'totalXp': _totalXp,
     'level': _level,
     'totalCompletions': _totalCompletions,
@@ -140,6 +155,7 @@ class GameState extends ChangeNotifier {
 
   void loadFromJson(Map<String, dynamic> j) {
     username = j['username'] as String?;
+    avatarIndex = j['avatarIndex'] ?? 0;
     _totalXp = j['totalXp'] ?? 0;
     _level = j['level'] ?? 1;
     _totalCompletions = j['totalCompletions'] ?? 0;

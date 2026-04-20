@@ -44,6 +44,62 @@ void _confirmSignOut(BuildContext context) async {
   }
 }
 
+void _showAvatarPicker(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: const Color(0xFF12121A),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(t('CHOOSE AVATAR', 'ВЫБЕРИ АВАТАР'),
+            style: GoogleFonts.outfit(
+              fontSize: 14, fontWeight: FontWeight.w800,
+              letterSpacing: 2, color: Colors.white,
+            )),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: List.generate(GameState.avatarEmojis.length, (i) {
+              final isSelected = GameState.instance.avatarIndex == i;
+              return GestureDetector(
+                onTap: () {
+                  GameState.instance.setAvatar(i);
+                  Navigator.pop(context);
+                },
+                child: Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? AppColors.action.withAlpha(40)
+                        : Colors.white.withAlpha(8),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.action
+                          : Colors.white.withAlpha(20),
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(GameState.avatarEmojis[i],
+                      style: const TextStyle(fontSize: 26)),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -151,27 +207,27 @@ class ProfileScreen extends StatelessWidget {
                           backgroundColor: Colors.white.withAlpha(15),
                           valueColor: const AlwaysStoppedAnimation(AppColors.action),
                         )),
-                      Container(
-                        width: 84, height: 84,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [BoxShadow(
-                            color: AppColors.action.withAlpha(50),
-                            blurRadius: 16, spreadRadius: 2)],
-                        ),
-                        child: ClipOval(
-                          child: Image.asset('assets/images/avatar.png',
-                            width: 84, height: 84, fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: const Color(0xFF1A1008),
-                              child: Center(child: Text('H', style: GoogleFonts.outfit(
-                                color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900))))),
+                      GestureDetector(
+                        onTap: () => _showAvatarPicker(context),
+                        child: Container(
+                          width: 84, height: 84,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF1A1008),
+                            boxShadow: [BoxShadow(
+                              color: AppColors.action.withAlpha(50),
+                              blurRadius: 16, spreadRadius: 2)],
+                          ),
+                          child: Center(
+                            child: Text(gs.avatarEmoji,
+                              style: const TextStyle(fontSize: 44)),
+                          ),
                         ),
                       ),
                     ]),
                   ),
                   const SizedBox(height: 14),
-                  Text('HAMZA', style: GoogleFonts.playfairDisplay(
+                  Text((gs.username ?? 'PLAYER').toUpperCase(), style: GoogleFonts.playfairDisplay(
                     fontSize: 22, fontWeight: FontWeight.w800,
                     letterSpacing: 3, color: Colors.white)),
                   const SizedBox(height: 6),

@@ -426,6 +426,7 @@ class _HomeScreenState extends State<HomeScreen>
                                 width: 48, height: 48,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  color: const Color(0xFF1A1008),
                                   boxShadow: [
                                     BoxShadow(
                                       color: AppColors.action.withAlpha(60),
@@ -433,20 +434,10 @@ class _HomeScreenState extends State<HomeScreen>
                                     ),
                                   ],
                                 ),
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    'assets/images/avatar.png',
-                                    width: 48, height: 48,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (ctx, err, st) => Container(
-                                      color: const Color(0xFF1A1008),
-                                      child: Center(
-                                        child: Text('H', style: GoogleFonts.outfit(
-                                          color: Colors.white, fontSize: 20,
-                                          fontWeight: FontWeight.w900,
-                                        )),
-                                      ),
-                                    ),
+                                child: Center(
+                                  child: Text(
+                                    GameState.instance.avatarEmoji,
+                                    style: const TextStyle(fontSize: 26),
                                   ),
                                 ),
                               ),
