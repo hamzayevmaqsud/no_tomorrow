@@ -467,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen>
                           children: [
                             Row(
                               children: [
-                                Text('HAMZA',
+                                Text((GameState.instance.username ?? 'PLAYER').toUpperCase(),
                                   style: GoogleFonts.outfit(
                                     fontSize: 13, fontWeight: FontWeight.w900,
                                     letterSpacing: 2, color: Colors.white,
