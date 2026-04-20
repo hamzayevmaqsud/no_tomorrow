@@ -3242,7 +3242,7 @@ class _TaskFocusScreenState extends State<_TaskFocusScreen>
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: active ? color.withAlpha(180) : Colors.white.withAlpha(30))),
-                      child: Text('${m}m',
+                      child: Text('${m}${t('m', 'м')}',
                         style: GoogleFonts.jetBrainsMono(
                           fontSize: 11, fontWeight: FontWeight.w700,
                           color: active ? color : Colors.white.withAlpha(160))),
