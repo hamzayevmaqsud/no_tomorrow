@@ -11,13 +11,33 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v1.7',
+      date: '2026-04-20',
+      title: t('Custom Avatar & Profile', 'Кастомный аватар и профиль'),
+      items: [
+        t('🖼 CUSTOM PHOTO AVATAR: Open the app → swipe wheel to PROFILE → tap your avatar circle → tap "UPLOAD PHOTO" → choose a photo from your device. The photo is saved to the cloud.',
+          '🖼 СВОЯ ФОТОГРАФИЯ: Открой приложение → крути колесо до ПРОФИЛЬ → нажми на кружок аватара → нажми "ЗАГРУЗИТЬ ФОТО" → выбери фото с устройства. Фото сохраняется в облако.'),
+        t('😎 EMOJI AVATAR: Same place — tap your avatar → scroll down and pick any emoji from the grid (24 options). Choosing emoji removes the photo.',
+          '😎 ЭМОДЗИ АВАТАР: Там же — нажми на аватар → пролистай вниз и выбери любой эмодзи из сетки (24 варианта). Выбор эмодзи убирает фото.'),
+        t('👤 USERNAME DISPLAY: Your chosen username now shows in the home screen header (next to avatar) and in the profile screen.',
+          '👤 ИМЯ ПОЛЬЗОВАТЕЛЯ: Твоё имя теперь отображается в шапке главного меню (рядом с аватаром) и на экране профиля.'),
+      ],
+    ),
+    _PatchNote(
       version: 'v1.6',
       date: '2026-04-20',
       title: t('Localization & Patch Notes', 'Локализация и Патч Ноуты'),
       items: [
-        t('Russian language support', 'Поддержка русского языка'),
-        t('Language picker on every launch', 'Выбор языка при каждом запуске'),
-        t('Patch notes screen', 'Экран патч ноутов'),
+        t('🌐 LANGUAGE SELECTION: Every time you open the app, after the splash screen you choose English 🇬🇧 or Russian 🇷🇺. All screens switch instantly.',
+          '🌐 ВЫБОР ЯЗЫКА: При каждом запуске, после заставки, выбираешь English 🇬🇧 или Русский 🇷🇺. Все экраны переключаются мгновенно.'),
+        t('⚙️ CHANGE LANGUAGE LATER: Home screen → tap ⚙️ Settings (top right) → tap the language tile under "APPEARANCE" → toggles between EN and RU.',
+          '⚙️ СМЕНИТЬ ЯЗЫК ПОТОМ: Главный экран → нажми ⚙️ Настройки (вверху справа) → нажми на плитку языка в разделе "ВНЕШНИЙ ВИД" → переключает EN и RU.'),
+        t('📋 PATCH NOTES ON LAUNCH: After picking language, patch notes appear automatically. Tap "CONTINUE" to proceed.',
+          '📋 ПАТЧ НОУТЫ ПРИ ЗАПУСКЕ: После выбора языка автоматически появляются патч ноуты. Нажми "ПРОДОЛЖИТЬ" чтобы продолжить.'),
+        t('📋 PATCH NOTES FROM SETTINGS: Home → ⚙️ Settings → scroll to "PATCH NOTES" section → tap "VIEW PATCH NOTES".',
+          '📋 ПАТЧ НОУТЫ ИЗ НАСТРОЕК: Главная → ⚙️ Настройки → пролистай до "ПАТЧ НОУТЫ" → нажми "ПОСМОТРЕТЬ ПАТЧ НОУТЫ".'),
+        t('🔤 17 screens fully translated to Russian: home, tasks, habits, workouts, abstain, reading, budget, food, collection, profile, settings, login, onboarding, and more.',
+          '🔤 17 экранов полностью переведены на русский: главная, задания, привычки, тренировки, воздержание, чтение, бюджет, питание, коллекция, профиль, настройки, вход, онбординг и другие.'),
       ],
     ),
     _PatchNote(
