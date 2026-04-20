@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -434,12 +435,20 @@ class _HomeScreenState extends State<HomeScreen>
                                     ),
                                   ],
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    GameState.instance.avatarEmoji,
-                                    style: const TextStyle(fontSize: 26),
-                                  ),
-                                ),
+                                child: GameState.instance.hasCustomAvatar
+                                    ? ClipOval(
+                                        child: Image.memory(
+                                          base64Decode(GameState.instance.avatarBase64!),
+                                          width: 48, height: 48,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    : Center(
+                                        child: Text(
+                                          GameState.instance.avatarEmoji,
+                                          style: const TextStyle(fontSize: 26),
+                                        ),
+                                      ),
                               ),
                             ],
                           ),

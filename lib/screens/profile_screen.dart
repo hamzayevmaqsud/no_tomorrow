@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../l10n/app_locale.dart';
 import '../models/game_state.dart';
 import '../models/habit.dart';
@@ -44,6 +46,36 @@ void _confirmSignOut(BuildContext context) async {
   }
 }
 
+Future<void> _pickPhoto(BuildContext context) async {
+  final picker = ImagePicker();
+  final picked = await picker.pickImage(
+    source: ImageSource.gallery,
+    maxWidth: 256,
+    maxHeight: 256,
+    imageQuality: 70,
+  );
+  if (picked == null) return;
+  final bytes = await picked.readAsBytes();
+  final b64 = base64Encode(bytes);
+  GameState.instance.setCustomAvatar(b64);
+}
+
+Widget buildAvatar(double size, {bool showEditHint = false}) {
+  final gs = GameState.instance;
+  if (gs.hasCustomAvatar) {
+    return ClipOval(
+      child: Image.memory(
+        base64Decode(gs.avatarBase64!),
+        width: size, height: size,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+  return Center(
+    child: Text(gs.avatarEmoji, style: TextStyle(fontSize: size * 0.55)),
+  );
+}
+
 void _showAvatarPicker(BuildContext context) {
   showModalBottomSheet(
     context: context,
@@ -51,7 +83,7 @@ void _showAvatarPicker(BuildContext context) {
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
-    builder: (_) => Padding(
+    builder: (ctx) => Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -62,15 +94,52 @@ void _showAvatarPicker(BuildContext context) {
               letterSpacing: 2, color: Colors.white,
             )),
           const SizedBox(height: 16),
+          // Upload photo button
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(ctx);
+              _pickPhoto(context);
+            },
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.action.withAlpha(20),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.action.withAlpha(80)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.camera_alt_rounded,
+                      color: AppColors.action, size: 20),
+                  const SizedBox(width: 10),
+                  Text(t('UPLOAD PHOTO', 'ЗАГРУЗИТЬ ФОТО'),
+                    style: GoogleFonts.outfit(
+                      fontSize: 13, fontWeight: FontWeight.w700,
+                      letterSpacing: 1, color: AppColors.action,
+                    )),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(t('OR PICK EMOJI', 'ИЛИ ВЫБЕРИ ЭМОДЗИ'),
+            style: GoogleFonts.outfit(
+              fontSize: 10, fontWeight: FontWeight.w600,
+              letterSpacing: 2, color: Colors.white.withAlpha(80),
+            )),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: List.generate(GameState.avatarEmojis.length, (i) {
-              final isSelected = GameState.instance.avatarIndex == i;
+              final isSelected = !GameState.instance.hasCustomAvatar &&
+                  GameState.instance.avatarIndex == i;
               return GestureDetector(
                 onTap: () {
                   GameState.instance.setAvatar(i);
-                  Navigator.pop(context);
+                  Navigator.pop(ctx);
                 },
                 child: Container(
                   width: 52, height: 52,
@@ -218,10 +287,7 @@ class ProfileScreen extends StatelessWidget {
                               color: AppColors.action.withAlpha(50),
                               blurRadius: 16, spreadRadius: 2)],
                           ),
-                          child: Center(
-                            child: Text(gs.avatarEmoji,
-                              style: const TextStyle(fontSize: 44)),
-                          ),
+                          child: buildAvatar(84),
                         ),
                       ),
                     ]),

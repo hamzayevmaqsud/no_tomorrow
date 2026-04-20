@@ -127,6 +127,7 @@ class GameState extends ChangeNotifier {
   // ── Profile / sync ──────────────────────────────────────────────────────────
   String? username;
   int avatarIndex = 0;
+  String? avatarBase64; // custom photo stored as base64
 
   static const avatarEmojis = [
     '😎', '🧑‍💻', '🦊', '🐺', '🦁', '🐉', '👑', '🎮',
@@ -135,15 +136,23 @@ class GameState extends ChangeNotifier {
   ];
 
   String get avatarEmoji => avatarEmojis[avatarIndex % avatarEmojis.length];
+  bool get hasCustomAvatar => avatarBase64 != null && avatarBase64!.isNotEmpty;
 
   void setAvatar(int index) {
     avatarIndex = index;
+    avatarBase64 = null; // clear custom photo when picking emoji
+    notifyListeners();
+  }
+
+  void setCustomAvatar(String base64) {
+    avatarBase64 = base64;
     notifyListeners();
   }
 
   Map<String, dynamic> toJson() => {
     'username': username,
     'avatarIndex': avatarIndex,
+    'avatarBase64': avatarBase64,
     'totalXp': _totalXp,
     'level': _level,
     'totalCompletions': _totalCompletions,
@@ -156,6 +165,7 @@ class GameState extends ChangeNotifier {
   void loadFromJson(Map<String, dynamic> j) {
     username = j['username'] as String?;
     avatarIndex = j['avatarIndex'] ?? 0;
+    avatarBase64 = j['avatarBase64'] as String?;
     _totalXp = j['totalXp'] ?? 0;
     _level = j['level'] ?? 1;
     _totalCompletions = j['totalCompletions'] ?? 0;
