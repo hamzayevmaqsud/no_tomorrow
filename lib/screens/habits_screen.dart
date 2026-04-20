@@ -2247,15 +2247,15 @@ class _CheckCelebrationState extends State<_CheckCelebration>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, _) {
-        final t = _ctrl.value;
+        final v = _ctrl.value;
         final sz = MediaQuery.of(context).size;
         return Positioned.fill(child: IgnorePointer(child: Stack(
           children: [
             // Scale bounce checkmark
             Center(child: Opacity(
-              opacity: (1 - t * 1.5).clamp(0.0, 1.0),
+              opacity: (1 - v * 1.5).clamp(0.0, 1.0),
               child: Transform.scale(
-                scale: 0.5 + Curves.elasticOut.transform((t * 2).clamp(0.0, 1.0)) * 1.5,
+                scale: 0.5 + Curves.elasticOut.transform((v * 2).clamp(0.0, 1.0)) * 1.5,
                 child: Icon(Icons.check_circle_rounded,
                     size: 60, color: widget.color.withAlpha(180))),
             )),
@@ -2263,13 +2263,13 @@ class _CheckCelebrationState extends State<_CheckCelebration>
             ...List.generate(12, (i) {
               final seed = i * 73.7;
               final angle = (i / 12) * 2 * pi;
-              final dist = t * 80 + sin(seed) * 20;
+              final dist = v * 80 + sin(seed) * 20;
               final x = sz.width / 2 + cos(angle) * dist;
-              final y = sz.height / 2 + sin(angle) * dist - t * 40;
+              final y = sz.height / 2 + sin(angle) * dist - v * 40;
               return Positioned(
                 left: x - 3, top: y - 3,
                 child: Opacity(
-                  opacity: (1 - t * 1.3).clamp(0.0, 1.0),
+                  opacity: (1 - v * 1.3).clamp(0.0, 1.0),
                   child: Container(width: 6, height: 6,
                     decoration: BoxDecoration(
                       color: i % 2 == 0 ? widget.color : AppColors.gold,
@@ -2314,11 +2314,11 @@ class _StreakMilestoneState extends State<_StreakMilestone>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, _) {
-        final t = _ctrl.value;
-        final bgOp = t < 0.1 ? t / 0.1 : t > 0.8 ? 1 - (t - 0.8) / 0.2 : 1.0;
+        final v = _ctrl.value;
+        final bgOp = v < 0.1 ? v / 0.1 : v > 0.8 ? 1 - (v - 0.8) / 0.2 : 1.0;
         final scale = Curves.elasticOut.transform(
-            ((t - 0.05) / 0.3).clamp(0.0, 1.0));
-        final textOp = t < 0.1 ? 0.0 : t > 0.8 ? 1 - (t - 0.8) / 0.2 : 1.0;
+            ((v - 0.05) / 0.3).clamp(0.0, 1.0));
+        final textOp = v < 0.1 ? 0.0 : v > 0.8 ? 1 - (v - 0.8) / 0.2 : 1.0;
 
         return Positioned.fill(
           child: IgnorePointer(

@@ -269,11 +269,11 @@ class _TasksScreenState extends State<TasksScreen> {
         });
       },
       itemBuilder: (ctx, i) {
-        final t = pending[i];
+        final tk = pending[i];
         return ReorderableDragStartListener(
-          key: ValueKey('reorder_${t.id}'),
+          key: ValueKey('reorder_${tk.id}'),
           index: i,
-          child: _dismissible(t, isDark),
+          child: _dismissible(tk, isDark),
         );
       },
     );
@@ -2813,10 +2813,10 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
   }
 
   void _pickTime() async {
-    final t = await showTimePicker(
+    final picked = await showTimePicker(
       context: context, initialTime: widget.task.dueTime ?? TimeOfDay.now(),
       builder: _themedPicker);
-    if (t != null) { setState(() => widget.task.dueTime = t); widget.onEdit(); }
+    if (picked != null) { setState(() => widget.task.dueTime = picked); widget.onEdit(); }
   }
 
   void _toggleSubtask(int i) {
@@ -3662,7 +3662,7 @@ class _AddSheetState extends State<_AddSheet> {
   }
 
   void _pickTime() async {
-    final t = await showTimePicker(
+    final picked = await showTimePicker(
       context: context,
       initialTime: _time ?? TimeOfDay.now(),
       builder: (ctx, child) => Theme(
@@ -3676,7 +3676,7 @@ class _AddSheetState extends State<_AddSheet> {
         child: child!,
       ),
     );
-    if (t != null) setState(() => _time = t);
+    if (picked != null) setState(() => _time = picked);
   }
 
   void _pickDate() async {
@@ -4220,22 +4220,22 @@ class _LivingGradientState extends State<_LivingGradient>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, _) {
-        final t = _ctrl.value;
+        final v = _ctrl.value;
         return Opacity(
           opacity: 0.18,
           child: Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment(
-                  -0.5 + sin(t * pi) * 0.8,
-                  -0.3 + cos(t * pi * 0.7) * 0.6,
+                  -0.5 + sin(v * pi) * 0.8,
+                  -0.3 + cos(v * pi * 0.7) * 0.6,
                 ),
-                radius: 1.2 + sin(t * pi * 1.3) * 0.3,
+                radius: 1.2 + sin(v * pi * 1.3) * 0.3,
                 colors: [
                   Color.lerp(
                     const Color(0xFFFF6B35),
                     const Color(0xFFCA8A04),
-                    t,
+                    v,
                   )!,
                   Colors.transparent,
                 ],
@@ -4922,61 +4922,61 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (ctx, _) {
-        final t = _ctrl.value;
+        final v = _ctrl.value;
 
         final bgOp =
-            (t < 0.08
-                    ? t / 0.08
-                    : t > 0.80
-                    ? 1 - (t - 0.80) / 0.20
+            (v < 0.08
+                    ? v / 0.08
+                    : v > 0.80
+                    ? 1 - (v - 0.80) / 0.20
                     : 1.0)
                 .clamp(0.0, 1.0);
-        final flashOp = (t < 0.06 ? 1 - t / 0.06 : 0.0).clamp(0.0, 1.0);
+        final flashOp = (v < 0.06 ? 1 - v / 0.06 : 0.0).clamp(0.0, 1.0);
         final avT = Curves.easeOutBack.transform(
-          ((t - 0.08) / 0.14).clamp(0.0, 1.0),
+          ((v - 0.08) / 0.14).clamp(0.0, 1.0),
         );
         final avY = (1 - avT) * -180.0;
         final avOp =
-            (t < 0.08
+            (v < 0.08
                     ? 0.0
-                    : t > 0.80
-                    ? 1 - (t - 0.80) / 0.20
+                    : v > 0.80
+                    ? 1 - (v - 0.80) / 0.20
                     : 1.0)
                 .clamp(0.0, 1.0);
-        final ring = t > 0.22
-            ? (0.55 + 0.45 * sin(t * 2 * pi * 3.5)).clamp(0.0, 1.0)
+        final ring = v > 0.22
+            ? (0.55 + 0.45 * sin(v * 2 * pi * 3.5)).clamp(0.0, 1.0)
             : 0.0;
-        final lvlT = ((t - 0.22) / 0.16).clamp(0.0, 1.0);
+        final lvlT = ((v - 0.22) / 0.16).clamp(0.0, 1.0);
         final lvlFlk = lvlT < 1
             ? (lvlT + 0.25 * sin(lvlT * pi * 10) * (1 - lvlT)).clamp(0.0, 1.2)
             : 1.0;
         final lvlOp =
-            (t < 0.22
+            (v < 0.22
                     ? 0.0
-                    : t > 0.80
-                    ? 1 - (t - 0.80) / 0.20
+                    : v > 0.80
+                    ? 1 - (v - 0.80) / 0.20
                     : lvlFlk)
                 .clamp(0.0, 1.0);
-        final upT = ((t - 0.34) / 0.18).clamp(0.0, 1.0);
+        final upT = ((v - 0.34) / 0.18).clamp(0.0, 1.0);
         final upFlk = upT < 1
             ? (upT + 0.25 * sin(upT * pi * 10) * (1 - upT)).clamp(0.0, 1.2)
             : 1.0;
         final upOp =
-            (t < 0.34
+            (v < 0.34
                     ? 0.0
-                    : t > 0.80
-                    ? 1 - (t - 0.80) / 0.20
+                    : v > 0.80
+                    ? 1 - (v - 0.80) / 0.20
                     : upFlk)
                 .clamp(0.0, 1.0);
         final bdT = Curves.elasticOut.transform(
-          ((t - 0.55) / 0.15).clamp(0.0, 1.0),
+          ((v - 0.55) / 0.15).clamp(0.0, 1.0),
         );
-        final bdSc = (t < 0.55 ? 0.0 : bdT).clamp(0.0, 2.5);
+        final bdSc = (v < 0.55 ? 0.0 : bdT).clamp(0.0, 2.5);
         final bdOp =
-            (t < 0.55
+            (v < 0.55
                     ? 0.0
-                    : t > 0.80
-                    ? 1 - (t - 0.80) / 0.20
+                    : v > 0.80
+                    ? 1 - (v - 0.80) / 0.20
                     : 1.0)
                 .clamp(0.0, 1.0);
 
@@ -5113,7 +5113,7 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                           ),
                           const SizedBox(height: 64),
                           Opacity(
-                            opacity: t > 0.65 ? bdOp : 0.0,
+                            opacity: v > 0.65 ? bdOp : 0.0,
                             child: Text(
                               t('PRESS  ANY  KEY', 'НАЖМИТЕ  ЛЮБУЮ  КЛАВИШУ'),
                               style: GoogleFonts.jetBrainsMono(
@@ -5173,19 +5173,19 @@ class _AllDoneOverlayState extends State<_AllDoneOverlay>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, _) {
-        final t = _ctrl.value;
-        final bgOp = t < 0.1
-            ? t / 0.1
-            : t > 0.75
-            ? 1 - (t - 0.75) / 0.25
+        final v = _ctrl.value;
+        final bgOp = v < 0.1
+            ? v / 0.1
+            : v > 0.75
+            ? 1 - (v - 0.75) / 0.25
             : 1.0;
         final textScale = Curves.elasticOut.transform(
-          ((t - 0.05) / 0.25).clamp(0.0, 1.0),
+          ((v - 0.05) / 0.25).clamp(0.0, 1.0),
         );
-        final textOp = t < 0.05
+        final textOp = v < 0.05
             ? 0.0
-            : t > 0.75
-            ? 1 - (t - 0.75) / 0.25
+            : v > 0.75
+            ? 1 - (v - 0.75) / 0.25
             : 1.0;
 
         return Positioned.fill(
@@ -5197,12 +5197,12 @@ class _AllDoneOverlayState extends State<_AllDoneOverlay>
                 child: Stack(
                   children: [
                     // Confetti
-                    if (t > 0.08)
+                    if (v > 0.08)
                       ...List.generate(24, (i) {
                         final seed = i * 97.3;
                         final x = (sin(seed) * 0.5 + 0.5);
                         final speed = 0.3 + (cos(seed * 2) * 0.2 + 0.3);
-                        final cT = ((t - 0.08) * speed * 1.8).clamp(0.0, 1.0);
+                        final cT = ((v - 0.08) * speed * 1.8).clamp(0.0, 1.0);
                         final y = -0.05 + 1.1 * cT;
                         final wobble = sin(cT * pi * 5 + seed) * 16;
                         final cOp =
@@ -5357,12 +5357,12 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (ctx, _) {
-        final t = _ctrl.value;
-        final bgOp = (t / 0.12).clamp(0.0, 1.0);
+        final v = _ctrl.value;
+        final bgOp = (v / 0.12).clamp(0.0, 1.0);
         final cardT = Curves.easeOutBack.transform(
-          ((t - 0.20) / 0.35).clamp(0.0, 1.0),
+          ((v - 0.20) / 0.35).clamp(0.0, 1.0),
         );
-        final labelT = ((t - 0.55) / 0.20).clamp(0.0, 1.0);
+        final labelT = ((v - 0.55) / 0.20).clamp(0.0, 1.0);
 
         return Positioned.fill(
           child: GestureDetector(
@@ -5489,7 +5489,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                       const SizedBox(height: 20),
                       Opacity(
                         opacity: Curves.easeOut.transform(
-                          ((t - 0.65) / 0.20).clamp(0.0, 1.0),
+                          ((v - 0.65) / 0.20).clamp(0.0, 1.0),
                         ),
                         child: Column(
                           children: [
