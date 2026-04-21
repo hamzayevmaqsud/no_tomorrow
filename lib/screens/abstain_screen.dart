@@ -6,6 +6,7 @@ import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
+import '../widgets/animated_empty.dart';
 import '../l10n/app_locale.dart';
 
 // ── Model ────────────────────────────────────────────────────────────────────
@@ -117,15 +118,10 @@ class _AbstainScreenState extends State<AbstainScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: items.isEmpty
-                ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.shield_rounded, size: 40, color: Colors.white.withAlpha(60)),
-                    const SizedBox(height: 16),
-                    Text(t('nothing to abstain from', 'нечего бросать'), style: GoogleFonts.inter(
-                      fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(180))),
-                    const SizedBox(height: 6),
-                    Text(t('add something to quit', 'добавьте привычку'), style: GoogleFonts.inter(
-                      fontSize: 12, color: Colors.white.withAlpha(120))),
-                  ]))
+                ? AnimatedEmpty(
+                    icon: Icons.block_rounded,
+                    title: t('Nothing to abstain from', 'Не от чего воздерживаться'),
+                    subtitle: t('Add a habit you want to break', 'Добавь привычку от которой хочешь избавиться'))
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                     itemCount: items.length,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -1969,7 +1970,7 @@ class _WeeklyReviewSheet extends StatelessWidget {
         ]),
         const SizedBox(height: 14),
 
-        // Priority breakdown
+        // Priority breakdown (donut + legend)
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
@@ -1984,12 +1985,8 @@ class _WeeklyReviewSheet extends StatelessWidget {
                   letterSpacing: 1.5,
                   color: const Color(0xFF2A2318).withAlpha(140))),
             ]),
-            const SizedBox(height: 10),
-            _PrioBar(label: t('HIGH', 'ВЫСОК'), count: hi, total: weekDone, color: const Color(0xFFDC2626)),
-            const SizedBox(height: 6),
-            _PrioBar(label: t('MED', 'СРЕД'), count: md, total: weekDone, color: const Color(0xFFF59E0B)),
-            const SizedBox(height: 6),
-            _PrioBar(label: t('LOW', 'НИЗК'), count: lo, total: weekDone, color: const Color(0xFF10B981)),
+            const SizedBox(height: 14),
+            _PrioDonut(hi: hi, md: md, lo: lo),
           ]),
         ),
         const SizedBox(height: 14),
@@ -2069,50 +2066,122 @@ class _ReviewStat extends StatelessWidget {
   }
 }
 
-class _PrioBar extends StatelessWidget {
-  final String label;
-  final int count;
-  final int total;
-  final Color color;
-  const _PrioBar({
-    required this.label, required this.count, required this.total, required this.color,
-  });
+/// Donut of priority distribution for the Weekly Review sheet.
+class _PrioDonut extends StatefulWidget {
+  final int hi;
+  final int md;
+  final int lo;
+  const _PrioDonut({required this.hi, required this.md, required this.lo});
+
+  @override
+  State<_PrioDonut> createState() => _PrioDonutState();
+}
+
+class _PrioDonutState extends State<_PrioDonut> {
+  int? _touchedIndex;
 
   @override
   Widget build(BuildContext context) {
-    final frac = total == 0 ? 0.0 : count / total;
-    return Row(children: [
+    const hiColor = Color(0xFFDC2626);
+    const mdColor = Color(0xFFF59E0B);
+    const loColor = Color(0xFF10B981);
+    final total = widget.hi + widget.md + widget.lo;
+
+    List<PieChartSectionData> sections() {
+      final data = [
+        (t('HIGH', 'ВЫСОК'), widget.hi, hiColor),
+        (t('MED',  'СРЕД'),  widget.md, mdColor),
+        (t('LOW',  'НИЗК'),  widget.lo, loColor),
+      ];
+      return List.generate(data.length, (i) {
+        final (_, count, color) = data[i];
+        final isTouched = i == _touchedIndex;
+        return PieChartSectionData(
+          color: color,
+          value: count == 0 ? 0.0001 : count.toDouble(),
+          showTitle: isTouched && count > 0,
+          title: '$count',
+          titleStyle: GoogleFonts.jetBrainsMono(
+            fontSize: 11, fontWeight: FontWeight.w800,
+            color: Colors.white),
+          radius: isTouched ? 30 : 24,
+        );
+      });
+    }
+
+    return Column(children: [
       SizedBox(
-        width: 36,
-        child: Text(label,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 9, fontWeight: FontWeight.w800,
-            letterSpacing: 1, color: color)),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Stack(children: [
-          Container(height: 6,
-            decoration: BoxDecoration(
-              color: color.withAlpha(25),
-              borderRadius: BorderRadius.circular(3))),
-          FractionallySizedBox(
-            widthFactor: frac.clamp(0.0, 1.0),
-            child: Container(height: 6,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(3))),
+        height: 150,
+        child: Stack(alignment: Alignment.center, children: [
+          PieChart(
+            PieChartData(
+              sections: sections(),
+              centerSpaceRadius: 42,
+              sectionsSpace: 3,
+              startDegreeOffset: -90,
+              pieTouchData: PieTouchData(
+                touchCallback: (ev, resp) {
+                  setState(() {
+                    if (!ev.isInterestedForInteractions ||
+                        resp == null || resp.touchedSection == null) {
+                      _touchedIndex = null;
+                      return;
+                    }
+                    _touchedIndex =
+                        resp.touchedSection!.touchedSectionIndex;
+                  });
+                },
+              ),
+            ),
           ),
+          Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('$total',
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 24, fontWeight: FontWeight.w800,
+                fontStyle: FontStyle.italic,
+                color: const Color(0xFF2A2318))),
+            Text(t('TASKS', 'ЗАДАЧ'),
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 8, fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: const Color(0xFF2A2318).withAlpha(130))),
+          ]),
         ]),
       ),
-      const SizedBox(width: 8),
-      SizedBox(
-        width: 22,
-        child: Text('$count', textAlign: TextAlign.right,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 10, fontWeight: FontWeight.w700,
-            color: const Color(0xFF2A2318))),
-      ),
+      const SizedBox(height: 10),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        _DonutLegend(label: t('HIGH', 'ВЫСОК'), count: widget.hi, color: hiColor),
+        const SizedBox(width: 14),
+        _DonutLegend(label: t('MED', 'СРЕД'), count: widget.md, color: mdColor),
+        const SizedBox(width: 14),
+        _DonutLegend(label: t('LOW', 'НИЗК'), count: widget.lo, color: loColor),
+      ]),
+    ]);
+  }
+}
+
+class _DonutLegend extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+  const _DonutLegend({
+    required this.label, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Container(width: 9, height: 9,
+        decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+      const SizedBox(width: 5),
+      Text('$label',
+        style: GoogleFonts.jetBrainsMono(
+          fontSize: 9, fontWeight: FontWeight.w700,
+          letterSpacing: 0.8, color: color)),
+      const SizedBox(width: 4),
+      Text('$count',
+        style: GoogleFonts.jetBrainsMono(
+          fontSize: 10, fontWeight: FontWeight.w800,
+          color: const Color(0xFF2A2318))),
     ]);
   }
 }
@@ -3704,6 +3773,12 @@ class _AddSheetState extends State<_AddSheet> {
       return;
     }
     HapticFeedback.lightImpact();
+    // Smart default: before 17:00 → today, after 17:00 → tomorrow.
+    final now = DateTime.now();
+    final smartDate = _date ??
+        (now.hour < 17
+            ? DateTime(now.year, now.month, now.day)
+            : DateTime(now.year, now.month, now.day).add(const Duration(days: 1)));
     widget.onAdd(
       Task(
         id: widget.nextId,
@@ -3712,7 +3787,7 @@ class _AddSheetState extends State<_AddSheet> {
         priority: _priority,
         createdAt: DateTime.now(),
         dueTime: _time,
-        dueDate: _date,
+        dueDate: smartDate,
       ),
     );
   }

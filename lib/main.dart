@@ -64,8 +64,83 @@ class _NoTomorrowAppState extends State<NoTomorrowApp> {
       themeMode: _themeMode,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      builder: (ctx, child) => PhoneFrame(child: child ?? const SizedBox()),
+      builder: (ctx, child) => PhoneFrame(
+        child: Stack(children: [
+          child ?? const SizedBox(),
+          const Positioned(
+            left: 0, right: 0, bottom: 0,
+            child: _SyncErrorBanner(),
+          ),
+        ]),
+      ),
       home: _AuthGate(onToggleTheme: _toggleTheme),
+    );
+  }
+}
+
+class _SyncErrorBanner extends StatelessWidget {
+  const _SyncErrorBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: SyncService.instance,
+      builder: (ctx, _) {
+        if (!SyncService.instance.hasError) return const SizedBox.shrink();
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF7F1D1D),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [BoxShadow(
+                    color: Colors.black.withAlpha(120),
+                    blurRadius: 16, offset: const Offset(0, 6))],
+                  border: Border.all(color: const Color(0xFFDC2626), width: 1),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.cloud_off_rounded,
+                    size: 16, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      t("Couldn't save to cloud",
+                        'Не удалось сохранить в облако'),
+                      style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600,
+                        color: Colors.white),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => SyncService.instance.retrySave(),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(0, 28),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      foregroundColor: Colors.white),
+                    child: Text(
+                      t('RETRY', 'ПОВТОР'),
+                      style: const TextStyle(
+                        fontSize: 11, fontWeight: FontWeight.w800,
+                        letterSpacing: 1)),
+                  ),
+                  GestureDetector(
+                    onTap: () => SyncService.instance.clearError(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close_rounded,
+                        size: 16, color: Colors.white70),
+                    ),
+                  ),
+                ]),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

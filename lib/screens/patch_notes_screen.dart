@@ -11,6 +11,25 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v2.1',
+      date: '2026-04-21',
+      title: t('Data Visualization & Trust', 'Визуализация данных и надёжность'),
+      items: [
+        t('Waffle view for habit monthly calendar — toggle the grid icon at the top of a habit detail for a GitHub-style compact heat map (6 columns, one square per day)',
+          'Waffle-вид для месячного календаря привычки — переключи иконку сетки вверху детального экрана привычки, чтобы получить компактную тепловую карту в стиле GitHub (6 колонок, один квадрат на день)'),
+        t('Donut chart in Weekly Review — tap a slice to see the exact count, central total shows tasks completed that week',
+          'Donut-диаграмма в Weekly Review — нажми на сектор чтобы увидеть точное количество, в центре общее число задач за неделю'),
+        t('Save-failure banner with Retry — if sync to cloud fails, a red bar appears at the bottom of the app with a one-tap retry',
+          'Баннер ошибки сохранения с кнопкой Retry — если синк в облако падает, внизу приложения появляется красная полоса с кнопкой повтора'),
+        t('Undo snackbar when you delete a habit from the edit sheet — 4 seconds to restore',
+          'Undo-уведомление при удалении привычки через лист редактирования — 4 секунды чтобы вернуть'),
+        t('Smart default due date for new tasks — today before 5pm, tomorrow after',
+          'Умная дата по умолчанию для новых задач — сегодня до 17:00, завтра после'),
+        t('Animated empty states added to Workouts, Reading, Food, Abstain, Collection, Budget — no more lifeless "nothing here"',
+          'Анимированные пустые состояния добавлены в Тренировки, Чтение, Питание, Воздержание, Коллекцию, Бюджет — больше никаких безжизненных "тут ничего"'),
+      ],
+    ),
+    _PatchNote(
       version: 'v2.0',
       date: '2026-04-20',
       title: t('Tasks Header & Home Dock Polish', 'Полировка шапки задач и дока главной'),

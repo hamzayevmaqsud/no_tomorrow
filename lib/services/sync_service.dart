@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/task.dart';
 import '../models/habit.dart';
 import '../models/game_state.dart';
@@ -13,7 +14,7 @@ import '../screens/tasks_screen.dart' show TaskStore, TaskCombo;
 /// On auth sign-in: load bag into stores. If bag doesn't exist, app prompts
 /// for username and creates initial bag. After that, autosave every [_period]
 /// if anything has changed (cheap diff via JSON hash).
-class SyncService {
+class SyncService extends ChangeNotifier {
   static final SyncService instance = SyncService._();
   SyncService._();
 
@@ -26,9 +27,34 @@ class SyncService {
   String? _lastJsonHash;
   bool _loaded = false;
   bool _saving = false;
+  String? _lastError;
+  DateTime? _lastErrorAt;
+  DateTime? _lastSavedAt;
 
   bool get loaded => _loaded;
   String? get uid => _uid;
+  String? get lastError => _lastError;
+  bool get hasError => _lastError != null;
+  DateTime? get lastErrorAt => _lastErrorAt;
+  DateTime? get lastSavedAt => _lastSavedAt;
+
+  void clearError() {
+    if (_lastError == null) return;
+    _lastError = null;
+    notifyListeners();
+  }
+
+  /// Manually retry save after a failure.
+  Future<bool> retrySave() async {
+    if (_uid == null || !_loaded) return false;
+    clearError();
+    try {
+      await _saveNow();
+      return _lastError == null;
+    } catch (_) {
+      return false;
+    }
+  }
 
   /// Start listening to auth state — call once from main after Firebase.initializeApp.
   void start() {
@@ -176,7 +202,11 @@ class SyncService {
     final h = _computeHash();
     if (h == _lastJsonHash) return;
     _lastJsonHash = h;
-    await _saveNow();
+    try {
+      await _saveNow();
+    } catch (_) {
+      // Error already reported via notifyListeners; next tick will retry.
+    }
   }
 
   Future<void> _saveNow() async {
@@ -189,6 +219,16 @@ class SyncService {
       await _fs
         .collection('users').doc(uid)
         .collection('state').doc('bag').set(data);
+      _lastSavedAt = DateTime.now();
+      if (_lastError != null) {
+        _lastError = null;
+        notifyListeners();
+      }
+    } catch (e) {
+      _lastError = e.toString();
+      _lastErrorAt = DateTime.now();
+      notifyListeners();
+      rethrow;
     } finally {
       _saving = false;
     }
@@ -201,8 +241,10 @@ class SyncService {
     await _saveNow();
   }
 
+  @override
   void dispose() {
     _authSub?.cancel();
     _stopAutosave();
+    super.dispose();
   }
 }

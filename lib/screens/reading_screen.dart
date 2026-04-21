@@ -6,6 +6,7 @@ import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
+import '../widgets/animated_empty.dart';
 import '../l10n/app_locale.dart';
 
 class Book {
@@ -108,13 +109,10 @@ class _ReadingScreenState extends State<ReadingScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: books.isEmpty
-                ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.menu_book_rounded, size: 40, color: Colors.white.withAlpha(60)),
-                    const SizedBox(height: 16),
-                    Text(t('no books yet', 'пока нет книг'), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(180))),
-                    const SizedBox(height: 6),
-                    Text(t('start your reading journey', 'начните свой путь чтения'), style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withAlpha(120))),
-                  ]))
+                ? AnimatedEmpty(
+                    icon: Icons.menu_book_outlined,
+                    title: t('Start reading', 'Начни читать'),
+                    subtitle: t('Log pages to build your knowledge', 'Записывай страницы чтобы копить знания'))
                 : ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 100), children: [
                     ...reading.map((b) => _BookCard(book: b, onAddPages: (p) => _addPages(b, p), onDelete: () => _delete(b.id))),
                     if (finished.isNotEmpty) ...[

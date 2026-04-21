@@ -111,9 +111,9 @@ class _FoodScreenState extends State<FoodScreen> {
           Expanded(
             child: meals.isEmpty
                 ? AnimatedEmpty(
-                    icon: Icons.restaurant_rounded,
-                    title: t('no meals logged', 'нет записей о приёмах пищи'),
-                    subtitle: t('tap + to log your first meal', 'нажмите + чтобы добавить первый приём пищи'))
+                    icon: Icons.restaurant_outlined,
+                    title: t('No meals logged', 'Приёмы пищи не записаны'),
+                    subtitle: t('Tap + to log what you ate', 'Нажмите + чтобы записать еду'))
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                     itemCount: meals.length,

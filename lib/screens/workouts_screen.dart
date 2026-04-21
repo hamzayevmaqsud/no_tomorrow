@@ -7,6 +7,7 @@ import '../models/game_state.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
+import '../widgets/animated_empty.dart';
 import '../l10n/app_locale.dart';
 
 // ── Model ────────────────────────────────────────────────────────────────────
@@ -424,13 +425,11 @@ class _CardioStat extends StatelessWidget {
 
 class _Empty extends StatelessWidget {
   @override
-  Widget build(BuildContext context) => Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Icon(Icons.fitness_center_rounded, size: 40, color: Colors.white.withAlpha(60)),
-    const SizedBox(height: 16),
-    Text(t('no workouts yet', 'тренировок пока нет'), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(180))),
-    const SizedBox(height: 6),
-    Text(t('start your training', 'начни тренировку'), style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withAlpha(120))),
-  ]));
+  Widget build(BuildContext context) => AnimatedEmpty(
+    icon: Icons.fitness_center_rounded,
+    title: t('No workouts yet', 'Тренировок пока нет'),
+    subtitle: t('Log your first one to start a streak', 'Запиши первую чтобы начать серию'),
+  );
 }
 
 class _AddWorkoutSheet extends StatefulWidget {

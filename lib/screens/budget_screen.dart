@@ -112,9 +112,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
           Expanded(
             child: expenses.isEmpty
                 ? AnimatedEmpty(
-                    icon: Icons.account_balance_wallet_rounded,
-                    title: t('no expenses yet', 'пока нет расходов'),
-                    subtitle: t('tap + to log your first expense', 'нажмите + чтобы добавить расход'))
+                    icon: Icons.account_balance_wallet_outlined,
+                    title: t('No transactions yet', 'Нет транзакций'),
+                    subtitle: t('Tap the + button to add your first one', 'Нажмите + чтобы добавить первую'))
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
                     itemCount: expenses.length,

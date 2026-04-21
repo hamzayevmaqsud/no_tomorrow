@@ -2041,11 +2041,25 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
       ),
     );
     if (ok != true || !mounted) return;
-    HabitStore.habits.removeWhere((x) => x.id == widget.habit.id);
+    final idx = HabitStore.habits.indexWhere((x) => x.id == widget.habit.id);
+    if (idx < 0) return;
+    final removed = HabitStore.habits.removeAt(idx);
+    final messenger = ScaffoldMessenger.of(context);
     if (mounted) {
       Navigator.pop(context, true); // close edit sheet
       Navigator.pop(context);        // close detail view (back to list)
     }
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(t('Deleted "${removed.title}"',
+          'Удалено "${removed.title}"')),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: t('UNDO', 'ОТМЕНИТЬ'),
+          onPressed: () => HabitStore.habits
+              .insert(idx.clamp(0, HabitStore.habits.length), removed)),
+      ));
   }
 
   @override
@@ -2389,6 +2403,7 @@ class _HabitDetailView extends StatefulWidget {
 
 class _HabitDetailViewState extends State<_HabitDetailView> {
   late DateTime _viewMonth;
+  bool _waffleMode = false;
 
   @override
   void initState() {
@@ -2505,68 +2520,106 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                       onTap: () => setState(() => _viewMonth = DateTime(
                           _viewMonth.year, _viewMonth.month + 1)),
                       child: Icon(Icons.chevron_right_rounded, size: 22, color: textCol)),
+                    const SizedBox(width: 6),
+                    // Calendar / Waffle toggle
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _waffleMode = !_waffleMode);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: color.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: color.withAlpha(60))),
+                        child: Icon(
+                          _waffleMode ? Icons.calendar_month_rounded : Icons.grid_view_rounded,
+                          size: 12, color: color),
+                      ),
+                    ),
                   ]),
                   const SizedBox(height: 14),
 
-                  // Day headers
-                  Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
-                    Expanded(child: Center(child: Text(d,
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 8, fontWeight: FontWeight.w600,
-                        color: subCol.withAlpha(140)))))).toList()),
-                  const SizedBox(height: 8),
+                  // Body: monthly grid OR waffle heat grid
+                  if (_waffleMode)
+                    _Waffle(
+                      month: _viewMonth,
+                      completedDates: h.completedDates,
+                      accent: color,
+                      bg: textCol.withAlpha(14),
+                      onTap: (date) {
+                        if (date.isAfter(now)) return;
+                        HapticFeedback.lightImpact();
+                        final k = _dk(date);
+                        setState(() {
+                          if (h.completedDates.contains(k)) {
+                            h.completedDates.remove(k);
+                          } else {
+                            h.completedDates.add(k);
+                          }
+                        });
+                      },
+                    )
+                  else ...[
+                    // Day headers
+                    Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
+                      Expanded(child: Center(child: Text(d,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600,
+                          color: subCol.withAlpha(140)))))).toList()),
+                    const SizedBox(height: 8),
+                    ...List.generate(6, (week) {
+                      return Row(
+                        children: List.generate(7, (dayOfWeek) {
+                          final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
+                          if (dayIndex < 0 || dayIndex >= daysInMonth) {
+                            return const Expanded(child: SizedBox(height: 36));
+                          }
+                          final day = dayIndex + 1;
+                          final date = DateTime(_viewMonth.year, _viewMonth.month, day);
+                          final key = _dk(date);
+                          final done = h.completedDates.contains(key);
+                          final isToday = date.day == now.day &&
+                              date.month == now.month && date.year == now.year;
+                          final isFuture = date.isAfter(now);
 
-                  // Calendar grid
-                  ...List.generate(6, (week) {
-                    return Row(
-                      children: List.generate(7, (dayOfWeek) {
-                        final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
-                        if (dayIndex < 0 || dayIndex >= daysInMonth) {
-                          return const Expanded(child: SizedBox(height: 36));
-                        }
-                        final day = dayIndex + 1;
-                        final date = DateTime(_viewMonth.year, _viewMonth.month, day);
-                        final key = _dk(date);
-                        final done = h.completedDates.contains(key);
-                        final isToday = date.day == now.day &&
-                            date.month == now.month && date.year == now.year;
-                        final isFuture = date.isAfter(now);
-
-                        return Expanded(child: GestureDetector(
-                          onTap: isFuture ? null : () {
-                            setState(() {
-                              if (done) { h.completedDates.remove(key); }
-                              else { h.completedDates.add(key); }
-                            });
-                          },
-                          child: Container(
-                            height: 36,
-                            margin: const EdgeInsets.all(1.5),
-                            decoration: BoxDecoration(
-                              color: done
-                                  ? color
-                                  : isToday
-                                      ? color.withAlpha(15)
-                                      : Colors.transparent,
-                              shape: BoxShape.circle,
-                              border: isToday && !done
-                                  ? Border.all(color: color.withAlpha(120), width: 1.5)
-                                  : null,
-                            ),
-                            child: Center(child: Text('$day',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: done || isToday ? FontWeight.w700 : FontWeight.w500,
+                          return Expanded(child: GestureDetector(
+                            onTap: isFuture ? null : () {
+                              setState(() {
+                                if (done) { h.completedDates.remove(key); }
+                                else { h.completedDates.add(key); }
+                              });
+                            },
+                            child: Container(
+                              height: 36,
+                              margin: const EdgeInsets.all(1.5),
+                              decoration: BoxDecoration(
                                 color: done
-                                    ? Colors.white
-                                    : isFuture
-                                        ? subCol.withAlpha(60)
-                                        : textCol))),
-                          ),
-                        ));
-                      }),
-                    );
-                  }),
+                                    ? color
+                                    : isToday
+                                        ? color.withAlpha(15)
+                                        : Colors.transparent,
+                                shape: BoxShape.circle,
+                                border: isToday && !done
+                                    ? Border.all(color: color.withAlpha(120), width: 1.5)
+                                    : null,
+                              ),
+                              child: Center(child: Text('$day',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: done || isToday ? FontWeight.w700 : FontWeight.w500,
+                                  color: done
+                                      ? Colors.white
+                                      : isFuture
+                                          ? subCol.withAlpha(60)
+                                          : textCol))),
+                            ),
+                          ));
+                        }),
+                      );
+                    }),
+                  ],
                 ]),
               ),
 
@@ -2621,6 +2674,84 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
         ]),
       ),
     );
+  }
+}
+
+/// Waffle-style monthly view: one square per day of the month, 6 columns wide.
+/// Filled squares = checked day; empty = missed. Future days render faintly.
+class _Waffle extends StatelessWidget {
+  final DateTime month; // any day within the target month
+  final Set<String> completedDates;
+  final Color accent;
+  final Color bg;
+  final void Function(DateTime date) onTap;
+
+  const _Waffle({
+    required this.month,
+    required this.completedDates,
+    required this.accent,
+    required this.bg,
+    required this.onTap,
+  });
+
+  static String _dk(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+
+    return LayoutBuilder(builder: (ctx, box) {
+      const cols = 6;
+      const gap = 6.0;
+      final cellW = (box.maxWidth - gap * (cols - 1)) / cols;
+      final cellH = cellW;
+
+      return Wrap(
+        spacing: gap, runSpacing: gap,
+        children: List.generate(daysInMonth, (i) {
+          final day = i + 1;
+          final date = DateTime(month.year, month.month, day);
+          final done = completedDates.contains(_dk(date));
+          final isToday = date.year == now.year &&
+              date.month == now.month && date.day == now.day;
+          final isFuture = date.isAfter(now);
+
+          return GestureDetector(
+            onTap: isFuture ? null : () => onTap(date),
+            child: Container(
+              width: cellW, height: cellH,
+              decoration: BoxDecoration(
+                color: done
+                  ? accent
+                  : isFuture
+                    ? bg.withAlpha(50)
+                    : bg,
+                borderRadius: BorderRadius.circular(6),
+                border: isToday
+                  ? Border.all(color: accent, width: 1.6)
+                  : null,
+                boxShadow: done
+                  ? [BoxShadow(color: accent.withAlpha(90), blurRadius: 5)]
+                  : null,
+              ),
+              child: Center(
+                child: Text('$day',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 9,
+                    fontWeight: isToday || done ? FontWeight.w800 : FontWeight.w500,
+                    color: done
+                      ? Colors.white
+                      : isFuture
+                        ? const Color(0xFF8A8070).withAlpha(80)
+                        : const Color(0xFF8A8070))),
+              ),
+            ),
+          );
+        }),
+      );
+    });
   }
 }
 

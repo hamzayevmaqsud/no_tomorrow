@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import '../l10n/app_locale.dart';
 import '../models/collection_state.dart';
 import '../theme/app_colors.dart';
+import '../widgets/animated_empty.dart';
 import '../widgets/swipe_to_pop.dart';
 
 String _translateRarity(String label) {
@@ -89,12 +90,17 @@ class CollectionScreen extends StatelessWidget {
 
                 // ── Album list ──────────────────────────────────────────
                 Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    itemCount: Album.values.length,
-                    separatorBuilder: (_, s) => const SizedBox(height: 14),
-                    itemBuilder: (ctx, i) => _AlbumListCard(album: Album.values[i]),
-                  ),
+                  child: unlocked == 0
+                      ? AnimatedEmpty(
+                          icon: Icons.collections_bookmark_outlined,
+                          title: t('Collection is empty', 'Коллекция пуста'),
+                          subtitle: t('Complete tasks and level up to unlock rewards', 'Выполняй задачи и повышай уровень чтобы открывать награды'))
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                          itemCount: Album.values.length,
+                          separatorBuilder: (_, s) => const SizedBox(height: 14),
+                          itemBuilder: (ctx, i) => _AlbumListCard(album: Album.values[i]),
+                        ),
                 ),
               ],
             ),
