@@ -11,6 +11,17 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v2.3',
+      date: '2026-04-21',
+      title: t('Cleaner Habit Calendars', 'Чище календари привычек'),
+      items: [
+        t('Removed the grid/waffle toggle button from both the main Habits calendar and the single-habit detail view — one mode only, no clutter',
+          'Убрал кнопку переключения сетка/waffle с главного календаря Habits и с детального экрана привычки — один режим, без лишних иконок'),
+        t('Square cells with category-stripe fill is now the only (and default) view: each day is split into colored stripes proportional to how many habits of each category you completed (Health green, Mindset purple, Productivity orange, Social blue)',
+          'Квадратные ячейки с заливкой по категориям — теперь единственный вид: каждый день делится на цветные полосы пропорционально выполненным привычкам по категориям (Здоровье зелёный, Мышление фиолетовый, Продуктивность оранжевый, Общение синий)'),
+      ],
+    ),
+    _PatchNote(
       version: 'v2.2',
       date: '2026-04-21',
       title: t('Square Calendars With Category Fill', 'Квадратный календарь с заливкой по категориям'),

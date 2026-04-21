@@ -875,7 +875,6 @@ class _HabitCalendarBar extends StatefulWidget {
 class _HabitCalendarBarState extends State<_HabitCalendarBar> {
   late DateTime _month;
   bool _expanded = false;
-  bool _waffleMode = false;
 
   @override
   void initState() {
@@ -954,28 +953,9 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                 : null,
               child: Icon(Icons.chevron_right_rounded, size: 22,
                 color: _expanded ? textCol : textCol.withAlpha(60))),
-            if (_expanded) ...[
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _waffleMode = !_waffleMode);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.habits.withAlpha(20),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.habits.withAlpha(60))),
-                  child: Icon(
-                    _waffleMode ? Icons.calendar_month_rounded : Icons.grid_view_rounded,
-                    size: 12, color: AppColors.habits),
-                ),
-              ),
-            ],
           ]),
 
-          // Collapsible body — day headers + grid (or waffle)
+          // Collapsible body — day headers + square category grid
           AnimatedSize(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
@@ -983,23 +963,17 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
             child: _expanded
               ? Padding(
                   padding: const EdgeInsets.only(top: 14),
-                  child: _waffleMode
-                    ? _WaffleBar(
-                        month: _month,
-                        habits: habits,
-                        accent: AppColors.habits,
-                        bg: textCol.withAlpha(14))
-                    : Column(children: [
-                        // Day headers
-                        Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
-                          Expanded(child: Center(child: Text(d,
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 8, fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
-                        const SizedBox(height: 8),
-                        ..._buildGrid(now, habits, total, subCol, textCol,
-                          firstDay: firstDay, startWeekday: startWeekday, daysInMonth: daysInMonth),
-                      ]),
+                  child: Column(children: [
+                    // Day headers
+                    Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
+                      Expanded(child: Center(child: Text(d,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600,
+                          color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
+                    const SizedBox(height: 8),
+                    ..._buildGrid(now, habits, total, subCol, textCol,
+                      firstDay: firstDay, startWeekday: startWeekday, daysInMonth: daysInMonth),
+                  ]),
                 )
               : const SizedBox.shrink(),
           ),
@@ -2434,7 +2408,6 @@ class _HabitDetailView extends StatefulWidget {
 
 class _HabitDetailViewState extends State<_HabitDetailView> {
   late DateTime _viewMonth;
-  bool _waffleMode = false;
 
   @override
   void initState() {
@@ -2551,55 +2524,17 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                       onTap: () => setState(() => _viewMonth = DateTime(
                           _viewMonth.year, _viewMonth.month + 1)),
                       child: Icon(Icons.chevron_right_rounded, size: 22, color: textCol)),
-                    const SizedBox(width: 6),
-                    // Calendar / Waffle toggle
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() => _waffleMode = !_waffleMode);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: color.withAlpha(20),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: color.withAlpha(60))),
-                        child: Icon(
-                          _waffleMode ? Icons.calendar_month_rounded : Icons.grid_view_rounded,
-                          size: 12, color: color),
-                      ),
-                    ),
                   ]),
                   const SizedBox(height: 14),
 
-                  // Body: monthly grid OR waffle heat grid
-                  if (_waffleMode)
-                    _Waffle(
-                      month: _viewMonth,
-                      completedDates: h.completedDates,
-                      accent: color,
-                      bg: textCol.withAlpha(14),
-                      onTap: (date) {
-                        if (date.isAfter(now)) return;
-                        HapticFeedback.lightImpact();
-                        final k = _dk(date);
-                        setState(() {
-                          if (h.completedDates.contains(k)) {
-                            h.completedDates.remove(k);
-                          } else {
-                            h.completedDates.add(k);
-                          }
-                        });
-                      },
-                    )
-                  else ...[
-                    // Day headers
-                    Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
-                      Expanded(child: Center(child: Text(d,
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 8, fontWeight: FontWeight.w600,
-                          color: subCol.withAlpha(140)))))).toList()),
-                    const SizedBox(height: 8),
+                  // Square category grid
+                  // Day headers
+                  Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
+                    Expanded(child: Center(child: Text(d,
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 8, fontWeight: FontWeight.w600,
+                        color: subCol.withAlpha(140)))))).toList()),
+                  const SizedBox(height: 8),
                     ...List.generate(6, (week) {
                       return Row(
                         children: List.generate(7, (dayOfWeek) {
@@ -2655,7 +2590,6 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                         }),
                       );
                     }),
-                  ],
                 ]),
               ),
 
