@@ -11,6 +11,17 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v2.4',
+      date: '2026-04-21',
+      title: t('Honest Category Stripes', 'Честные полосы категорий'),
+      items: [
+        t('Removed the "all done = solid green" takeover — a fully completed day now stays colored by your actual category mix instead of overriding to green',
+          'Убрал зелёную заливку для "всё выполнено" — полностью завершённый день теперь окрашен твоим реальным миксом категорий, а не перекрывается зелёным'),
+        t('Category stripes now render for every non-future day with any habit data, including today. Incomplete portion is a neutral stripe so you see progress at a glance',
+          'Полосы категорий теперь рисуются для любого прошедшего/текущего дня с данными, включая сегодня. Незавершённая часть — нейтральная полоса, прогресс виден сразу'),
+      ],
+    ),
+    _PatchNote(
       version: 'v2.3',
       date: '2026-04-21',
       title: t('Cleaner Habit Calendars', 'Чище календари привычек'),

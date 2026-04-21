@@ -1009,60 +1009,39 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                     catDone[h.category] = (catDone[h.category] ?? 0) + 1;
                   }
                 }
-                final allDone = total > 0 && dayDone >= total;
-
                 return Expanded(child: Padding(
                   padding: const EdgeInsets.all(2),
                   child: AspectRatio(
                     aspectRatio: 1,
-                    child: total == 0 || isFuture
-                      ? Container(
-                          decoration: BoxDecoration(
-                            color: textCol.withAlpha(6),
-                            borderRadius: BorderRadius.circular(7),
-                            border: isToday
-                              ? Border.all(color: AppColors.habits, width: 1.6)
-                              : null,
-                          ),
-                          child: Center(child: Text('$day',
-                            style: GoogleFonts.inter(
-                              fontSize: 10,
-                              fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                              color: isFuture ? subCol.withAlpha(55) : subCol))),
-                        )
-                      : Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Background or category stripes
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(7),
-                              child: dayDone == 0
-                                ? Container(color: textCol.withAlpha(10))
-                                : _CategoryFill(
-                                    catDone: catDone,
-                                    total: total,
-                                    allDone: allDone),
-                            ),
-                            // Today accent border
-                            if (isToday)
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(7),
-                                  border: Border.all(
-                                    color: AppColors.habits, width: 1.6))),
-                            // Day number
-                            Center(child: Text('$day',
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: isToday || allDone ? FontWeight.w800 : FontWeight.w600,
-                                color: dayDone > 0
-                                  ? Colors.white
-                                  : textCol,
-                                shadows: dayDone > 0
-                                  ? [const Shadow(color: Colors.black26, blurRadius: 2)]
-                                  : null))),
-                          ],
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(7),
+                          child: total == 0 || isFuture
+                            ? Container(color: textCol.withAlpha(6))
+                            : _CategoryFill(catDone: catDone, total: total),
                         ),
+                        if (isToday)
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(7),
+                              border: Border.all(
+                                color: AppColors.habits, width: 1.6))),
+                        Center(child: Text('$day',
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                            color: dayDone > 0
+                              ? Colors.white
+                              : isFuture
+                                ? subCol.withAlpha(55)
+                                : subCol,
+                            shadows: dayDone > 0
+                              ? [const Shadow(color: Colors.black45, blurRadius: 2)]
+                              : null))),
+                      ],
+                    ),
                   ),
                 ));
               }),
@@ -1072,40 +1051,39 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
 }
 
 // ── Category fill (square cell) ───────────────────────────────────────────────
-// Replaces the old circular _PiePainter with stacked vertical stripes per
-// category, sized proportional to how many habits of that category were done.
-// If every habit was completed, the whole cell turns solid success green.
+// Stacked vertical stripes per category, width proportional to how many
+// habits of that category were done that day. Unfinished share becomes an
+// empty neutral stripe. No "allDone green" — colors stay truthful.
 
 class _CategoryFill extends StatelessWidget {
   final Map<HabitCategory, int> catDone;
   final int total;
-  final bool allDone;
   const _CategoryFill({
     required this.catDone,
     required this.total,
-    required this.allDone,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (allDone) {
-      return Container(color: const Color(0xFF22C55E));
-    }
-
     final segments = <Widget>[];
     for (final cat in HabitCategory.values) {
       final n = catDone[cat] ?? 0;
       if (n == 0) continue;
-      segments.add(Expanded(flex: n, child: ColoredBox(color: habitCatColor(cat))));
+      segments.add(Expanded(
+        flex: n * 100,
+        child: Container(color: habitCatColor(cat))));
     }
-    final gap = total - catDone.values.fold<int>(0, (s, v) => s + v);
+    final doneSum = catDone.values.fold<int>(0, (s, v) => s + v);
+    final gap = total - doneSum;
     if (gap > 0) {
       segments.add(Expanded(
-        flex: gap,
-        child: Container(color: const Color(0xFF2A2318).withAlpha(10))));
+        flex: gap * 100,
+        child: Container(color: const Color(0xFF2A2318).withAlpha(14))));
     }
-    // If a day has no completions segments will be empty, caller handles that.
-    return Row(children: segments);
+    if (segments.isEmpty) {
+      return Container(color: const Color(0xFF2A2318).withAlpha(14));
+    }
+    return Row(mainAxisSize: MainAxisSize.max, children: segments);
   }
 }
 
