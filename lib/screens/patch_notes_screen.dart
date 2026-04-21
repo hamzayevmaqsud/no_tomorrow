@@ -11,6 +11,17 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v2.5',
+      date: '2026-04-21',
+      title: t('Tasks Header Polish', 'Полировка шапки задач'),
+      items: [
+        t('Combo meter moved from above the task list to the header stats row, right next to the streak chip — compact mini-pill showing the multiplier, always visible without scrolling',
+          'Combo-метр переехал из-над списка задач в шапку статистики, рядом с chip-серии — компактная мини-таблетка с множителем, всегда видна без скролла'),
+        t('Timeline view: tasks without a time now grouped under "Anytime" instead of the technical-looking "NO TIME" label',
+          'Timeline-вид: задачи без времени теперь под заголовком "Anytime" вместо технического "NO TIME"'),
+      ],
+    ),
+    _PatchNote(
       version: 'v2.4',
       date: '2026-04-21',
       title: t('Honest Category Stripes', 'Честные полосы категорий'),

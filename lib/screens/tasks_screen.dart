@@ -786,6 +786,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                   : Colors.white.withAlpha(160),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
@@ -831,6 +832,10 @@ class _TasksScreenState extends State<TasksScreen> {
                               ],
                             ),
                           ),
+                          if (TaskCombo.current >= 3) ...[
+                            const SizedBox(width: 6),
+                            _ComboBadge(accentColor: vivid, compact: true),
+                          ],
                         ],
                       ),
                     ),
@@ -1076,11 +1081,6 @@ class _TasksScreenState extends State<TasksScreen> {
                                     });
                                   },
                                 ),
-                                if (TaskCombo.current >= 3)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: _ComboBadge(accentColor: vivid),
-                                  ),
                                 ...pending.asMap().entries.map(
                                   (e) => _staggered(
                                     e.key,
@@ -2378,46 +2378,57 @@ class _TemplateChips extends StatelessWidget {
 
 class _ComboBadge extends StatelessWidget {
   final Color accentColor;
-  const _ComboBadge({required this.accentColor});
+  final bool compact;
+  const _ComboBadge({required this.accentColor, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     final n = TaskCombo.current;
     final mult = TaskCombo.multiplier;
     final hot = n >= 5;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+
+    final badge = Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 14,
+        vertical: compact ? 2 : 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: hot
           ? [const Color(0xFFFF6B35), const Color(0xFFDC2626)]
           : [accentColor.withAlpha(200), accentColor.withAlpha(120)]),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(compact ? 10 : 18),
         boxShadow: [BoxShadow(
-          color: (hot ? const Color(0xFFFF6B35) : accentColor).withAlpha(120),
-          blurRadius: 14, offset: const Offset(0, 4)),
-        ],
+          color: (hot ? const Color(0xFFFF6B35) : accentColor).withAlpha(compact ? 80 : 120),
+          blurRadius: compact ? 6 : 14,
+          offset: Offset(0, compact ? 2 : 4))],
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(hot ? Icons.local_fire_department_rounded : Icons.bolt_rounded,
-          size: 16, color: Colors.white),
-        const SizedBox(width: 8),
-        Text('${t('COMBO', 'КОМБО')} x$n', style: GoogleFonts.jetBrainsMono(
-          fontSize: 11, fontWeight: FontWeight.w800,
-          letterSpacing: 1.5, color: Colors.white)),
-        const SizedBox(width: 10),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.white.withAlpha(60),
-            borderRadius: BorderRadius.circular(10)),
-          child: Text('${mult.toStringAsFixed(mult == mult.roundToDouble() ? 0 : 1)}×XP',
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 9, fontWeight: FontWeight.w800,
-              letterSpacing: 1, color: Colors.white)),
-        ),
+          size: compact ? 11 : 16, color: Colors.white),
+        SizedBox(width: compact ? 4 : 8),
+        Text('x$n', style: GoogleFonts.jetBrainsMono(
+          fontSize: compact ? 9 : 11, fontWeight: FontWeight.w800,
+          letterSpacing: compact ? 0.5 : 1.5, color: Colors.white)),
+        if (!compact) ...[
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(60),
+              borderRadius: BorderRadius.circular(10)),
+            child: Text(
+              '${mult.toStringAsFixed(mult == mult.roundToDouble() ? 0 : 1)}×XP',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 9, fontWeight: FontWeight.w800,
+                letterSpacing: 1, color: Colors.white)),
+          ),
+        ],
       ]),
-    ).animate(onPlay: (c) => c.repeat(reverse: true))
-      .scaleXY(begin: 1.0, end: 1.03, duration: 900.ms, curve: Curves.easeInOut);
+    );
+
+    return compact
+      ? badge
+      : badge.animate(onPlay: (c) => c.repeat(reverse: true))
+          .scaleXY(begin: 1.0, end: 1.03, duration: 900.ms, curve: Curves.easeInOut);
   }
 }
 
@@ -3436,7 +3447,7 @@ class _TimelineView extends StatelessWidget {
         final hour = hours[i];
         final slotTasks = byHour[hour] ?? [];
         final label = hour < 0
-            ? t('NO TIME', 'БЕЗ ВРЕМЕНИ')
+            ? t('ANYTIME', 'КОГДА-НИБУДЬ')
             : '${hour.toString().padLeft(2, '0')}:00';
         final now = TimeOfDay.now();
         final isCurrent = hour == now.hour;
