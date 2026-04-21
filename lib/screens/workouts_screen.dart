@@ -21,15 +21,86 @@ class SetEntry {
   SetEntry({this.weight = 20, this.reps = 10, this.done = false});
 }
 
+class MuscleGroup {
+  final String id, emoji;
+  final String Function() name;
+  final List<String Function()> exercises;
+  const MuscleGroup({required this.id, required this.emoji, required this.name, required this.exercises});
+}
+
+final kMuscleGroups = [
+  MuscleGroup(id: 'chest', emoji: '🫁', name: () => t('Chest', 'Грудь'), exercises: [
+    () => t('Bench Press', 'Жим лёжа'),
+    () => t('Incline Bench Press', 'Жим на наклонной'),
+    () => t('Dumbbell Flyes', 'Разведение гантелей'),
+    () => t('Cable Crossover', 'Кроссовер'),
+    () => t('Push-Ups', 'Отжимания'),
+    () => t('Dips (Chest)', 'Брусья (грудь)'),
+  ]),
+  MuscleGroup(id: 'back', emoji: '🔙', name: () => t('Back', 'Спина'), exercises: [
+    () => t('Pull-Ups', 'Подтягивания'),
+    () => t('Lat Pulldown', 'Тяга верхнего блока'),
+    () => t('Barbell Row', 'Тяга штанги в наклоне'),
+    () => t('Dumbbell Row', 'Тяга гантели в наклоне'),
+    () => t('Seated Cable Row', 'Тяга нижнего блока'),
+    () => t('Deadlift', 'Становая тяга'),
+    () => t('T-Bar Row', 'Тяга Т-грифа'),
+  ]),
+  MuscleGroup(id: 'legs', emoji: '🦵', name: () => t('Legs', 'Ноги'), exercises: [
+    () => t('Squat', 'Присед'),
+    () => t('Leg Press', 'Жим ногами'),
+    () => t('Lunges', 'Выпады'),
+    () => t('Leg Extension', 'Разгибание ног'),
+    () => t('Leg Curl', 'Сгибание ног'),
+    () => t('Calf Raise', 'Подъём на носки'),
+    () => t('Romanian Deadlift', 'Румынская тяга'),
+    () => t('Bulgarian Split Squat', 'Болгарские выпады'),
+  ]),
+  MuscleGroup(id: 'shoulders', emoji: '🏋️', name: () => t('Shoulders', 'Плечи'), exercises: [
+    () => t('Overhead Press', 'Жим стоя'),
+    () => t('Lateral Raise', 'Махи в стороны'),
+    () => t('Front Raise', 'Махи перед собой'),
+    () => t('Face Pull', 'Тяга к лицу'),
+    () => t('Arnold Press', 'Жим Арнольда'),
+    () => t('Reverse Flyes', 'Обратные разведения'),
+  ]),
+  MuscleGroup(id: 'arms', emoji: '💪', name: () => t('Arms', 'Руки'), exercises: [
+    () => t('Bicep Curl', 'Сгибание на бицепс'),
+    () => t('Hammer Curl', 'Молотковые сгибания'),
+    () => t('Tricep Pushdown', 'Разгибание на трицепс'),
+    () => t('Skull Crushers', 'Французский жим'),
+    () => t('Preacher Curl', 'Сгибание на скамье Скотта'),
+    () => t('Dips (Triceps)', 'Брусья (трицепс)'),
+  ]),
+  MuscleGroup(id: 'core', emoji: '🧱', name: () => t('Core', 'Кор'), exercises: [
+    () => t('Plank', 'Планка'),
+    () => t('Crunches', 'Скручивания'),
+    () => t('Leg Raise', 'Подъём ног'),
+    () => t('Russian Twist', 'Русский твист'),
+    () => t('Ab Wheel', 'Ролик для пресса'),
+    () => t('Cable Woodchop', 'Дровосек на блоке'),
+  ]),
+  MuscleGroup(id: 'cardio', emoji: '🏃', name: () => t('Cardio', 'Кардио'), exercises: [
+    () => t('Treadmill', 'Беговая дорожка'),
+    () => t('Cycling', 'Велотренажёр'),
+    () => t('Rowing', 'Гребной тренажёр'),
+    () => t('Elliptical', 'Эллипс'),
+    () => t('Jump Rope', 'Скакалка'),
+    () => t('Stairmaster', 'Степпер'),
+  ]),
+];
+
 class Exercise {
   final String id;
   String name;
+  String muscleEmoji;
   final List<SetEntry> sets;
   int restSeconds;
 
   Exercise({
     required this.id,
     required this.name,
+    this.muscleEmoji = '🏋️',
     List<SetEntry>? sets,
     this.restSeconds = 90,
   }) : sets = sets ?? [SetEntry()];
@@ -515,6 +586,8 @@ class _ExerciseCard extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Exercise header
         Row(children: [
+          Text(exercise.muscleEmoji, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 8),
           Expanded(child: Text(exercise.name, style: GoogleFonts.playfairDisplay(
             fontSize: 15, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
             color: const Color(0xFFE0C4C4)))),
@@ -636,8 +709,20 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
   int _reps = 10;
   int _weight = 20;
   int _rest = 90;
+  String _selectedEmoji = '🏋️';
+
+  // null = show catalog, non-null = show config for selected exercise
+  String? _pickedName;
 
   static const _restOptions = [30, 60, 90, 120, 180];
+
+  void _pickExercise(String name, String emoji) {
+    setState(() {
+      _pickedName = name;
+      _selectedEmoji = emoji;
+      _nameCtrl.text = name;
+    });
+  }
 
   void _submit() {
     final name = _nameCtrl.text.trim();
@@ -645,6 +730,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
     widget.onAdd(Exercise(
       id: WorkoutStore.nextId(),
       name: name,
+      muscleEmoji: _selectedEmoji,
       sets: List.generate(_sets, (_) => SetEntry(weight: _weight, reps: _reps)),
       restSeconds: _rest,
     ));
@@ -656,94 +742,166 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
   @override
   Widget build(BuildContext context) {
     final kb = MediaQuery.of(context).viewInsets.bottom;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, kb + 20),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        // Handle
-        Container(width: 40, height: 4,
-          decoration: BoxDecoration(color: Colors.white.withAlpha(30),
-            borderRadius: BorderRadius.circular(2))),
-        const SizedBox(height: 16),
 
-        // Title
-        Text(t('ADD EXERCISE', 'ДОБАВИТЬ УПРАЖНЕНИЕ'), style: GoogleFonts.playfairDisplay(
-          fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-          letterSpacing: 1, color: const Color(0xFFE0C4C4))),
-        const SizedBox(height: 16),
+    // Step 2: configure sets/reps/weight/rest
+    if (_pickedName != null) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, kb + 20),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.white.withAlpha(30), borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
 
-        // Name field
-        TextField(
-          controller: _nameCtrl,
-          autofocus: true,
-          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
-          decoration: InputDecoration(
-            hintText: t('e.g. Bench Press', 'напр. Жим лёжа'),
-            hintStyle: GoogleFonts.inter(fontSize: 15, color: Colors.white.withAlpha(40)),
-            filled: true,
-            fillColor: Colors.white.withAlpha(8),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
-          onSubmitted: (_) => _submit(),
-        ),
-        const SizedBox(height: 16),
+          // Back + title
+          Row(children: [
+            GestureDetector(
+              onTap: () => setState(() => _pickedName = null),
+              child: Icon(Icons.arrow_back_rounded, size: 18, color: Colors.white.withAlpha(140)),
+            ),
+            const SizedBox(width: 12),
+            Text(_selectedEmoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 8),
+            Expanded(child: Text(_pickedName!, style: GoogleFonts.playfairDisplay(
+              fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+              color: const Color(0xFFE0C4C4)))),
+          ]),
+          const SizedBox(height: 20),
 
-        // Counters row
-        Row(children: [
-          _MiniCounter(label: t('SETS', 'ПОДХ'), value: _sets,
-            onChanged: (v) => setState(() => _sets = v), min: 1, max: 10),
-          const SizedBox(width: 10),
-          _MiniCounter(label: t('REPS', 'ПОВТ'), value: _reps,
-            onChanged: (v) => setState(() => _reps = v), min: 1, max: 50),
-          const SizedBox(width: 10),
-          _MiniCounter(label: t('KG', 'КГ'), value: _weight,
-            onChanged: (v) => setState(() => _weight = v), min: 0, max: 300, step: 5),
-        ]),
-        const SizedBox(height: 14),
+          // Counters row
+          Row(children: [
+            _MiniCounter(label: t('SETS', 'ПОДХ'), value: _sets,
+              onChanged: (v) => setState(() => _sets = v), min: 1, max: 10),
+            const SizedBox(width: 10),
+            _MiniCounter(label: t('REPS', 'ПОВТ'), value: _reps,
+              onChanged: (v) => setState(() => _reps = v), min: 1, max: 50),
+            const SizedBox(width: 10),
+            _MiniCounter(label: t('KG', 'КГ'), value: _weight,
+              onChanged: (v) => setState(() => _weight = v), min: 0, max: 300, step: 5),
+          ]),
+          const SizedBox(height: 14),
 
-        // Rest timer selector
-        Row(children: [
-          Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
-            fontSize: 9, fontWeight: FontWeight.w700,
-            letterSpacing: 1.5, color: Colors.white.withAlpha(60))),
-          const SizedBox(width: 10),
-          ...(_restOptions.map((sec) => Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: GestureDetector(
-              onTap: () => setState(() => _rest = sec),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _rest == sec ? _kBordo.withAlpha(25) : Colors.white.withAlpha(6),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: _rest == sec
-                      ? _kBordo.withAlpha(80) : Colors.white.withAlpha(15)),
+          // Rest selector
+          SingleChildScrollView(scrollDirection: Axis.horizontal,
+            child: Row(children: [
+              Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
+                fontSize: 9, fontWeight: FontWeight.w700,
+                letterSpacing: 1.5, color: Colors.white.withAlpha(60))),
+              const SizedBox(width: 10),
+              ...(_restOptions.map((sec) => Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: GestureDetector(
+                  onTap: () => setState(() => _rest = sec),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _rest == sec ? _kBordo.withAlpha(25) : Colors.white.withAlpha(6),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: _rest == sec
+                          ? _kBordo.withAlpha(80) : Colors.white.withAlpha(15))),
+                    child: Text('${sec}s', style: GoogleFonts.jetBrainsMono(
+                      fontSize: 10, fontWeight: FontWeight.w700,
+                      color: _rest == sec ? _kBordo : Colors.white.withAlpha(80))),
+                  ),
                 ),
-                child: Text('${sec}s', style: GoogleFonts.jetBrainsMono(
-                  fontSize: 10, fontWeight: FontWeight.w700,
-                  color: _rest == sec ? _kBordo : Colors.white.withAlpha(80))),
+              ))),
+            ]),
+          ),
+          const SizedBox(height: 20),
+
+          GestureDetector(
+            onTap: _submit,
+            child: Container(
+              width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(color: _kBordo, borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: _kBordo.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))]),
+              child: Center(child: Text(t('ADD', 'ДОБАВИТЬ'), style: GoogleFonts.inter(
+                fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1.5, color: Colors.white))),
+            ),
+          ),
+        ]),
+      );
+    }
+
+    // Step 1: exercise catalog
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.7,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(width: 40, height: 4,
+            decoration: BoxDecoration(color: Colors.white.withAlpha(30), borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
+
+          Text(t('CHOOSE EXERCISE', 'ВЫБЕРИ УПРАЖНЕНИЕ'), style: GoogleFonts.playfairDisplay(
+            fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+            letterSpacing: 1, color: const Color(0xFFE0C4C4))),
+          const SizedBox(height: 12),
+
+          // Custom name field
+          TextField(
+            controller: _nameCtrl,
+            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+            decoration: InputDecoration(
+              hintText: t('or type custom name...', 'или введи своё...'),
+              hintStyle: GoogleFonts.inter(fontSize: 14, color: Colors.white.withAlpha(30)),
+              filled: true, fillColor: Colors.white.withAlpha(6),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              suffixIcon: IconButton(
+                icon: Icon(Icons.arrow_forward_rounded, color: _kBordo, size: 20),
+                onPressed: () {
+                  if (_nameCtrl.text.trim().isNotEmpty) {
+                    _pickExercise(_nameCtrl.text.trim(), '🏋️');
+                  }
+                },
               ),
             ),
-          ))),
-        ]),
-        const SizedBox(height: 20),
-
-        // Submit
-        GestureDetector(
-          onTap: _submit,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: _kBordo,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: _kBordo.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))],
-            ),
-            child: Center(child: Text(t('ADD', 'ДОБАВИТЬ'), style: GoogleFonts.inter(
-              fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1.5, color: Colors.white))),
+            onSubmitted: (v) {
+              if (v.trim().isNotEmpty) _pickExercise(v.trim(), '🏋️');
+            },
           ),
-        ),
-      ]),
+          const SizedBox(height: 12),
+
+          // Muscle group catalog
+          Expanded(child: ListView(
+            children: kMuscleGroups.map((group) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(children: [
+                    Text(group.emoji, style: const TextStyle(fontSize: 18)),
+                    const SizedBox(width: 8),
+                    Text(group.name().toUpperCase(), style: GoogleFonts.jetBrainsMono(
+                      fontSize: 10, fontWeight: FontWeight.w700,
+                      letterSpacing: 2, color: _kBordo)),
+                  ]),
+                ),
+                Wrap(spacing: 6, runSpacing: 6,
+                  children: group.exercises.map((exFn) {
+                    final name = exFn();
+                    return GestureDetector(
+                      onTap: () => _pickExercise(name, group.emoji),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(6),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white.withAlpha(12)),
+                        ),
+                        child: Text(name, style: GoogleFonts.inter(
+                          fontSize: 12, fontWeight: FontWeight.w600,
+                          color: Colors.white.withAlpha(200))),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 6),
+              ],
+            )).toList(),
+          )),
+        ]),
+      ),
     );
   }
 }
