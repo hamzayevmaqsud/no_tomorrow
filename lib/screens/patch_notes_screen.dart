@@ -15,8 +15,8 @@ class PatchNotesScreen extends StatelessWidget {
       date: '2026-04-21',
       title: t('Data Visualization & Trust', 'Визуализация данных и надёжность'),
       items: [
-        t('Waffle view for habit monthly calendar — toggle the grid icon at the top of a habit detail for a GitHub-style compact heat map (6 columns, one square per day)',
-          'Waffle-вид для месячного календаря привычки — переключи иконку сетки вверху детального экрана привычки, чтобы получить компактную тепловую карту в стиле GitHub (6 колонок, один квадрат на день)'),
+        t('Waffle view for habit calendars — toggle the grid icon in the top calendar of Habits (aggregate heatmap across all habits) and in the detail view of any single habit (GitHub-style per-day grid)',
+          'Waffle-вид для календарей привычек — переключи иконку сетки в верхнем календаре Habits (агрегированная тепловая карта по всем привычкам) и в детальном просмотре любой привычки (GitHub-style сетка по дням)'),
         t('Donut chart in Weekly Review — tap a slice to see the exact count, central total shows tasks completed that week',
           'Donut-диаграмма в Weekly Review — нажми на сектор чтобы увидеть точное количество, в центре общее число задач за неделю'),
         t('Save-failure banner with Retry — if sync to cloud fails, a red bar appears at the bottom of the app with a one-tap retry',

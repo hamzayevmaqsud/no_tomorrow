@@ -875,6 +875,7 @@ class _HabitCalendarBar extends StatefulWidget {
 class _HabitCalendarBarState extends State<_HabitCalendarBar> {
   late DateTime _month;
   bool _expanded = false;
+  bool _waffleMode = false;
 
   @override
   void initState() {
@@ -953,26 +954,53 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                 : null,
               child: Icon(Icons.chevron_right_rounded, size: 22,
                 color: _expanded ? textCol : textCol.withAlpha(60))),
+            if (_expanded) ...[
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _waffleMode = !_waffleMode);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.habits.withAlpha(20),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.habits.withAlpha(60))),
+                  child: Icon(
+                    _waffleMode ? Icons.calendar_month_rounded : Icons.grid_view_rounded,
+                    size: 12, color: AppColors.habits),
+                ),
+              ),
+            ],
           ]),
 
-          // Collapsible body — day headers + grid
+          // Collapsible body — day headers + grid (or waffle)
           AnimatedSize(
             duration: const Duration(milliseconds: 260),
             curve: Curves.easeOutCubic,
             alignment: Alignment.topCenter,
             child: _expanded
-              ? Column(children: [
-                  const SizedBox(height: 14),
-                  // Day headers
-                  Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
-                    Expanded(child: Center(child: Text(d,
-                      style: GoogleFonts.jetBrainsMono(
-                        fontSize: 8, fontWeight: FontWeight.w600,
-                        color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
-                  const SizedBox(height: 8),
-                  ..._buildGrid(now, habits, total, subCol, textCol,
-                    firstDay: firstDay, startWeekday: startWeekday, daysInMonth: daysInMonth),
-                ])
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: _waffleMode
+                    ? _WaffleBar(
+                        month: _month,
+                        habits: habits,
+                        accent: AppColors.habits,
+                        bg: textCol.withAlpha(14))
+                    : Column(children: [
+                        // Day headers
+                        Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
+                          Expanded(child: Center(child: Text(d,
+                            style: GoogleFonts.jetBrainsMono(
+                              fontSize: 8, fontWeight: FontWeight.w600,
+                              color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
+                        const SizedBox(height: 8),
+                        ..._buildGrid(now, habits, total, subCol, textCol,
+                          firstDay: firstDay, startWeekday: startWeekday, daysInMonth: daysInMonth),
+                      ]),
+                )
               : const SizedBox.shrink(),
           ),
         ]),
@@ -2674,6 +2702,89 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
         ]),
       ),
     );
+  }
+}
+
+/// Aggregated Waffle for the main habits calendar — one square per day of
+/// the month with intensity = (habits done that day / total habits).
+class _WaffleBar extends StatelessWidget {
+  final DateTime month;
+  final List<Habit> habits;
+  final Color accent;
+  final Color bg;
+  const _WaffleBar({
+    required this.month,
+    required this.habits,
+    required this.accent,
+    required this.bg,
+  });
+
+  static String _dk(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
+    final total = habits.length;
+
+    return LayoutBuilder(builder: (ctx, box) {
+      const cols = 7;
+      const gap = 5.0;
+      final cellW = (box.maxWidth - gap * (cols - 1)) / cols;
+      final cellH = cellW;
+
+      return Wrap(
+        spacing: gap, runSpacing: gap,
+        children: List.generate(daysInMonth, (i) {
+          final day = i + 1;
+          final date = DateTime(month.year, month.month, day);
+          final key = _dk(date);
+          final isToday = date.year == now.year &&
+              date.month == now.month && date.day == now.day;
+          final isFuture = date.isAfter(now);
+          final done = total == 0
+              ? 0
+              : habits.where((h) => h.completedDates.contains(key)).length;
+          final ratio = total == 0 ? 0.0 : done / total;
+
+          Color fill;
+          if (isFuture) {
+            fill = bg.withAlpha(40);
+          } else if (ratio == 0) {
+            fill = bg;
+          } else {
+            fill = Color.lerp(bg, accent, 0.35 + 0.65 * ratio)!;
+          }
+
+          return Container(
+            width: cellW, height: cellH,
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(6),
+              border: isToday
+                ? Border.all(color: accent, width: 1.5)
+                : null,
+              boxShadow: ratio >= 0.6 && !isFuture
+                ? [BoxShadow(color: accent.withAlpha(90), blurRadius: 4)]
+                : null,
+            ),
+            child: Center(
+              child: Text('$day',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 9,
+                  fontWeight: ratio > 0.5 || isToday
+                    ? FontWeight.w800 : FontWeight.w500,
+                  color: ratio > 0.5
+                    ? Colors.white
+                    : isFuture
+                      ? const Color(0xFF8A8070).withAlpha(80)
+                      : const Color(0xFF8A8070))),
+            ),
+          );
+        }),
+      );
+    });
   }
 }
 
