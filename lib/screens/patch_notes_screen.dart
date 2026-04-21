@@ -11,6 +11,19 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v2.2',
+      date: '2026-04-21',
+      title: t('Square Calendars With Category Fill', 'Квадратный календарь с заливкой по категориям'),
+      items: [
+        t('Habit calendars now use rounded square cells instead of circles — cleaner, denser, more modern',
+          'Календари привычек теперь используют скруглённые квадраты вместо кругов — чище, плотнее, современнее'),
+        t('Main Habits calendar keeps the category-colored fill logic: each day cell is split into vertical stripes proportional to how many habits of each category you completed that day (Health green, Mindset purple, Productivity orange, Social blue). All habits done → solid success green',
+          'Главный календарь Habits сохраняет логику заливки по категориям: каждая ячейка дня делится на вертикальные полосы пропорционально количеству выполненных привычек каждой категории (Здоровье зелёный, Мышление фиолетовый, Продуктивность оранжевый, Общение синий). Все привычки сделаны → сплошной зелёный'),
+        t('Habit detail calendar: done days fill with the habit’s category color + soft glow, today outlined, future faded',
+          'Детальный календарь привычки: выполненные дни заливаются цветом категории привычки + мягкое свечение, сегодня в обводке, будущие затемнены'),
+      ],
+    ),
+    _PatchNote(
       version: 'v2.1',
       date: '2026-04-21',
       title: t('Data Visualization & Trust', 'Визуализация данных и надёжность'),

@@ -1037,50 +1037,58 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                 }
                 final allDone = total > 0 && dayDone >= total;
 
-                return Expanded(child: SizedBox(
-                  height: 38,
-                  child: Center(child: total == 0 || isFuture
-                    ? Text('$day', style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: isToday ? FontWeight.w700 : FontWeight.w400,
-                        color: isFuture ? subCol.withAlpha(50) : subCol))
-                    : SizedBox(
-                        width: 34, height: 34,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Pie chart or empty circle
-                            if (dayDone > 0)
-                              CustomPaint(
-                                size: const Size(34, 34),
-                                painter: _PiePainter(
-                                  categories: catDone,
-                                  total: total,
-                                  allDone: allDone,
-                                ),
-                              )
-                            else
-                              Container(width: 34, height: 34,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: textCol.withAlpha(8),
-                                )),
-                            // Today ring
-                            if (isToday)
-                              Container(width: 34, height: 34,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.habits, width: 2.5),
-                                )),
-                            // Day number
-                            Text('$day', style: GoogleFonts.inter(
+                return Expanded(child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: total == 0 || isFuture
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: textCol.withAlpha(6),
+                            borderRadius: BorderRadius.circular(7),
+                            border: isToday
+                              ? Border.all(color: AppColors.habits, width: 1.6)
+                              : null,
+                          ),
+                          child: Center(child: Text('$day',
+                            style: GoogleFonts.inter(
                               fontSize: 10,
-                              fontWeight: isToday || allDone ? FontWeight.w700 : FontWeight.w500,
-                              color: allDone ? Colors.white : textCol)),
+                              fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                              color: isFuture ? subCol.withAlpha(55) : subCol))),
+                        )
+                      : Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Background or category stripes
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(7),
+                              child: dayDone == 0
+                                ? Container(color: textCol.withAlpha(10))
+                                : _CategoryFill(
+                                    catDone: catDone,
+                                    total: total,
+                                    allDone: allDone),
+                            ),
+                            // Today accent border
+                            if (isToday)
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(7),
+                                  border: Border.all(
+                                    color: AppColors.habits, width: 1.6))),
+                            // Day number
+                            Center(child: Text('$day',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: isToday || allDone ? FontWeight.w800 : FontWeight.w600,
+                                color: dayDone > 0
+                                  ? Colors.white
+                                  : textCol,
+                                shadows: dayDone > 0
+                                  ? [const Shadow(color: Colors.black26, blurRadius: 2)]
+                                  : null))),
                           ],
                         ),
-                      ),
                   ),
                 ));
               }),
@@ -1089,47 +1097,42 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
   }
 }
 
-// ── Pie chart painter (category colors per day) ──────────────────────────────
+// ── Category fill (square cell) ───────────────────────────────────────────────
+// Replaces the old circular _PiePainter with stacked vertical stripes per
+// category, sized proportional to how many habits of that category were done.
+// If every habit was completed, the whole cell turns solid success green.
 
-class _PiePainter extends CustomPainter {
-  final Map<HabitCategory, int> categories;
+class _CategoryFill extends StatelessWidget {
+  final Map<HabitCategory, int> catDone;
   final int total;
   final bool allDone;
-
-  _PiePainter({required this.categories, required this.total, required this.allDone});
+  const _CategoryFill({
+    required this.catDone,
+    required this.total,
+    required this.allDone,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-
+  Widget build(BuildContext context) {
     if (allDone) {
-      canvas.drawCircle(center, radius, Paint()..color = const Color(0xFF22C55E));
-      return;
+      return Container(color: const Color(0xFF22C55E));
     }
 
-    // Background
-    canvas.drawCircle(center, radius, Paint()..color = const Color(0xFF2A2318).withAlpha(10));
-
-    // Pie segments per category
-    final totalDone = categories.values.fold(0, (s, v) => s + v);
-    if (totalDone == 0) return;
-
-    double startAngle = -pi / 2;
+    final segments = <Widget>[];
     for (final cat in HabitCategory.values) {
-      final count = categories[cat] ?? 0;
-      if (count == 0) continue;
-      final sweep = (count / totalDone) * 2 * pi;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle, sweep, true,
-        Paint()..color = habitCatColor(cat));
-      startAngle += sweep;
+      final n = catDone[cat] ?? 0;
+      if (n == 0) continue;
+      segments.add(Expanded(flex: n, child: ColoredBox(color: habitCatColor(cat))));
     }
+    final gap = total - catDone.values.fold<int>(0, (s, v) => s + v);
+    if (gap > 0) {
+      segments.add(Expanded(
+        flex: gap,
+        child: Container(color: const Color(0xFF2A2318).withAlpha(10))));
+    }
+    // If a day has no completions segments will be empty, caller handles that.
+    return Row(children: segments);
   }
-
-  @override
-  bool shouldRepaint(_PiePainter old) => true;
 }
 
 // ── Inline stat pill ─────────────────────────────────────────────────────────
@@ -2619,29 +2622,34 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                                 else { h.completedDates.add(key); }
                               });
                             },
-                            child: Container(
-                              height: 36,
-                              margin: const EdgeInsets.all(1.5),
-                              decoration: BoxDecoration(
-                                color: done
-                                    ? color
-                                    : isToday
-                                        ? color.withAlpha(15)
-                                        : Colors.transparent,
-                                shape: BoxShape.circle,
-                                border: isToday && !done
-                                    ? Border.all(color: color.withAlpha(120), width: 1.5)
-                                    : null,
-                              ),
-                              child: Center(child: Text('$day',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: done || isToday ? FontWeight.w700 : FontWeight.w500,
+                            child: AspectRatio(
+                              aspectRatio: 1,
+                              child: Container(
+                                margin: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
                                   color: done
-                                      ? Colors.white
+                                      ? color
                                       : isFuture
-                                          ? subCol.withAlpha(60)
-                                          : textCol))),
+                                          ? textCol.withAlpha(6)
+                                          : textCol.withAlpha(10),
+                                  borderRadius: BorderRadius.circular(7),
+                                  border: isToday
+                                      ? Border.all(color: color, width: 1.6)
+                                      : null,
+                                  boxShadow: done
+                                      ? [BoxShadow(color: color.withAlpha(90), blurRadius: 4)]
+                                      : null,
+                                ),
+                                child: Center(child: Text('$day',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: done || isToday ? FontWeight.w800 : FontWeight.w500,
+                                    color: done
+                                        ? Colors.white
+                                        : isFuture
+                                            ? subCol.withAlpha(60)
+                                            : textCol))),
+                              ),
                             ),
                           ));
                         }),
