@@ -10,6 +10,8 @@ import '../widgets/jelly_button.dart';
 import '../widgets/animated_empty.dart';
 import '../l10n/app_locale.dart';
 
+const _kBordo = Color(0xFF8B1A2B); // burgundy/bordeaux accent
+
 // ── Models ──────────────────────────────────────────────────────────────────
 
 class SetEntry {
@@ -156,7 +158,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   void _showAddExercise(WorkoutSession session) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1208),
+      backgroundColor: const Color(0xFF10080C),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -182,13 +184,13 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     final totalVol = todaySessions.fold(0, (v, s) => v + s.totalVolume);
 
     return SwipeToPop(child: Scaffold(
-      backgroundColor: const Color(0xFF120C06),
+      backgroundColor: const Color(0xFF0A0A0F),
       body: Stack(children: [
         // Background
         Positioned.fill(child: Container(
           decoration: const BoxDecoration(gradient: RadialGradient(
             center: Alignment(0, -0.3), radius: 1.2,
-            colors: [Color(0xFF261808), Color(0xFF120C06)],
+            colors: [Color(0xFF1A0A10), Color(0xFF0A0A0F)],
           )),
         )),
 
@@ -240,8 +242,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   ),
                   child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Container(width: 36, height: 36,
-                      decoration: BoxDecoration(color: AppColors.workouts, shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: AppColors.workouts.withAlpha(100), blurRadius: 12)]),
+                      decoration: BoxDecoration(color: _kBordo, shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: _kBordo.withAlpha(100), blurRadius: 12)]),
                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 20)),
                     const SizedBox(width: 12),
                     Text(t('NEW  WORKOUT', 'НОВАЯ  ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
@@ -280,17 +282,17 @@ class _Header extends StatelessWidget {
         const Spacer(),
         Text(t('WORKOUT', 'ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
           fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-          letterSpacing: 2, color: const Color(0xFFF0D4C0))),
+          letterSpacing: 2, color: const Color(0xFFE0C4C4))),
         const Spacer(),
         if (totalSets > 0) ...[
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.workouts.withAlpha(20),
+              color: _kBordo.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text('$doneSets/$totalSets', style: GoogleFonts.jetBrainsMono(
-              fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.workouts)),
+              fontSize: 11, fontWeight: FontWeight.w700, color: _kBordo)),
           ),
           const SizedBox(width: 8),
           Container(
@@ -326,9 +328,9 @@ class _RestTimerBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: BoxDecoration(
-        color: AppColors.workouts.withAlpha(20),
+        color: _kBordo.withAlpha(20),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.workouts.withAlpha(60)),
+        border: Border.all(color: _kBordo.withAlpha(60)),
       ),
       child: Row(children: [
         // Circular timer
@@ -339,7 +341,7 @@ class _RestTimerBanner extends StatelessWidget {
                 value: progress,
                 strokeWidth: 3,
                 backgroundColor: Colors.white.withAlpha(15),
-                valueColor: AlwaysStoppedAnimation(AppColors.workouts),
+                valueColor: AlwaysStoppedAnimation(_kBordo),
               )),
             Text('$mins:${secs.toString().padLeft(2, '0')}',
               style: GoogleFonts.jetBrainsMono(
@@ -351,7 +353,7 @@ class _RestTimerBanner extends StatelessWidget {
           children: [
             Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
               fontSize: 10, fontWeight: FontWeight.w700,
-              letterSpacing: 2, color: AppColors.workouts)),
+              letterSpacing: 2, color: _kBordo)),
             const SizedBox(height: 2),
             Text(t('Next set in $remaining s', 'Следующий подход через $remaining с'),
               style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withAlpha(140))),
@@ -399,7 +401,7 @@ class _SessionCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1408),
+        color: const Color(0xFF12080C),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withAlpha(10)),
       ),
@@ -408,7 +410,7 @@ class _SessionCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
           child: Row(children: [
-            Icon(Icons.fitness_center_rounded, size: 16, color: AppColors.workouts),
+            Icon(Icons.fitness_center_rounded, size: 16, color: _kBordo),
             const SizedBox(width: 8),
             Text(session.dateLabel, style: GoogleFonts.jetBrainsMono(
               fontSize: 10, fontWeight: FontWeight.w700,
@@ -425,7 +427,7 @@ class _SessionCard extends StatelessWidget {
             const Spacer(),
             // Progress
             Text('${session.doneSets}/${session.totalSets}', style: GoogleFonts.jetBrainsMono(
-              fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.workouts)),
+              fontSize: 10, fontWeight: FontWeight.w700, color: _kBordo)),
             const SizedBox(width: 10),
             GestureDetector(
               onTap: onDeleteSession,
@@ -441,7 +443,7 @@ class _SessionCard extends StatelessWidget {
               color: Colors.white.withAlpha(8), borderRadius: BorderRadius.circular(2))),
             FractionallySizedBox(widthFactor: session.progress,
               child: Container(height: 3, decoration: BoxDecoration(
-                color: session.isCompleted ? AppColors.success : AppColors.workouts,
+                color: session.isCompleted ? AppColors.success : _kBordo,
                 borderRadius: BorderRadius.circular(2)))),
           ]),
         ),
@@ -471,11 +473,11 @@ class _SessionCard extends StatelessWidget {
                 border: Border.all(color: Colors.white.withAlpha(15)),
               ),
               child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Icon(Icons.add_rounded, size: 16, color: AppColors.workouts.withAlpha(180)),
+                Icon(Icons.add_rounded, size: 16, color: _kBordo.withAlpha(180)),
                 const SizedBox(width: 6),
                 Text(t('ADD EXERCISE', 'ДОБАВИТЬ УПРАЖНЕНИЕ'), style: GoogleFonts.inter(
                   fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1,
-                  color: AppColors.workouts.withAlpha(180))),
+                  color: _kBordo.withAlpha(180))),
               ]),
             ),
           ),
@@ -515,7 +517,7 @@ class _ExerciseCard extends StatelessWidget {
         Row(children: [
           Expanded(child: Text(exercise.name, style: GoogleFonts.playfairDisplay(
             fontSize: 15, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-            color: const Color(0xFFF0D4C0)))),
+            color: const Color(0xFFE0C4C4)))),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -550,14 +552,14 @@ class _ExerciseCard extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 4),
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             decoration: BoxDecoration(
-              color: s.done ? AppColors.workouts.withAlpha(10) : Colors.transparent,
+              color: s.done ? _kBordo.withAlpha(10) : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(children: [
               SizedBox(width: 36,
                 child: Text('${i + 1}', style: GoogleFonts.jetBrainsMono(
                   fontSize: 12, fontWeight: FontWeight.w700,
-                  color: s.done ? AppColors.workouts : Colors.white.withAlpha(100)))),
+                  color: s.done ? _kBordo : Colors.white.withAlpha(100)))),
               Expanded(child: Center(
                 child: Text('${s.weight}', style: GoogleFonts.jetBrainsMono(
                   fontSize: 14, fontWeight: FontWeight.w700,
@@ -574,16 +576,16 @@ class _ExerciseCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: s.done
                           ? AppColors.success.withAlpha(20)
-                          : AppColors.workouts.withAlpha(15),
+                          : _kBordo.withAlpha(15),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: s.done
                           ? AppColors.success.withAlpha(60)
-                          : AppColors.workouts.withAlpha(40)),
+                          : _kBordo.withAlpha(40)),
                     ),
                     child: Center(child: Icon(
                       s.done ? Icons.check_rounded : Icons.play_arrow_rounded,
                       size: 16,
-                      color: s.done ? AppColors.success : AppColors.workouts)),
+                      color: s.done ? AppColors.success : _kBordo)),
                   ),
                 ),
               ),
@@ -666,7 +668,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
         // Title
         Text(t('ADD EXERCISE', 'ДОБАВИТЬ УПРАЖНЕНИЕ'), style: GoogleFonts.playfairDisplay(
           fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-          letterSpacing: 1, color: const Color(0xFFF0D4C0))),
+          letterSpacing: 1, color: const Color(0xFFE0C4C4))),
         const SizedBox(height: 16),
 
         // Name field
@@ -712,14 +714,14 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _rest == sec ? AppColors.workouts.withAlpha(25) : Colors.white.withAlpha(6),
+                  color: _rest == sec ? _kBordo.withAlpha(25) : Colors.white.withAlpha(6),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: _rest == sec
-                      ? AppColors.workouts.withAlpha(80) : Colors.white.withAlpha(15)),
+                      ? _kBordo.withAlpha(80) : Colors.white.withAlpha(15)),
                 ),
                 child: Text('${sec}s', style: GoogleFonts.jetBrainsMono(
                   fontSize: 10, fontWeight: FontWeight.w700,
-                  color: _rest == sec ? AppColors.workouts : Colors.white.withAlpha(80))),
+                  color: _rest == sec ? _kBordo : Colors.white.withAlpha(80))),
               ),
             ),
           ))),
@@ -733,9 +735,9 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.workouts,
+              color: _kBordo,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: AppColors.workouts.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))],
+              boxShadow: [BoxShadow(color: _kBordo.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))],
             ),
             child: Center(child: Text(t('ADD', 'ДОБАВИТЬ'), style: GoogleFonts.inter(
               fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1.5, color: Colors.white))),
