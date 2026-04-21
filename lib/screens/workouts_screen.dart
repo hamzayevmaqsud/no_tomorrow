@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,39 +10,54 @@ import '../widgets/jelly_button.dart';
 import '../widgets/animated_empty.dart';
 import '../l10n/app_locale.dart';
 
-// ── Model ────────────────────────────────────────────────────────────────────
+// ── Models ──────────────────────────────────────────────────────────────────
 
-enum WorkoutType { strength, cardio }
+class SetEntry {
+  int weight;
+  int reps;
+  bool done;
+  SetEntry({this.weight = 20, this.reps = 10, this.done = false});
+}
 
-class Workout {
+class Exercise {
   final String id;
   String name;
-  final DateTime date;
-  final List<ExerciseSet> sets;
-  WorkoutType type;
-  // Cardio fields
-  int cardioMinutes;
-  double cardioDistance; // km
-  bool cardioCompleted;
+  final List<SetEntry> sets;
+  int restSeconds;
 
-  bool get isCompleted => type == WorkoutType.cardio
-      ? cardioCompleted
-      : sets.isNotEmpty && sets.every((s) => s.done);
+  Exercise({
+    required this.id,
+    required this.name,
+    List<SetEntry>? sets,
+    this.restSeconds = 90,
+  }) : sets = sets ?? [SetEntry()];
 
-  Workout({
-    required this.id, required this.name, required this.date,
-    List<ExerciseSet>? sets, this.type = WorkoutType.strength,
-    this.cardioMinutes = 0, this.cardioDistance = 0, this.cardioCompleted = false,
-  }) : sets = sets ?? [];
-
-  int get totalVolume => sets.where((s) => s.done).fold(0, (sum, s) => sum + s.reps * s.weight);
   int get doneSets => sets.where((s) => s.done).length;
-  int get xp => type == WorkoutType.cardio
-      ? (cardioCompleted ? 20 : 0)
-      : doneSets * 10;
-  double get progress => type == WorkoutType.cardio
-      ? (cardioCompleted ? 1.0 : 0.0)
-      : sets.isEmpty ? 0.0 : doneSets / sets.length;
+  int get totalVolume => sets.where((s) => s.done).fold(0, (v, s) => v + s.weight * s.reps);
+  bool get isCompleted => sets.isNotEmpty && sets.every((s) => s.done);
+  double get progress => sets.isEmpty ? 0.0 : doneSets / sets.length;
+}
+
+class WorkoutSession {
+  final String id;
+  final DateTime date;
+  final List<Exercise> exercises;
+  bool finished;
+
+  WorkoutSession({
+    required this.id,
+    required this.date,
+    List<Exercise>? exercises,
+    this.finished = false,
+  }) : exercises = exercises ?? [];
+
+  int get totalSets => exercises.fold(0, (s, e) => s + e.sets.length);
+  int get doneSets => exercises.fold(0, (s, e) => s + e.doneSets);
+  int get totalVolume => exercises.fold(0, (v, e) => v + e.totalVolume);
+  int get totalExercises => exercises.length;
+  bool get isCompleted => exercises.isNotEmpty && exercises.every((e) => e.isCompleted);
+  double get progress => totalSets == 0 ? 0.0 : doneSets / totalSets;
+  int get xp => doneSets * 10;
 
   String get dateLabel {
     final now = DateTime.now();
@@ -54,19 +69,13 @@ class Workout {
   }
 }
 
-class ExerciseSet {
-  int reps;
-  int weight;
-  bool done;
-  ExerciseSet({this.reps = 10, this.weight = 0, this.done = false});
-}
-
 class WorkoutStore {
-  static final List<Workout> workouts = [];
-  static int nextId = 1;
+  static final List<WorkoutSession> sessions = [];
+  static int _nextId = 1;
+  static String nextId() => '${_nextId++}';
 }
 
-// ── Screen ───────────────────────────────────────────────────────────────────
+// ── Screen ──────────────────────────────────────────────────────────────────
 
 class WorkoutsScreen extends StatefulWidget {
   const WorkoutsScreen({super.key});
@@ -75,86 +84,155 @@ class WorkoutsScreen extends StatefulWidget {
 }
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
-  void _completeSet(Workout w, int setIndex) {
-    if (w.sets[setIndex].done) return;
+  // Rest timer state
+  Timer? _restTimer;
+  int _restRemaining = 0;
+  int _restTotal = 0;
+  bool get _resting => _restRemaining > 0;
+
+  @override
+  void dispose() {
+    _restTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startRest(int seconds) {
+    _restTimer?.cancel();
+    setState(() {
+      _restTotal = seconds;
+      _restRemaining = seconds;
+    });
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_restRemaining <= 1) {
+        timer.cancel();
+        HapticFeedback.heavyImpact();
+        setState(() => _restRemaining = 0);
+      } else {
+        setState(() => _restRemaining--);
+      }
+    });
+  }
+
+  void _skipRest() {
+    _restTimer?.cancel();
+    setState(() => _restRemaining = 0);
+  }
+
+  void _completeSet(Exercise exercise, int setIndex) {
+    if (exercise.sets[setIndex].done) return;
     HapticFeedback.mediumImpact();
-    setState(() => w.sets[setIndex].done = true);
+    setState(() => exercise.sets[setIndex].done = true);
     GameState.instance.recordCompletion();
     GameState.instance.addXp(10);
+    // Auto-start rest timer
+    _startRest(exercise.restSeconds);
   }
 
-  void _delete(String id) {
+  void _addSet(Exercise exercise) {
     HapticFeedback.lightImpact();
-    setState(() => WorkoutStore.workouts.removeWhere((w) => w.id == id));
+    final last = exercise.sets.isNotEmpty ? exercise.sets.last : null;
+    setState(() => exercise.sets.add(SetEntry(
+      weight: last?.weight ?? 20,
+      reps: last?.reps ?? 10,
+    )));
   }
 
-  void _showAdd() {
-    showGeneralDialog(
+  void _deleteExercise(WorkoutSession session, int exerciseIndex) {
+    HapticFeedback.lightImpact();
+    setState(() => session.exercises.removeAt(exerciseIndex));
+  }
+
+  void _deleteSession(String id) {
+    HapticFeedback.lightImpact();
+    setState(() => WorkoutStore.sessions.removeWhere((s) => s.id == id));
+  }
+
+  void _newSession() {
+    final session = WorkoutSession(id: WorkoutStore.nextId(), date: DateTime.now());
+    setState(() => WorkoutStore.sessions.insert(0, session));
+    _showAddExercise(session);
+  }
+
+  void _showAddExercise(WorkoutSession session) {
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: true, barrierLabel: 'dismiss',
-      barrierColor: Colors.black.withAlpha(140),
-      transitionDuration: const Duration(milliseconds: 340),
-      pageBuilder: (ctx, _, __) => _AddWorkoutSheet(
-        onAdd: (w) { setState(() => WorkoutStore.workouts.insert(0, w)); Navigator.of(ctx).pop(); },
-        nextId: '${WorkoutStore.nextId++}',
+      backgroundColor: const Color(0xFF1A1208),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-            .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-        child: child,
+      isScrollControlled: true,
+      builder: (_) => _AddExerciseSheet(
+        onAdd: (exercise) {
+          setState(() => session.exercises.add(exercise));
+          Navigator.pop(context);
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final workouts = WorkoutStore.workouts;
-    final todayW = workouts.where((w) {
-      final n = DateTime.now(); return w.date.day == n.day && w.date.month == n.month;
+    final sessions = WorkoutStore.sessions;
+    final todaySessions = sessions.where((s) {
+      final n = DateTime.now();
+      return s.date.day == n.day && s.date.month == n.month && s.date.year == n.year;
     }).toList();
-    final totalSets = todayW.fold(0, (s, w) => s + w.sets.length);
-    final doneSets = todayW.fold(0, (s, w) => s + w.doneSets);
-    final totalVol = todayW.fold(0, (s, w) => s + w.totalVolume);
+    final totalSets = todaySessions.fold(0, (v, s) => v + s.totalSets);
+    final doneSets = todaySessions.fold(0, (v, s) => v + s.doneSets);
+    final totalVol = todaySessions.fold(0, (v, s) => v + s.totalVolume);
 
     return SwipeToPop(child: Scaffold(
       backgroundColor: const Color(0xFF120C06),
       body: Stack(children: [
+        // Background
         Positioned.fill(child: Container(
           decoration: const BoxDecoration(gradient: RadialGradient(
             center: Alignment(0, -0.3), radius: 1.2,
             colors: [Color(0xFF261808), Color(0xFF120C06)],
           )),
         )),
+
         SafeArea(child: Column(children: [
+          // Header
           _Header(totalSets: totalSets, doneSets: doneSets, totalVol: totalVol),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Container(height: 1, color: Colors.white.withAlpha(12)),
-          // Dashboard
-          if (workouts.isNotEmpty) _Dashboard(totalSets: totalSets, doneSets: doneSets, totalVol: totalVol),
+
+          // Rest timer banner
+          if (_resting) _RestTimerBanner(
+            remaining: _restRemaining,
+            total: _restTotal,
+            onSkip: _skipRest,
+          ),
+
+          // Content
           Expanded(
-            child: workouts.isEmpty
-                ? _Empty()
+            child: sessions.isEmpty
+                ? AnimatedEmpty(
+                    icon: Icons.fitness_center_rounded,
+                    title: t('No workouts yet', 'Тренировок пока нет'),
+                    subtitle: t('Tap + to start your session', 'Нажми + чтобы начать тренировку'),
+                  )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-                    itemCount: workouts.length,
-                    itemBuilder: (ctx, i) => _WorkoutCard(
-                      workout: workouts[i],
-                      onCompleteSet: (si) => _completeSet(workouts[i], si),
-                      onDelete: () => _delete(workouts[i].id),
-                      onCompleteCardio: () {
-                        HapticFeedback.mediumImpact();
-                        setState(() => workouts[i].cardioCompleted = true);
-                        GameState.instance.recordCompletion();
-                        GameState.instance.addXp(20);
-                      },
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                    itemCount: sessions.length,
+                    itemBuilder: (ctx, i) => _SessionCard(
+                      session: sessions[i],
+                      onCompleteSet: _completeSet,
+                      onAddSet: _addSet,
+                      onAddExercise: () => _showAddExercise(sessions[i]),
+                      onDeleteExercise: (ei) => _deleteExercise(sessions[i], ei),
+                      onDeleteSession: () => _deleteSession(sessions[i].id),
                     ),
                   ),
           ),
         ])),
+
+        // FAB
         Positioned(bottom: 36, left: 52, right: 52,
           child: ClipRRect(borderRadius: BorderRadius.circular(40),
             child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: JellyButton(onTap: _showAdd,
+              child: JellyButton(onTap: _newSession,
                 child: Container(height: 56,
                   decoration: BoxDecoration(
                     color: Colors.white.withAlpha(22), borderRadius: BorderRadius.circular(40),
@@ -167,7 +245,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 20)),
                     const SizedBox(width: 12),
                     Text(t('NEW  WORKOUT', 'НОВАЯ  ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
-                      fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 2, color: Colors.white.withAlpha(200))),
+                      fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 2,
+                      color: Colors.white.withAlpha(200))),
                   ])),
                 ),
               ),
@@ -179,489 +258,530 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   }
 }
 
+// ── Header ──────────────────────────────────────────────────────────────────
+
 class _Header extends StatelessWidget {
   final int totalSets, doneSets, totalVol;
   const _Header({required this.totalSets, required this.doneSets, required this.totalVol});
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Row(children: [
-          GestureDetector(onTap: () => Navigator.pop(context),
-            child: Container(width: 36, height: 36,
-              decoration: BoxDecoration(color: Colors.white.withAlpha(18),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withAlpha(40))),
-              child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200)))),
-          const Spacer(),
-          Text(t('WORKOUT', 'ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
-            fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-            letterSpacing: 2, color: const Color(0xFFF0D4C0))),
-        ])),
-      if (totalSets > 0) Padding(padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('$doneSets / $totalSets ${t('sets', 'подх.')}', style: GoogleFonts.inter(
-            fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(160))),
-        ])),
-    ]);
-  }
-}
 
-class _Dashboard extends StatelessWidget {
-  final int totalSets, doneSets, totalVol;
-  const _Dashboard({required this.totalSets, required this.doneSets, required this.totalVol});
   @override
   Widget build(BuildContext context) {
-    final p = totalSets == 0 ? 0.0 : doneSets / totalSets;
-    return Padding(padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-      child: Container(padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: const Color(0xFFF5F2EB), borderRadius: BorderRadius.circular(24),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(25), blurRadius: 12, offset: const Offset(0, 5))]),
-        child: Row(children: [
-          SizedBox(width: 60, height: 60, child: Stack(alignment: Alignment.center, children: [
-            SizedBox(width: 60, height: 60, child: CircularProgressIndicator(
-              value: p, strokeWidth: 4,
-              backgroundColor: const Color(0xFF2A2318).withAlpha(15),
-              valueColor: AlwaysStoppedAnimation(p >= 1.0 ? AppColors.success : AppColors.workouts))),
-            Text('${(p * 100).round()}%', style: GoogleFonts.jetBrainsMono(
-              fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF2A2318))),
-          ])),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Icon(Icons.fitness_center_rounded, size: 12, color: AppColors.workouts),
-              const SizedBox(width: 5),
-              Text('$doneSets ${t('SETS DONE', 'ПОДХ. ГОТОВО')}', style: GoogleFonts.jetBrainsMono(
-                fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1, color: AppColors.workouts)),
-            ]),
-            const SizedBox(height: 6),
-            Row(children: [
-              Icon(Icons.scale_rounded, size: 12, color: AppColors.gold),
-              const SizedBox(width: 5),
-              Text('${totalVol}${t('kg VOLUME', 'кг ОБЪЁМ')}', style: GoogleFonts.jetBrainsMono(
-                fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 1, color: AppColors.gold)),
-            ]),
-            const SizedBox(height: 6),
-            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(color: AppColors.workouts.withAlpha(12), borderRadius: BorderRadius.circular(10)),
-              child: Text(p >= 1.0 ? t('WORKOUT COMPLETE', 'ТРЕНИРОВКА ЗАВЕРШЕНА') : t('KEEP PUSHING', 'ПРОДОЛЖАЙ'), style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1.5,
-                color: p >= 1.0 ? AppColors.success : const Color(0xFF594536)))),
-          ])),
-        ]),
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Row(children: [
+        GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(width: 36, height: 36,
+            decoration: BoxDecoration(color: Colors.white.withAlpha(18),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withAlpha(40))),
+            child: Icon(Icons.chevron_left_rounded, size: 22,
+              color: Colors.white.withAlpha(200)))),
+        const Spacer(),
+        Text(t('WORKOUT', 'ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
+          fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+          letterSpacing: 2, color: const Color(0xFFF0D4C0))),
+        const Spacer(),
+        if (totalSets > 0) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.workouts.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text('$doneSets/$totalSets', style: GoogleFonts.jetBrainsMono(
+              fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.workouts)),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text('${totalVol}kg', style: GoogleFonts.jetBrainsMono(
+              fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gold)),
+          ),
+        ] else
+          const SizedBox(width: 36), // balance
+      ]),
     );
   }
 }
 
-class _WorkoutCard extends StatelessWidget {
-  final Workout workout;
-  final void Function(int) onCompleteSet;
-  final VoidCallback onDelete;
-  final VoidCallback? onCompleteCardio;
-  const _WorkoutCard({required this.workout, required this.onCompleteSet,
-    required this.onDelete, this.onCompleteCardio});
+// ── Rest Timer Banner ───────────────────────────────────────────────────────
+
+class _RestTimerBanner extends StatelessWidget {
+  final int remaining, total;
+  final VoidCallback onSkip;
+  const _RestTimerBanner({required this.remaining, required this.total, required this.onSkip});
 
   @override
   Widget build(BuildContext context) {
-    const cardBg = Color(0xFFF5F2EB);
-    const textCol = Color(0xFF2A2318);
-    const subCol = Color(0xFF8A8070);
-    final w = workout;
-    final isCardio = w.type == WorkoutType.cardio;
+    final progress = total > 0 ? remaining / total : 0.0;
+    final mins = remaining ~/ 60;
+    final secs = remaining % 60;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(25), blurRadius: 12, offset: const Offset(0, 5)),
-          BoxShadow(color: Colors.white.withAlpha(180), blurRadius: 1, offset: const Offset(0, -0.5)),
-        ]),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // ── Header with date ──────────────────────
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(children: [
-              Icon(isCardio ? Icons.directions_run_rounded : Icons.fitness_center_rounded,
-                  size: 16, color: AppColors.workouts),
-              const SizedBox(width: 8),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(w.name, style: GoogleFonts.playfairDisplay(
-                    fontSize: 18, fontWeight: FontWeight.w700,
-                    fontStyle: FontStyle.italic, color: textCol)),
-                  const SizedBox(height: 2),
-                  Row(children: [
-                    Text(w.dateLabel, style: GoogleFonts.jetBrainsMono(
-                      fontSize: 8, fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5, color: subCol)),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: (isCardio ? const Color(0xFF3B82F6) : AppColors.workouts).withAlpha(15),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: (isCardio ? const Color(0xFF3B82F6) : AppColors.workouts).withAlpha(40))),
-                      child: Text(isCardio ? t('CARDIO', 'КАРДИО') : t('STRENGTH', 'СИЛА'),
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 7, fontWeight: FontWeight.w700,
-                          letterSpacing: 1,
-                          color: isCardio ? const Color(0xFF3B82F6) : AppColors.workouts)),
-                    ),
-                  ]),
-                ],
-              )),
-              Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: AppColors.gold.withAlpha(20), borderRadius: BorderRadius.circular(8)),
-                child: Text('+${w.xp} XP', style: GoogleFonts.jetBrainsMono(
-                  fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold))),
-              const SizedBox(width: 8),
-              GestureDetector(onTap: onDelete, behavior: HitTestBehavior.opaque,
-                child: Padding(padding: const EdgeInsets.all(6),
-                  child: Icon(Icons.close_rounded, size: 14, color: subCol.withAlpha(120)))),
-            ]),
-          ),
-
-          // ── Progress bar ──────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Stack(children: [
-              Container(height: 4, decoration: BoxDecoration(
-                color: textCol.withAlpha(12), borderRadius: BorderRadius.circular(2))),
-              FractionallySizedBox(widthFactor: w.progress,
-                child: Container(height: 4, decoration: BoxDecoration(
-                  color: w.isCompleted ? AppColors.success : AppColors.workouts,
-                  borderRadius: BorderRadius.circular(2),
-                  boxShadow: w.progress > 0 ? [BoxShadow(
-                    color: (w.isCompleted ? AppColors.success : AppColors.workouts).withAlpha(80),
-                    blurRadius: 6)] : []))),
-            ]),
-          ),
-
-          // ── Body ──────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
-            child: isCardio
-                // Cardio display
-                ? Row(children: [
-                    _CardioStat(icon: Icons.timer_rounded, value: '${w.cardioMinutes}', unit: t('min', 'мин')),
-                    const SizedBox(width: 16),
-                    _CardioStat(icon: Icons.straighten_rounded, value: w.cardioDistance.toStringAsFixed(1), unit: t('km', 'км')),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: w.cardioCompleted ? null : onCompleteCardio,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: w.cardioCompleted
-                              ? AppColors.success.withAlpha(20)
-                              : AppColors.workouts.withAlpha(15),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: w.cardioCompleted
-                              ? AppColors.success.withAlpha(80)
-                              : AppColors.workouts.withAlpha(60))),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(w.cardioCompleted ? Icons.check_rounded : Icons.play_arrow_rounded,
-                              size: 14, color: w.cardioCompleted ? AppColors.success : AppColors.workouts),
-                          const SizedBox(width: 4),
-                          Text(w.cardioCompleted ? t('DONE', 'ГОТОВО') : t('COMPLETE', 'ЗАВЕРШИТЬ'),
-                            style: GoogleFonts.jetBrainsMono(
-                              fontSize: 9, fontWeight: FontWeight.w700,
-                              color: w.cardioCompleted ? AppColors.success : AppColors.workouts)),
-                        ]),
-                      ),
-                    ),
-                  ])
-                // Strength sets
-                : Wrap(spacing: 6, runSpacing: 6,
-                    children: w.sets.asMap().entries.map((e) {
-                      final s = e.value;
-                      return GestureDetector(
-                        onTap: () => onCompleteSet(e.key),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: s.done ? AppColors.workouts.withAlpha(20) : textCol.withAlpha(8),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: s.done
-                                ? AppColors.workouts.withAlpha(80)
-                                : textCol.withAlpha(20))),
-                          child: Text(
-                            s.done ? '✓ ${s.reps}×${s.weight}kg' : '${s.reps}×${s.weight}kg',
-                            style: GoogleFonts.jetBrainsMono(fontSize: 10, fontWeight: FontWeight.w600,
-                              color: s.done ? AppColors.workouts : subCol)),
-                        ),
-                      );
-                    }).toList()),
-          ),
-        ]),
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: AppColors.workouts.withAlpha(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.workouts.withAlpha(60)),
       ),
+      child: Row(children: [
+        // Circular timer
+        SizedBox(width: 44, height: 44,
+          child: Stack(alignment: Alignment.center, children: [
+            SizedBox(width: 44, height: 44,
+              child: CircularProgressIndicator(
+                value: progress,
+                strokeWidth: 3,
+                backgroundColor: Colors.white.withAlpha(15),
+                valueColor: AlwaysStoppedAnimation(AppColors.workouts),
+              )),
+            Text('$mins:${secs.toString().padLeft(2, '0')}',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+          ])),
+        const SizedBox(width: 14),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
+              fontSize: 10, fontWeight: FontWeight.w700,
+              letterSpacing: 2, color: AppColors.workouts)),
+            const SizedBox(height: 2),
+            Text(t('Next set in $remaining s', 'Следующий подход через $remaining с'),
+              style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withAlpha(140))),
+          ],
+        )),
+        GestureDetector(
+          onTap: onSkip,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withAlpha(30)),
+            ),
+            child: Text(t('SKIP', 'ПРОПУСТИТЬ'), style: GoogleFonts.jetBrainsMono(
+              fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(180))),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-class _CardioStat extends StatelessWidget {
-  final IconData icon;
-  final String value, unit;
-  const _CardioStat({required this.icon, required this.value, required this.unit});
+// ── Session Card ────────────────────────────────────────────────────────────
+
+class _SessionCard extends StatelessWidget {
+  final WorkoutSession session;
+  final void Function(Exercise, int) onCompleteSet;
+  final void Function(Exercise) onAddSet;
+  final VoidCallback onAddExercise;
+  final void Function(int) onDeleteExercise;
+  final VoidCallback onDeleteSession;
+
+  const _SessionCard({
+    required this.session,
+    required this.onCompleteSet,
+    required this.onAddSet,
+    required this.onAddExercise,
+    required this.onDeleteExercise,
+    required this.onDeleteSession,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Icon(icon, size: 14, color: const Color(0xFF3B82F6)),
-      const SizedBox(width: 4),
-      Text(value, style: GoogleFonts.jetBrainsMono(
-        fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF2A2318))),
-      const SizedBox(width: 2),
-      Text(unit, style: GoogleFonts.inter(
-        fontSize: 9, fontWeight: FontWeight.w500, color: const Color(0xFF8A8070))),
-    ]);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C1408),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withAlpha(10)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Session header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 8),
+          child: Row(children: [
+            Icon(Icons.fitness_center_rounded, size: 16, color: AppColors.workouts),
+            const SizedBox(width: 8),
+            Text(session.dateLabel, style: GoogleFonts.jetBrainsMono(
+              fontSize: 10, fontWeight: FontWeight.w700,
+              letterSpacing: 1.5, color: Colors.white.withAlpha(120))),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.gold.withAlpha(15),
+                borderRadius: BorderRadius.circular(6)),
+              child: Text('+${session.xp} XP', style: GoogleFonts.jetBrainsMono(
+                fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold)),
+            ),
+            const Spacer(),
+            // Progress
+            Text('${session.doneSets}/${session.totalSets}', style: GoogleFonts.jetBrainsMono(
+              fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.workouts)),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: onDeleteSession,
+              child: Icon(Icons.close_rounded, size: 14, color: Colors.white.withAlpha(60)),
+            ),
+          ]),
+        ),
+
+        // Progress bar
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Stack(children: [
+            Container(height: 3, decoration: BoxDecoration(
+              color: Colors.white.withAlpha(8), borderRadius: BorderRadius.circular(2))),
+            FractionallySizedBox(widthFactor: session.progress,
+              child: Container(height: 3, decoration: BoxDecoration(
+                color: session.isCompleted ? AppColors.success : AppColors.workouts,
+                borderRadius: BorderRadius.circular(2)))),
+          ]),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Exercise cards
+        ...session.exercises.asMap().entries.map((entry) =>
+          _ExerciseCard(
+            exercise: entry.value,
+            onCompleteSet: (si) => onCompleteSet(entry.value, si),
+            onAddSet: () => onAddSet(entry.value),
+            onDelete: () => onDeleteExercise(entry.key),
+          )),
+
+        // Add exercise button
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+          child: GestureDetector(
+            onTap: onAddExercise,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withAlpha(15)),
+              ),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.add_rounded, size: 16, color: AppColors.workouts.withAlpha(180)),
+                const SizedBox(width: 6),
+                Text(t('ADD EXERCISE', 'ДОБАВИТЬ УПРАЖНЕНИЕ'), style: GoogleFonts.inter(
+                  fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1,
+                  color: AppColors.workouts.withAlpha(180))),
+              ]),
+            ),
+          ),
+        ),
+      ]),
+    );
   }
 }
 
-class _Empty extends StatelessWidget {
+// ── Exercise Card ───────────────────────────────────────────────────────────
+
+class _ExerciseCard extends StatelessWidget {
+  final Exercise exercise;
+  final void Function(int) onCompleteSet;
+  final VoidCallback onAddSet;
+  final VoidCallback onDelete;
+
+  const _ExerciseCard({
+    required this.exercise,
+    required this.onCompleteSet,
+    required this.onAddSet,
+    required this.onDelete,
+  });
+
   @override
-  Widget build(BuildContext context) => AnimatedEmpty(
-    icon: Icons.fitness_center_rounded,
-    title: t('No workouts yet', 'Тренировок пока нет'),
-    subtitle: t('Log your first one to start a streak', 'Запиши первую чтобы начать серию'),
-  );
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withAlpha(8)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Exercise header
+        Row(children: [
+          Expanded(child: Text(exercise.name, style: GoogleFonts.playfairDisplay(
+            fontSize: 15, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+            color: const Color(0xFFF0D4C0)))),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(8),
+              borderRadius: BorderRadius.circular(6)),
+            child: Text('${exercise.restSeconds}s ${t('rest', 'отд.')}',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(80))),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(onTap: onDelete,
+            child: Icon(Icons.close_rounded, size: 13, color: Colors.white.withAlpha(50))),
+        ]),
+        const SizedBox(height: 10),
+
+        // Sets header
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(children: [
+            SizedBox(width: 36, child: Text(t('SET', 'ПОД'), style: _headerStyle())),
+            Expanded(child: Center(child: Text(t('KG', 'КГ'), style: _headerStyle()))),
+            Expanded(child: Center(child: Text(t('REPS', 'ПОВТ'), style: _headerStyle()))),
+            const SizedBox(width: 44),
+          ]),
+        ),
+
+        // Set rows
+        ...exercise.sets.asMap().entries.map((entry) {
+          final i = entry.key;
+          final s = entry.value;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            decoration: BoxDecoration(
+              color: s.done ? AppColors.workouts.withAlpha(10) : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(children: [
+              SizedBox(width: 36,
+                child: Text('${i + 1}', style: GoogleFonts.jetBrainsMono(
+                  fontSize: 12, fontWeight: FontWeight.w700,
+                  color: s.done ? AppColors.workouts : Colors.white.withAlpha(100)))),
+              Expanded(child: Center(
+                child: Text('${s.weight}', style: GoogleFonts.jetBrainsMono(
+                  fontSize: 14, fontWeight: FontWeight.w700,
+                  color: s.done ? Colors.white.withAlpha(100) : Colors.white)))),
+              Expanded(child: Center(
+                child: Text('${s.reps}', style: GoogleFonts.jetBrainsMono(
+                  fontSize: 14, fontWeight: FontWeight.w700,
+                  color: s.done ? Colors.white.withAlpha(100) : Colors.white)))),
+              SizedBox(width: 44,
+                child: GestureDetector(
+                  onTap: s.done ? null : () => onCompleteSet(i),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: s.done
+                          ? AppColors.success.withAlpha(20)
+                          : AppColors.workouts.withAlpha(15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: s.done
+                          ? AppColors.success.withAlpha(60)
+                          : AppColors.workouts.withAlpha(40)),
+                    ),
+                    child: Center(child: Icon(
+                      s.done ? Icons.check_rounded : Icons.play_arrow_rounded,
+                      size: 16,
+                      color: s.done ? AppColors.success : AppColors.workouts)),
+                  ),
+                ),
+              ),
+            ]),
+          );
+        }),
+
+        // Add set button
+        GestureDetector(
+          onTap: onAddSet,
+          child: Container(
+            margin: const EdgeInsets.only(top: 4),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withAlpha(12)),
+            ),
+            child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.add_rounded, size: 14, color: Colors.white.withAlpha(60)),
+              const SizedBox(width: 4),
+              Text(t('ADD SET', 'ДОБАВИТЬ ПОДХОД'), style: GoogleFonts.inter(
+                fontSize: 10, fontWeight: FontWeight.w600,
+                color: Colors.white.withAlpha(60))),
+            ])),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  TextStyle _headerStyle() => GoogleFonts.jetBrainsMono(
+    fontSize: 8, fontWeight: FontWeight.w700,
+    letterSpacing: 1.5, color: Colors.white.withAlpha(50));
 }
 
-class _AddWorkoutSheet extends StatefulWidget {
-  final void Function(Workout) onAdd;
-  final String nextId;
-  const _AddWorkoutSheet({required this.onAdd, required this.nextId});
+// ── Add Exercise Sheet ──────────────────────────────────────────────────────
+
+class _AddExerciseSheet extends StatefulWidget {
+  final void Function(Exercise) onAdd;
+  const _AddExerciseSheet({required this.onAdd});
   @override
-  State<_AddWorkoutSheet> createState() => _AddWorkoutSheetState();
+  State<_AddExerciseSheet> createState() => _AddExerciseSheetState();
 }
 
-class _AddWorkoutSheetState extends State<_AddWorkoutSheet> {
-  final _ctrl = TextEditingController();
-  WorkoutType _type = WorkoutType.strength;
-  int _setCount = 3;
+class _AddExerciseSheetState extends State<_AddExerciseSheet> {
+  final _nameCtrl = TextEditingController();
+  int _sets = 3;
   int _reps = 10;
   int _weight = 20;
-  int _cardioMin = 30;
-  double _cardioDist = 5.0;
+  int _rest = 90;
+
+  static const _restOptions = [30, 60, 90, 120, 180];
 
   void _submit() {
-    final name = _ctrl.text.trim();
+    final name = _nameCtrl.text.trim();
     if (name.isEmpty) return;
-    widget.onAdd(Workout(
-      id: widget.nextId, name: name, date: DateTime.now(),
-      type: _type,
-      sets: _type == WorkoutType.strength
-          ? List.generate(_setCount, (_) => ExerciseSet(reps: _reps, weight: _weight))
-          : [],
-      cardioMinutes: _cardioMin,
-      cardioDistance: _cardioDist,
+    widget.onAdd(Exercise(
+      id: WorkoutStore.nextId(),
+      name: name,
+      sets: List.generate(_sets, (_) => SetEntry(weight: _weight, reps: _reps)),
+      restSeconds: _rest,
     ));
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() { _nameCtrl.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    final sw = MediaQuery.of(context).size.width;
     final kb = MediaQuery.of(context).viewInsets.bottom;
-    const bg = Color(0xFFF5F1E8);
-    const cocoa = Color(0xFF594536);
-    const divider = Color(0xFFDDD8CB);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, kb + 20),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        // Handle
+        Container(width: 40, height: 4,
+          decoration: BoxDecoration(color: Colors.white.withAlpha(30),
+            borderRadius: BorderRadius.circular(2))),
+        const SizedBox(height: 16),
 
-    return Align(alignment: Alignment.centerLeft,
-      child: Padding(padding: EdgeInsets.fromLTRB(12, 48, 40, kb > 0 ? kb + 12 : 48),
-        child: Material(color: Colors.transparent,
-          child: ClipRRect(borderRadius: BorderRadius.circular(36),
-            child: Container(width: sw * 0.82,
-              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(36),
-                boxShadow: [BoxShadow(color: Colors.black.withAlpha(80), blurRadius: 40, offset: const Offset(6, 8))]),
-              child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                  decoration: BoxDecoration(color: AppColors.workouts.withAlpha(25),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(36))),
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-                  child: Row(children: [
-                    Container(width: 36, height: 36,
-                      decoration: BoxDecoration(color: AppColors.workouts, borderRadius: BorderRadius.circular(14)),
-                      child: const Icon(Icons.fitness_center_rounded, color: Colors.white, size: 18)),
-                    const SizedBox(width: 12),
-                    Text(t('NEW WORKOUT', 'НОВАЯ ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
-                      fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.2, color: cocoa)),
-                    const Spacer(),
-                    GestureDetector(onTap: () => Navigator.pop(context),
-                      child: Container(width: 28, height: 28,
-                        decoration: BoxDecoration(color: divider, borderRadius: BorderRadius.circular(10)),
-                        child: Icon(Icons.close_rounded, color: cocoa.withAlpha(150), size: 14))),
-                  ])),
-                Padding(padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
-                  child: TextField(controller: _ctrl, autofocus: true,
-                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: cocoa),
-                    decoration: InputDecoration(hintText: t('e.g. Bench Press', 'напр. Жим лёжа'),
-                      hintStyle: GoogleFonts.inter(fontSize: 15, color: cocoa.withAlpha(100)),
-                      border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
-                    onSubmitted: (_) => _submit())),
-                // Type toggle
-                Divider(height: 1, thickness: 1, color: divider),
-                Padding(padding: const EdgeInsets.fromLTRB(18, 14, 18, 10),
-                  child: Row(children: [
-                    _TypeChip(label: t('STRENGTH', 'СИЛА'), icon: Icons.fitness_center_rounded,
-                      active: _type == WorkoutType.strength,
-                      color: AppColors.workouts,
-                      onTap: () => setState(() => _type = WorkoutType.strength)),
-                    const SizedBox(width: 8),
-                    _TypeChip(label: t('CARDIO', 'КАРДИО'), icon: Icons.directions_run_rounded,
-                      active: _type == WorkoutType.cardio,
-                      color: const Color(0xFF3B82F6),
-                      onTap: () => setState(() => _type = WorkoutType.cardio)),
-                  ])),
-                // Strength counters OR Cardio counters
-                Divider(height: 1, thickness: 1, color: divider),
-                if (_type == WorkoutType.strength)
-                  Padding(padding: const EdgeInsets.all(18),
-                    child: Row(children: [
-                      _Counter(label: t('SETS', 'ПОДХ.'), value: _setCount, onChanged: (v) => setState(() => _setCount = v), min: 1, max: 10),
-                      const SizedBox(width: 12),
-                      _Counter(label: t('REPS', 'ПОВТ.'), value: _reps, onChanged: (v) => setState(() => _reps = v), min: 1, max: 50),
-                      const SizedBox(width: 12),
-                      _Counter(label: t('KG', 'КГ'), value: _weight, onChanged: (v) => setState(() => _weight = v), min: 0, max: 300, step: 5),
-                    ]))
-                else
-                  Padding(padding: const EdgeInsets.all(18),
-                    child: Row(children: [
-                      _Counter(label: t('MIN', 'МИН'), value: _cardioMin, onChanged: (v) => setState(() => _cardioMin = v), min: 5, max: 180, step: 5),
-                      const SizedBox(width: 12),
-                      _Counter(label: t('KM', 'КМ'), value: (_cardioDist * 10).round(), onChanged: (v) => setState(() => _cardioDist = v / 10), min: 0, max: 500),
-                    ])),
-                Divider(height: 1, thickness: 1, color: divider),
-                Padding(padding: const EdgeInsets.fromLTRB(18, 16, 18, 20),
-                  child: GestureDetector(onTap: _submit,
-                    child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(color: AppColors.workouts, borderRadius: BorderRadius.circular(22),
-                        boxShadow: [BoxShadow(color: AppColors.workouts.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))]),
-                      child: Center(child: Text(t('START WORKOUT', 'НАЧАТЬ ТРЕНИРОВКУ'), style: GoogleFonts.inter(
-                        fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4, color: Colors.white)))))),
-              ])),
+        // Title
+        Text(t('ADD EXERCISE', 'ДОБАВИТЬ УПРАЖНЕНИЕ'), style: GoogleFonts.playfairDisplay(
+          fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+          letterSpacing: 1, color: const Color(0xFFF0D4C0))),
+        const SizedBox(height: 16),
+
+        // Name field
+        TextField(
+          controller: _nameCtrl,
+          autofocus: true,
+          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+          decoration: InputDecoration(
+            hintText: t('e.g. Bench Press', 'напр. Жим лёжа'),
+            hintStyle: GoogleFonts.inter(fontSize: 15, color: Colors.white.withAlpha(40)),
+            filled: true,
+            fillColor: Colors.white.withAlpha(8),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          onSubmitted: (_) => _submit(),
+        ),
+        const SizedBox(height: 16),
+
+        // Counters row
+        Row(children: [
+          _MiniCounter(label: t('SETS', 'ПОДХ'), value: _sets,
+            onChanged: (v) => setState(() => _sets = v), min: 1, max: 10),
+          const SizedBox(width: 10),
+          _MiniCounter(label: t('REPS', 'ПОВТ'), value: _reps,
+            onChanged: (v) => setState(() => _reps = v), min: 1, max: 50),
+          const SizedBox(width: 10),
+          _MiniCounter(label: t('KG', 'КГ'), value: _weight,
+            onChanged: (v) => setState(() => _weight = v), min: 0, max: 300, step: 5),
+        ]),
+        const SizedBox(height: 14),
+
+        // Rest timer selector
+        Row(children: [
+          Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
+            fontSize: 9, fontWeight: FontWeight.w700,
+            letterSpacing: 1.5, color: Colors.white.withAlpha(60))),
+          const SizedBox(width: 10),
+          ...(_restOptions.map((sec) => Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: GestureDetector(
+              onTap: () => setState(() => _rest = sec),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _rest == sec ? AppColors.workouts.withAlpha(25) : Colors.white.withAlpha(6),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: _rest == sec
+                      ? AppColors.workouts.withAlpha(80) : Colors.white.withAlpha(15)),
+                ),
+                child: Text('${sec}s', style: GoogleFonts.jetBrainsMono(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  color: _rest == sec ? AppColors.workouts : Colors.white.withAlpha(80))),
+              ),
             ),
+          ))),
+        ]),
+        const SizedBox(height: 20),
+
+        // Submit
+        GestureDetector(
+          onTap: _submit,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.workouts,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(color: AppColors.workouts.withAlpha(70), blurRadius: 14, offset: const Offset(0, 4))],
+            ),
+            child: Center(child: Text(t('ADD', 'ДОБАВИТЬ'), style: GoogleFonts.inter(
+              fontSize: 13, fontWeight: FontWeight.w800, letterSpacing: 1.5, color: Colors.white))),
           ),
         ),
-      ),
+      ]),
     );
   }
 }
 
-class _Counter extends StatefulWidget {
+class _MiniCounter extends StatelessWidget {
   final String label;
   final int value, min, max, step;
   final ValueChanged<int> onChanged;
-  const _Counter({required this.label, required this.value, required this.onChanged,
-    this.min = 0, this.max = 100, this.step = 1});
-  @override
-  State<_Counter> createState() => _CounterState();
-}
-
-class _CounterState extends State<_Counter> {
-  bool _editing = false;
-  late TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(text: '${widget.value}');
-  }
-
-  @override
-  void didUpdateWidget(_Counter old) {
-    super.didUpdateWidget(old);
-    if (!_editing) _ctrl.text = '${widget.value}';
-  }
-
-  @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
-
-  void _finishEdit() {
-    final v = (int.tryParse(_ctrl.text) ?? widget.value)
-        .clamp(widget.min, widget.max);
-    widget.onChanged(v);
-    setState(() => _editing = false);
-  }
+  const _MiniCounter({required this.label, required this.value,
+    required this.onChanged, this.min = 0, this.max = 100, this.step = 1});
 
   @override
   Widget build(BuildContext context) {
-    const cocoa = Color(0xFF594536);
-    return Expanded(child: Column(children: [
-      Text(widget.label, style: GoogleFonts.jetBrainsMono(fontSize: 8, fontWeight: FontWeight.w700,
-        letterSpacing: 1.5, color: cocoa.withAlpha(140))),
-      const SizedBox(height: 6),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        GestureDetector(
-          onTap: widget.value > widget.min ? () => widget.onChanged(widget.value - widget.step) : null,
-          child: Icon(Icons.remove_circle_outline_rounded, size: 20,
-            color: widget.value > widget.min ? cocoa : cocoa.withAlpha(50))),
-        const SizedBox(width: 8),
-        _editing
-            ? SizedBox(width: 50,
-                child: TextField(
-                  controller: _ctrl,
-                  keyboardType: TextInputType.number,
-                  textAlign: TextAlign.center,
-                  autofocus: true,
-                  style: GoogleFonts.jetBrainsMono(fontSize: 18, fontWeight: FontWeight.w700, color: cocoa),
-                  decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
-                  onSubmitted: (_) => _finishEdit(),
-                  onTapOutside: (_) => _finishEdit(),
-                ))
-            : GestureDetector(
-                onTap: () => setState(() => _editing = true),
-                child: Text('${widget.value}', style: GoogleFonts.jetBrainsMono(
-                  fontSize: 18, fontWeight: FontWeight.w700, color: cocoa))),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: widget.value < widget.max ? () => widget.onChanged(widget.value + widget.step) : null,
-          child: Icon(Icons.add_circle_outline_rounded, size: 20,
-            color: widget.value < widget.max ? cocoa : cocoa.withAlpha(50))),
-      ]),
-    ]));
-  }
-}
-
-class _TypeChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool active;
-  final Color color;
-  final VoidCallback onTap;
-  const _TypeChip({required this.label, required this.icon,
-    required this.active, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    const cocoa = Color(0xFF594536);
-    const divider = Color(0xFFDDD8CB);
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: active ? color.withAlpha(20) : const Color(0xFFEFEBE0),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: active ? color.withAlpha(120) : divider)),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(icon, size: 14, color: active ? color : cocoa.withAlpha(100)),
-            const SizedBox(width: 6),
-            Text(label, style: GoogleFonts.jetBrainsMono(
-              fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 0.8,
-              color: active ? color : cocoa.withAlpha(130))),
-          ]),
-        ),
+    return Expanded(child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withAlpha(12)),
       ),
-    );
+      child: Column(children: [
+        Text(label, style: GoogleFonts.jetBrainsMono(
+          fontSize: 8, fontWeight: FontWeight.w700,
+          letterSpacing: 1.5, color: Colors.white.withAlpha(50))),
+        const SizedBox(height: 6),
+        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          GestureDetector(
+            onTap: value > min ? () => onChanged(value - step) : null,
+            child: Icon(Icons.remove_rounded, size: 18,
+              color: value > min ? Colors.white.withAlpha(140) : Colors.white.withAlpha(30))),
+          const SizedBox(width: 10),
+          Text('$value', style: GoogleFonts.jetBrainsMono(
+            fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white)),
+          const SizedBox(width: 10),
+          GestureDetector(
+            onTap: value < max ? () => onChanged(value + step) : null,
+            child: Icon(Icons.add_rounded, size: 18,
+              color: value < max ? Colors.white.withAlpha(140) : Colors.white.withAlpha(30))),
+        ]),
+      ]),
+    ));
   }
 }
