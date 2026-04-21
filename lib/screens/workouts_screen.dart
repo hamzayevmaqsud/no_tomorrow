@@ -146,6 +146,13 @@ class WorkoutStore {
   static final List<WorkoutSession> sessions = [];
   static int _nextId = 1;
   static String nextId() => '${_nextId++}';
+
+  /// Tracks last used weight/reps per exercise name for "previous performance" display
+  static final Map<String, ({int weight, int reps})> lastPerformance = {};
+
+  static void recordPerformance(String exerciseName, int weight, int reps) {
+    lastPerformance[exerciseName] = (weight: weight, reps: reps);
+  }
 }
 
 // ── Screen ──────────────────────────────────────────────────────────────────
@@ -195,10 +202,19 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     if (exercise.sets[setIndex].done) return;
     HapticFeedback.mediumImpact();
     setState(() => exercise.sets[setIndex].done = true);
+    WorkoutStore.recordPerformance(exercise.name, exercise.sets[setIndex].weight, exercise.sets[setIndex].reps);
     GameState.instance.recordCompletion();
     GameState.instance.addXp(10);
     // Auto-start rest timer
     _startRest(exercise.restSeconds);
+  }
+
+  void _changeWeight(Exercise ex, int si, int delta) {
+    setState(() => ex.sets[si].weight = (ex.sets[si].weight + delta).clamp(0, 500));
+  }
+
+  void _changeReps(Exercise ex, int si, int delta) {
+    setState(() => ex.sets[si].reps = (ex.sets[si].reps + delta).clamp(1, 100));
   }
 
   void _addSet(Exercise exercise) {
@@ -252,8 +268,6 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     }).toList();
     final totalSets = todaySessions.fold(0, (v, s) => v + s.totalSets);
     final doneSets = todaySessions.fold(0, (v, s) => v + s.doneSets);
-    final totalVol = todaySessions.fold(0, (v, s) => v + s.totalVolume);
-
     return SwipeToPop(child: Scaffold(
       backgroundColor: const Color(0xFF0A0A0F),
       body: Stack(children: [
@@ -267,7 +281,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
         SafeArea(child: Column(children: [
           // Header
-          _Header(totalSets: totalSets, doneSets: doneSets, totalVol: totalVol),
+          _Header(totalSets: totalSets, doneSets: doneSets),
           const SizedBox(height: 10),
           Container(height: 1, color: Colors.white.withAlpha(12)),
 
@@ -296,6 +310,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       onAddExercise: () => _showAddExercise(sessions[i]),
                       onDeleteExercise: (ei) => _deleteExercise(sessions[i], ei),
                       onDeleteSession: () => _deleteSession(sessions[i].id),
+                      onChangeWeight: _changeWeight,
+                      onChangeReps: _changeReps,
                     ),
                   ),
           ),
@@ -334,13 +350,13 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 // ── Header ──────────────────────────────────────────────────────────────────
 
 class _Header extends StatelessWidget {
-  final int totalSets, doneSets, totalVol;
-  const _Header({required this.totalSets, required this.doneSets, required this.totalVol});
+  final int totalSets, doneSets;
+  const _Header({required this.totalSets, required this.doneSets});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Row(children: [
         GestureDetector(
           onTap: () => Navigator.pop(context),
@@ -355,7 +371,7 @@ class _Header extends StatelessWidget {
           fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
           letterSpacing: 2, color: const Color(0xFFE0C4C4))),
         const Spacer(),
-        if (totalSets > 0) ...[
+        if (totalSets > 0)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -364,18 +380,8 @@ class _Header extends StatelessWidget {
             ),
             child: Text('$doneSets/$totalSets', style: GoogleFonts.jetBrainsMono(
               fontSize: 11, fontWeight: FontWeight.w700, color: _kBordo)),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.gold.withAlpha(20),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text('${totalVol}kg', style: GoogleFonts.jetBrainsMono(
-              fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gold)),
-          ),
-        ] else
+          )
+        else
           const SizedBox(width: 36), // balance
       ]),
     );
@@ -457,6 +463,8 @@ class _SessionCard extends StatelessWidget {
   final VoidCallback onAddExercise;
   final void Function(int) onDeleteExercise;
   final VoidCallback onDeleteSession;
+  final void Function(Exercise, int, int) onChangeWeight;
+  final void Function(Exercise, int, int) onChangeReps;
 
   const _SessionCard({
     required this.session,
@@ -465,6 +473,8 @@ class _SessionCard extends StatelessWidget {
     required this.onAddExercise,
     required this.onDeleteExercise,
     required this.onDeleteSession,
+    required this.onChangeWeight,
+    required this.onChangeReps,
   });
 
   @override
@@ -497,25 +507,23 @@ class _SessionCard extends StatelessWidget {
             ),
             const Spacer(),
             // Progress
-            Text('${session.doneSets}/${session.totalSets}', style: GoogleFonts.jetBrainsMono(
-              fontSize: 10, fontWeight: FontWeight.w700, color: _kBordo)),
+            SizedBox(width: 32, height: 32,
+              child: Stack(alignment: Alignment.center, children: [
+                SizedBox(width: 32, height: 32,
+                  child: CircularProgressIndicator(
+                    value: session.progress,
+                    strokeWidth: 2.5,
+                    backgroundColor: Colors.white.withAlpha(12),
+                    valueColor: AlwaysStoppedAnimation(session.isCompleted ? const Color(0xFF22C55E) : _kBordo),
+                  )),
+                Text('${session.doneSets}/${session.totalSets}',
+                  style: GoogleFonts.jetBrainsMono(fontSize: 7, fontWeight: FontWeight.w700, color: Colors.white)),
+              ])),
             const SizedBox(width: 10),
             GestureDetector(
               onTap: onDeleteSession,
               child: Icon(Icons.close_rounded, size: 14, color: Colors.white.withAlpha(60)),
             ),
-          ]),
-        ),
-
-        // Progress bar
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Stack(children: [
-            Container(height: 3, decoration: BoxDecoration(
-              color: Colors.white.withAlpha(8), borderRadius: BorderRadius.circular(2))),
-            FractionallySizedBox(widthFactor: session.progress,
-              child: Container(height: 3, decoration: BoxDecoration(
-                color: session.isCompleted ? AppColors.success : _kBordo,
-                borderRadius: BorderRadius.circular(2)))),
           ]),
         ),
 
@@ -528,6 +536,8 @@ class _SessionCard extends StatelessWidget {
             onCompleteSet: (si) => onCompleteSet(entry.value, si),
             onAddSet: () => onAddSet(entry.value),
             onDelete: () => onDeleteExercise(entry.key),
+            onChangeWeight: (si, delta) => onChangeWeight(entry.value, si, delta),
+            onChangeReps: (si, delta) => onChangeReps(entry.value, si, delta),
           )),
 
         // Add exercise button
@@ -565,12 +575,16 @@ class _ExerciseCard extends StatelessWidget {
   final void Function(int) onCompleteSet;
   final VoidCallback onAddSet;
   final VoidCallback onDelete;
+  final void Function(int setIndex, int delta) onChangeWeight;
+  final void Function(int setIndex, int delta) onChangeReps;
 
   const _ExerciseCard({
     required this.exercise,
     required this.onCompleteSet,
     required this.onAddSet,
     required this.onDelete,
+    required this.onChangeWeight,
+    required this.onChangeReps,
   });
 
   @override
@@ -604,6 +618,15 @@ class _ExerciseCard extends StatelessWidget {
           GestureDetector(onTap: onDelete,
             child: Icon(Icons.close_rounded, size: 13, color: Colors.white.withAlpha(50))),
         ]),
+        if (WorkoutStore.lastPerformance.containsKey(exercise.name)) ...[
+          const SizedBox(height: 4),
+          Row(children: [
+            Icon(Icons.history_rounded, size: 12, color: Colors.white.withAlpha(40)),
+            const SizedBox(width: 4),
+            Text('${t('Last', 'Пред')}: ${WorkoutStore.lastPerformance[exercise.name]!.weight}kg \u00d7 ${WorkoutStore.lastPerformance[exercise.name]!.reps}',
+              style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(40))),
+          ]),
+        ],
         const SizedBox(height: 10),
 
         // Sets header
@@ -634,13 +657,29 @@ class _ExerciseCard extends StatelessWidget {
                   fontSize: 12, fontWeight: FontWeight.w700,
                   color: s.done ? _kBordo : Colors.white.withAlpha(100)))),
               Expanded(child: Center(
-                child: Text('${s.weight}', style: GoogleFonts.jetBrainsMono(
-                  fontSize: 14, fontWeight: FontWeight.w700,
-                  color: s.done ? Colors.white.withAlpha(100) : Colors.white)))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  GestureDetector(onTap: s.done ? null : () => onChangeWeight(i, -5),
+                    child: Icon(Icons.chevron_left_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                  const SizedBox(width: 4),
+                  Text('${s.weight}', style: GoogleFonts.jetBrainsMono(
+                    fontSize: 14, fontWeight: FontWeight.w700,
+                    color: s.done ? Colors.white.withAlpha(100) : Colors.white)),
+                  const SizedBox(width: 4),
+                  GestureDetector(onTap: s.done ? null : () => onChangeWeight(i, 5),
+                    child: Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                ]))),
               Expanded(child: Center(
-                child: Text('${s.reps}', style: GoogleFonts.jetBrainsMono(
-                  fontSize: 14, fontWeight: FontWeight.w700,
-                  color: s.done ? Colors.white.withAlpha(100) : Colors.white)))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  GestureDetector(onTap: s.done ? null : () => onChangeReps(i, -1),
+                    child: Icon(Icons.chevron_left_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                  const SizedBox(width: 4),
+                  Text('${s.reps}', style: GoogleFonts.jetBrainsMono(
+                    fontSize: 14, fontWeight: FontWeight.w700,
+                    color: s.done ? Colors.white.withAlpha(100) : Colors.white)),
+                  const SizedBox(width: 4),
+                  GestureDetector(onTap: s.done ? null : () => onChangeReps(i, 1),
+                    child: Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                ]))),
               SizedBox(width: 44,
                 child: GestureDetector(
                   onTap: s.done ? null : () => onCompleteSet(i),
