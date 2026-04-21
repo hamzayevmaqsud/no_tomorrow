@@ -11,6 +11,29 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v3.0',
+      date: '2026-04-21',
+      title: t('Workout Overhaul', 'Полный редизайн тренировок'),
+      items: [
+        t('🏋️ EXERCISE CATALOG: Tap + → 7 muscle groups (Chest, Back, Legs, Shoulders, Arms, Core, Cardio) with 40+ exercises. Tap any exercise or type a custom name → configure sets/reps/weight/rest.',
+          '🏋️ КАТАЛОГ УПРАЖНЕНИЙ: Нажми + → 7 групп мышц (Грудь, Спина, Ноги, Плечи, Руки, Кор, Кардио) с 40+ упражнениями. Нажми на упражнение или введи своё → настрой подходы/повторы/вес/отдых.'),
+        t('⏱️ REST TIMER: Complete a set → rest timer starts automatically. Banner at the top with countdown, circular progress, and SKIP button. Rest time configurable per exercise (30s / 60s / 90s / 120s / 180s).',
+          '⏱️ ТАЙМЕР ОТДЫХА: Завершил подход → таймер отдыха стартует автоматически. Баннер сверху с обратным отсчётом, круговым прогрессом и кнопкой ПРОПУСТИТЬ. Время отдыха настраивается для каждого упражнения (30с / 60с / 90с / 120с / 180с).'),
+        t('← → EDITABLE SETS: Tap arrows to change kg (step 1) and reps (step 1) in each set row. Arrows disabled after completing a set.',
+          '← → РЕДАКТИРУЕМЫЕ ПОДХОДЫ: Стрелками меняй кг (шаг 1) и повторы (шаг 1) в каждой строке. Стрелки блокируются после завершения подхода.'),
+        t('📊 DASHBOARD: Tap chart icon in header → weekly volume bar chart (Mon-Sun), 4 stats (Workouts / Sets / Volume / Streak), best exercise of the week.',
+          '📊 ДАШБОРД: Нажми иконку графика в шапке → бар-чарт недельного объёма (ПН-ВС), 4 стата (Тренировки / Подходы / Объём / Серия), лучшее упражнение недели.'),
+        t('📋 WEEKLY REVIEW: Tap REVIEW in dashboard → hero card with total volume, change vs last week (+/-%), exercise breakdown with emoji, 2×2 stats grid.',
+          '📋 ОБЗОР НЕДЕЛИ: Нажми ОБЗОР в дашборде → карта с общим объёмом, изменение относительно прошлой недели (+/-%), разбивка упражнений с эмодзи, сетка 2×2 статов.'),
+        t('📅 SCHEDULE WORKOUTS: Tap any day on the calendar (including tomorrow) to schedule a future workout. List filters by selected date.',
+          '📅 ПЛАНИРУЙ ТРЕНИРОВКИ: Нажми на любой день в календаре (включая завтра) чтобы запланировать тренировку. Список фильтруется по выбранному дню.'),
+        t('📈 PREVIOUS PERFORMANCE: Small gray numbers under current kg/reps show your last recorded values for each set — track your progress at a glance.',
+          '📈 ПРЕДЫДУЩИЕ ПОКАЗАТЕЛИ: Мелкие серые цифры под текущими кг/повторами показывают прошлые значения для каждого подхода — прогресс виден сразу.'),
+        t('🔴 BLACK + BURGUNDY: New dark color scheme with burgundy (#8B1A2B) accent throughout the workout screen.',
+          '🔴 ЧЁРНЫЙ + БОРДОВЫЙ: Новая тёмная цветовая схема с бордовым (#8B1A2B) акцентом по всему экрану тренировок.'),
+      ],
+    ),
+    _PatchNote(
       version: 'v2.5',
       date: '2026-04-21',
       title: t('Tasks Header Polish', 'Полировка шапки задач'),
