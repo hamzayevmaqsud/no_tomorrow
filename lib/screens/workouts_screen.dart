@@ -147,11 +147,11 @@ class WorkoutStore {
   static int _nextId = 1;
   static String nextId() => '${_nextId++}';
 
-  /// Tracks last used weight/reps per exercise name for "previous performance" display
-  static final Map<String, ({int weight, int reps})> lastPerformance = {};
+  /// Tracks last sets per exercise name (list of weight/reps per set index)
+  static final Map<String, List<({int weight, int reps})>> lastPerformance = {};
 
-  static void recordPerformance(String exerciseName, int weight, int reps) {
-    lastPerformance[exerciseName] = (weight: weight, reps: reps);
+  static void recordExercise(String name, List<SetEntry> sets) {
+    lastPerformance[name] = sets.map((s) => (weight: s.weight, reps: s.reps)).toList();
   }
 }
 
@@ -202,7 +202,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     if (exercise.sets[setIndex].done) return;
     HapticFeedback.mediumImpact();
     setState(() => exercise.sets[setIndex].done = true);
-    WorkoutStore.recordPerformance(exercise.name, exercise.sets[setIndex].weight, exercise.sets[setIndex].reps);
+    WorkoutStore.recordExercise(exercise.name, exercise.sets);
     GameState.instance.recordCompletion();
     GameState.instance.addXp(10);
     // Auto-start rest timer
@@ -284,6 +284,9 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           _Header(totalSets: totalSets, doneSets: doneSets),
           const SizedBox(height: 10),
           Container(height: 1, color: Colors.white.withAlpha(12)),
+
+          // Weekly calendar
+          _WeekCalendar(sessions: sessions),
 
           // Rest timer banner
           if (_resting) _RestTimerBanner(
@@ -383,6 +386,93 @@ class _Header extends StatelessWidget {
           )
         else
           const SizedBox(width: 36), // balance
+      ]),
+    );
+  }
+}
+
+// ── Week Calendar ───────────────────────────────────────────────────────────
+
+class _WeekCalendar extends StatelessWidget {
+  final List<WorkoutSession> sessions;
+  const _WeekCalendar({required this.sessions});
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final days = List.generate(7, (i) => monday.add(Duration(days: i)));
+    final dayLabels = [
+      t('M', 'П'), t('T', 'В'), t('W', 'С'), t('T', 'Ч'),
+      t('F', 'П'), t('S', 'С'), t('S', 'В'),
+    ];
+    final months = [
+      t('JANUARY','ЯНВАРЬ'),t('FEBRUARY','ФЕВРАЛЬ'),t('MARCH','МАРТ'),
+      t('APRIL','АПРЕЛЬ'),t('MAY','МАЙ'),t('JUNE','ИЮНЬ'),
+      t('JULY','ИЮЛЬ'),t('AUGUST','АВГУСТ'),t('SEPTEMBER','СЕНТЯБРЬ'),
+      t('OCTOBER','ОКТЯБРЬ'),t('NOVEMBER','НОЯБРЬ'),t('DECEMBER','ДЕКАБРЬ'),
+    ];
+
+    // Find which days had workouts
+    Set<int> workoutDays = {};
+    for (final s in sessions) {
+      if (s.date.isAfter(monday.subtract(const Duration(days: 1))) &&
+          s.date.isBefore(monday.add(const Duration(days: 7)))) {
+        workoutDays.add(s.date.weekday);
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+      child: Column(children: [
+        // Month label
+        Text(months[today.month - 1],
+          style: GoogleFonts.jetBrainsMono(
+            fontSize: 9, fontWeight: FontWeight.w700,
+            letterSpacing: 2, color: Colors.white.withAlpha(40))),
+        const SizedBox(height: 8),
+        // Days row
+        Row(children: List.generate(7, (i) {
+          final d = days[i];
+          final isToday = d.day == today.day && d.month == today.month;
+          final hadWorkout = workoutDays.contains(d.weekday);
+          final isFuture = d.isAfter(today);
+
+          return Expanded(child: Column(children: [
+            Text(dayLabels[i], style: GoogleFonts.jetBrainsMono(
+              fontSize: 8, fontWeight: FontWeight.w600,
+              color: Colors.white.withAlpha(isToday ? 100 : 35))),
+            const SizedBox(height: 4),
+            Container(
+              width: 32, height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: hadWorkout
+                    ? _kBordo.withAlpha(isToday ? 80 : 50)
+                    : Colors.white.withAlpha(isFuture ? 3 : 6),
+                border: isToday
+                    ? Border.all(color: _kBordo, width: 1.5)
+                    : null,
+              ),
+              child: Center(child: Text('${d.day}',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 10, fontWeight: FontWeight.w700,
+                  color: hadWorkout
+                      ? Colors.white.withAlpha(220)
+                      : Colors.white.withAlpha(isFuture ? 20 : 50)))),
+            ),
+            const SizedBox(height: 3),
+            if (hadWorkout)
+              Container(width: 4, height: 4,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _kBordo,
+                  boxShadow: [BoxShadow(color: _kBordo.withAlpha(120), blurRadius: 4)],
+                ))
+            else
+              const SizedBox(height: 4),
+          ]));
+        })),
       ]),
     );
   }
@@ -618,15 +708,7 @@ class _ExerciseCard extends StatelessWidget {
           GestureDetector(onTap: onDelete,
             child: Icon(Icons.close_rounded, size: 13, color: Colors.white.withAlpha(50))),
         ]),
-        if (WorkoutStore.lastPerformance.containsKey(exercise.name)) ...[
-          const SizedBox(height: 4),
-          Row(children: [
-            Icon(Icons.history_rounded, size: 12, color: Colors.white.withAlpha(40)),
-            const SizedBox(width: 4),
-            Text('${t('Last', 'Пред')}: ${WorkoutStore.lastPerformance[exercise.name]!.weight}kg \u00d7 ${WorkoutStore.lastPerformance[exercise.name]!.reps}',
-              style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(40))),
-          ]),
-        ],
+        // Previous performance is shown inline per set row
         const SizedBox(height: 10),
 
         // Sets header
@@ -657,28 +739,40 @@ class _ExerciseCard extends StatelessWidget {
                   fontSize: 12, fontWeight: FontWeight.w700,
                   color: s.done ? _kBordo : Colors.white.withAlpha(100)))),
               Expanded(child: Center(
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  GestureDetector(onTap: s.done ? null : () => onChangeWeight(i, -5),
-                    child: Icon(Icons.chevron_left_rounded, size: 16, color: Colors.white.withAlpha(60))),
-                  const SizedBox(width: 4),
-                  Text('${s.weight}', style: GoogleFonts.jetBrainsMono(
-                    fontSize: 14, fontWeight: FontWeight.w700,
-                    color: s.done ? Colors.white.withAlpha(100) : Colors.white)),
-                  const SizedBox(width: 4),
-                  GestureDetector(onTap: s.done ? null : () => onChangeWeight(i, 5),
-                    child: Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    GestureDetector(onTap: s.done ? null : () => onChangeWeight(i, -1),
+                      child: Icon(Icons.chevron_left_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                    const SizedBox(width: 4),
+                    Text('${s.weight}', style: GoogleFonts.jetBrainsMono(
+                      fontSize: 14, fontWeight: FontWeight.w700,
+                      color: s.done ? Colors.white.withAlpha(100) : Colors.white)),
+                    const SizedBox(width: 4),
+                    GestureDetector(onTap: s.done ? null : () => onChangeWeight(i, 1),
+                      child: Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                  ]),
+                  if (_prevForSet(exercise.name, i) != null)
+                    Text('${_prevForSet(exercise.name, i)!.weight}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9, color: Colors.white.withAlpha(30))),
                 ]))),
               Expanded(child: Center(
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  GestureDetector(onTap: s.done ? null : () => onChangeReps(i, -1),
-                    child: Icon(Icons.chevron_left_rounded, size: 16, color: Colors.white.withAlpha(60))),
-                  const SizedBox(width: 4),
-                  Text('${s.reps}', style: GoogleFonts.jetBrainsMono(
-                    fontSize: 14, fontWeight: FontWeight.w700,
-                    color: s.done ? Colors.white.withAlpha(100) : Colors.white)),
-                  const SizedBox(width: 4),
-                  GestureDetector(onTap: s.done ? null : () => onChangeReps(i, 1),
-                    child: Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Row(mainAxisSize: MainAxisSize.min, children: [
+                    GestureDetector(onTap: s.done ? null : () => onChangeReps(i, -1),
+                      child: Icon(Icons.chevron_left_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                    const SizedBox(width: 4),
+                    Text('${s.reps}', style: GoogleFonts.jetBrainsMono(
+                      fontSize: 14, fontWeight: FontWeight.w700,
+                      color: s.done ? Colors.white.withAlpha(100) : Colors.white)),
+                    const SizedBox(width: 4),
+                    GestureDetector(onTap: s.done ? null : () => onChangeReps(i, 1),
+                      child: Icon(Icons.chevron_right_rounded, size: 16, color: Colors.white.withAlpha(60))),
+                  ]),
+                  if (_prevForSet(exercise.name, i) != null)
+                    Text('${_prevForSet(exercise.name, i)!.reps}',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 9, color: Colors.white.withAlpha(30))),
                 ]))),
               SizedBox(width: 44,
                 child: GestureDetector(
@@ -726,6 +820,12 @@ class _ExerciseCard extends StatelessWidget {
         ),
       ]),
     );
+  }
+
+  ({int weight, int reps})? _prevForSet(String name, int setIndex) {
+    final prev = WorkoutStore.lastPerformance[name];
+    if (prev == null || setIndex >= prev.length) return null;
+    return prev[setIndex];
   }
 
   TextStyle _headerStyle() => GoogleFonts.jetBrainsMono(
