@@ -9,6 +9,8 @@ import 'screens/login_screen.dart';
 import 'screens/username_screen.dart';
 import 'screens/patch_notes_screen.dart';
 import 'services/sync_service.dart';
+import 'services/local_session.dart';
+import 'models/game_state.dart';
 import 'widgets/phone_frame.dart';
 import 'firebase_options.dart';
 import 'l10n/app_locale.dart';
@@ -151,16 +153,29 @@ class _AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (ctx, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return _loadingScaffold();
+    return AnimatedBuilder(
+      animation: LocalAdminSession.instance,
+      builder: (ctx, _) {
+        // Local admin bypass — skip Firebase entirely, no bag loader.
+        if (LocalAdminSession.instance.active) {
+          // Seed a default username so ProfileScreen shows something.
+          if ((GameState.instance.username ?? '').isEmpty) {
+            GameState.instance.username = 'admin';
+          }
+          return _SplashGate(onToggleTheme: onToggleTheme);
         }
-        if (!snap.hasData) return const LoginScreen();
-        return _BagLoader(
-          uid: snap.data!.uid,
-          onToggleTheme: onToggleTheme,
+        return StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (ctx, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
+              return _loadingScaffold();
+            }
+            if (!snap.hasData) return const LoginScreen();
+            return _BagLoader(
+              uid: snap.data!.uid,
+              onToggleTheme: onToggleTheme,
+            );
+          },
         );
       },
     );

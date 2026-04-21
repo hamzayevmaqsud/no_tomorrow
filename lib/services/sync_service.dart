@@ -7,6 +7,7 @@ import '../models/task.dart';
 import '../models/habit.dart';
 import '../models/game_state.dart';
 import '../screens/tasks_screen.dart' show TaskStore, TaskCombo;
+import 'local_session.dart';
 
 /// Single-doc per-user persistence:
 ///   /users/{uid}/state/bag  →  one document with all data serialized
@@ -210,6 +211,7 @@ class SyncService extends ChangeNotifier {
   }
 
   Future<void> _saveNow() async {
+    if (LocalAdminSession.instance.active) return; // in-memory only
     final uid = _uid;
     if (uid == null) return;
     _saving = true;

@@ -11,6 +11,17 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v3.1',
+      date: '2026-04-21',
+      title: t('Local Admin Login', 'Локальный админ-вход'),
+      items: [
+        t('Sign in with email "admin" and password "2244" to bypass Firebase entirely — no cloud sync, no Firestore writes, everything stays in this browser tab. Handy for demos or offline preview',
+          'Войди с email "admin" и паролем "2244" чтобы полностью обойти Firebase — без облачного синка, без записей в Firestore, всё остаётся в этой вкладке. Удобно для демо или offline-превью'),
+        t('Sign-out from local admin just closes the local session; your Firebase account is untouched',
+          'Выход из локального админа просто закрывает локальную сессию; Firebase-аккаунт не трогается'),
+      ],
+    ),
+    _PatchNote(
       version: 'v3.0',
       date: '2026-04-21',
       title: t('Workout Overhaul', 'Полный редизайн тренировок'),

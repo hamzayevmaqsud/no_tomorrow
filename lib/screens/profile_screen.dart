@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../l10n/app_locale.dart';
 import '../models/game_state.dart';
 import '../models/habit.dart';
+import '../services/local_session.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
 import 'tasks_screen.dart';
@@ -42,7 +43,11 @@ void _confirmSignOut(BuildContext context) async {
     ),
   );
   if (confirmed == true) {
-    await FirebaseAuth.instance.signOut();
+    if (LocalAdminSession.instance.active) {
+      LocalAdminSession.instance.end();
+    } else {
+      await FirebaseAuth.instance.signOut();
+    }
   }
 }
 

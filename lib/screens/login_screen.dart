@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../l10n/app_locale.dart';
+import '../services/local_session.dart';
 import '../widgets/jelly_button.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -29,6 +30,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submitEmail() async {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
+
+    // Local admin bypass: no Firebase round-trip, data stays in-memory.
+    if (LocalAdminSession.matches(email, pass)) {
+      HapticFeedback.mediumImpact();
+      LocalAdminSession.instance.start();
+      return;
+    }
+
     if (email.isEmpty || pass.length < 6) {
       setState(() => _error = t('email + password (6+ chars)', 'email + пароль (6+ символов)'));
       return;
