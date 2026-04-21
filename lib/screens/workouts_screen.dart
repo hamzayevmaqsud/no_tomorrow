@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui' as ui;
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -94,6 +95,7 @@ class Exercise {
   final String id;
   String name;
   String muscleEmoji;
+  String muscleGroupId;
   final List<SetEntry> sets;
   int restSeconds;
 
@@ -101,6 +103,7 @@ class Exercise {
     required this.id,
     required this.name,
     this.muscleEmoji = '🏋️',
+    this.muscleGroupId = 'other',
     List<SetEntry>? sets,
     this.restSeconds = 90,
   }) : sets = sets ?? [SetEntry()];
@@ -137,6 +140,8 @@ class WorkoutSession {
     if (date.day == now.day && date.month == now.month && date.year == now.year) return t('TODAY', 'СЕГОДНЯ');
     final yesterday = now.subtract(const Duration(days: 1));
     if (date.day == yesterday.day && date.month == yesterday.month) return t('YESTERDAY', 'ВЧЕРА');
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    if (DateTime(date.year, date.month, date.day) == tomorrow) return t('TOMORROW', 'ЗАВТРА');
     final months = [t('JAN','ЯНВ'),t('FEB','ФЕВ'),t('MAR','МАР'),t('APR','АПР'),t('MAY','МАЙ'),t('JUN','ИЮН'),t('JUL','ИЮЛ'),t('AUG','АВГ'),t('SEP','СЕН'),t('OCT','ОКТ'),t('NOV','НОЯ'),t('DEC','ДЕК')];
     return '${months[date.month - 1]} ${date.day}';
   }
@@ -169,6 +174,12 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   int _restRemaining = 0;
   int _restTotal = 0;
   bool get _resting => _restRemaining > 0;
+
+  // Calendar selection
+  DateTime? _selectedDate;
+
+  // Dashboard toggle
+  bool _showDashboard = false;
 
   @override
   void dispose() {
@@ -237,7 +248,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   }
 
   void _newSession() {
-    final session = WorkoutSession(id: WorkoutStore.nextId(), date: DateTime.now());
+    final date = _selectedDate ?? DateTime.now();
+    final session = WorkoutSession(id: WorkoutStore.nextId(), date: date);
     setState(() => WorkoutStore.sessions.insert(0, session));
     _showAddExercise(session);
   }
@@ -281,12 +293,30 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
         SafeArea(child: Column(children: [
           // Header
-          _Header(totalSets: totalSets, doneSets: doneSets),
+          _Header(totalSets: totalSets, doneSets: doneSets,
+            dashboardActive: _showDashboard,
+            onToggleDashboard: () => setState(() => _showDashboard = !_showDashboard)),
           const SizedBox(height: 10),
           Container(height: 1, color: Colors.white.withAlpha(12)),
 
           // Weekly calendar
-          _WeekCalendar(sessions: sessions),
+          _WeekCalendar(
+            sessions: WorkoutStore.sessions,
+            selectedDate: _selectedDate,
+            onDateSelected: (date) => setState(() {
+              _selectedDate = (_selectedDate != null && _selectedDate!.day == date.day && _selectedDate!.month == date.month)
+                  ? null : date;
+            }),
+          ),
+
+          // Dashboard panel
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            child: _showDashboard
+                ? _WorkoutDashboard(sessions: WorkoutStore.sessions)
+                : const SizedBox.shrink(),
+          ),
 
           // Rest timer banner
           if (_resting) _RestTimerBanner(
@@ -296,28 +326,35 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           ),
 
           // Content
-          Expanded(
-            child: sessions.isEmpty
-                ? AnimatedEmpty(
-                    icon: Icons.fitness_center_rounded,
-                    title: t('No workouts yet', 'Тренировок пока нет'),
-                    subtitle: t('Tap + to start your session', 'Нажми + чтобы начать тренировку'),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
-                    itemCount: sessions.length,
-                    itemBuilder: (ctx, i) => _SessionCard(
-                      session: sessions[i],
-                      onCompleteSet: _completeSet,
-                      onAddSet: _addSet,
-                      onAddExercise: () => _showAddExercise(sessions[i]),
-                      onDeleteExercise: (ei) => _deleteExercise(sessions[i], ei),
-                      onDeleteSession: () => _deleteSession(sessions[i].id),
-                      onChangeWeight: _changeWeight,
-                      onChangeReps: _changeReps,
+          Builder(builder: (context) {
+            final displayedSessions = _selectedDate != null
+                ? sessions.where((s) => s.date.day == _selectedDate!.day && s.date.month == _selectedDate!.month && s.date.year == _selectedDate!.year).toList()
+                : sessions;
+            return Expanded(
+              child: displayedSessions.isEmpty
+                  ? AnimatedEmpty(
+                      icon: Icons.fitness_center_rounded,
+                      title: _selectedDate != null
+                          ? t('No workout on this day', 'Нет тренировки в этот день')
+                          : t('No workouts yet', 'Тренировок пока нет'),
+                      subtitle: t('Tap + to start your session', 'Нажми + чтобы начать тренировку'),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                      itemCount: displayedSessions.length,
+                      itemBuilder: (ctx, i) => _SessionCard(
+                        session: displayedSessions[i],
+                        onCompleteSet: _completeSet,
+                        onAddSet: _addSet,
+                        onAddExercise: () => _showAddExercise(displayedSessions[i]),
+                        onDeleteExercise: (ei) => _deleteExercise(displayedSessions[i], ei),
+                        onDeleteSession: () => _deleteSession(displayedSessions[i].id),
+                        onChangeWeight: _changeWeight,
+                        onChangeReps: _changeReps,
+                      ),
                     ),
-                  ),
-          ),
+            );
+          }),
         ])),
 
         // FAB
@@ -354,7 +391,9 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
 class _Header extends StatelessWidget {
   final int totalSets, doneSets;
-  const _Header({required this.totalSets, required this.doneSets});
+  final bool dashboardActive;
+  final VoidCallback onToggleDashboard;
+  const _Header({required this.totalSets, required this.doneSets, required this.dashboardActive, required this.onToggleDashboard});
 
   @override
   Widget build(BuildContext context) {
@@ -374,6 +413,17 @@ class _Header extends StatelessWidget {
           fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
           letterSpacing: 2, color: const Color(0xFFE0C4C4))),
         const Spacer(),
+        GestureDetector(
+          onTap: onToggleDashboard,
+          child: Container(width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: dashboardActive ? _kBordo.withAlpha(25) : Colors.white.withAlpha(18),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: dashboardActive ? _kBordo.withAlpha(80) : Colors.white.withAlpha(40))),
+            child: Icon(Icons.bar_chart_rounded, size: 18,
+              color: dashboardActive ? _kBordo : Colors.white.withAlpha(200))),
+        ),
+        const SizedBox(width: 8),
         if (totalSets > 0)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -395,7 +445,9 @@ class _Header extends StatelessWidget {
 
 class _WeekCalendar extends StatelessWidget {
   final List<WorkoutSession> sessions;
-  const _WeekCalendar({required this.sessions});
+  final DateTime? selectedDate;
+  final ValueChanged<DateTime> onDateSelected;
+  const _WeekCalendar({required this.sessions, this.selectedDate, required this.onDateSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -437,8 +489,11 @@ class _WeekCalendar extends StatelessWidget {
           final isToday = d.day == today.day && d.month == today.month;
           final hadWorkout = workoutDays.contains(d.weekday);
           final isFuture = d.isAfter(today);
+          final isSelected = selectedDate != null && selectedDate!.day == d.day && selectedDate!.month == d.month;
 
-          return Expanded(child: Column(children: [
+          return Expanded(child: GestureDetector(
+            onTap: () => onDateSelected(days[i]),
+            child: Column(children: [
             Text(dayLabels[i], style: GoogleFonts.jetBrainsMono(
               fontSize: 8, fontWeight: FontWeight.w600,
               color: Colors.white.withAlpha(isToday ? 100 : 35))),
@@ -450,9 +505,11 @@ class _WeekCalendar extends StatelessWidget {
                 color: hadWorkout
                     ? _kBordo.withAlpha(isToday ? 80 : 50)
                     : Colors.white.withAlpha(isFuture ? 3 : 6),
-                border: isToday
-                    ? Border.all(color: _kBordo, width: 1.5)
-                    : null,
+                border: isSelected
+                    ? Border.all(color: _kBordo, width: 2)
+                    : isToday
+                        ? Border.all(color: _kBordo, width: 1.5)
+                        : null,
               ),
               child: Center(child: Text('${d.day}',
                 style: GoogleFonts.jetBrainsMono(
@@ -471,7 +528,7 @@ class _WeekCalendar extends StatelessWidget {
                 ))
             else
               const SizedBox(height: 4),
-          ]));
+          ])));
         })),
       ]),
     );
@@ -852,13 +909,15 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
 
   // null = show catalog, non-null = show config for selected exercise
   String? _pickedName;
+  String _selectedGroupId = 'other';
 
   static const _restOptions = [30, 60, 90, 120, 180];
 
-  void _pickExercise(String name, String emoji) {
+  void _pickExercise(String name, String emoji, {String groupId = 'other'}) {
     setState(() {
       _pickedName = name;
       _selectedEmoji = emoji;
+      _selectedGroupId = groupId;
       _nameCtrl.text = name;
     });
   }
@@ -870,6 +929,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
       id: WorkoutStore.nextId(),
       name: name,
       muscleEmoji: _selectedEmoji,
+      muscleGroupId: _selectedGroupId,
       sets: List.generate(_sets, (_) => SetEntry(weight: _weight, reps: _reps)),
       restSeconds: _rest,
     ));
@@ -1020,7 +1080,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
                   children: group.exercises.map((exFn) {
                     final name = exFn();
                     return GestureDetector(
-                      onTap: () => _pickExercise(name, group.emoji),
+                      onTap: () => _pickExercise(name, group.emoji, groupId: group.id),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
@@ -1082,5 +1142,493 @@ class _MiniCounter extends StatelessWidget {
         ]),
       ]),
     ));
+  }
+}
+
+// ── Workout Dashboard ────────────────────────────────────────────────────────
+
+class _WorkoutDashboard extends StatelessWidget {
+  final List<WorkoutSession> sessions;
+  const _WorkoutDashboard({required this.sessions});
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final mondayStart = DateTime(monday.year, monday.month, monday.day);
+
+    // Weekly sessions
+    final weekSessions = sessions.where((s) {
+      final sd = DateTime(s.date.year, s.date.month, s.date.day);
+      return !sd.isBefore(mondayStart) && sd.isBefore(mondayStart.add(const Duration(days: 7)));
+    }).toList();
+
+    // Volume per day of week (0=Mon .. 6=Sun)
+    final dayVolumes = List<double>.filled(7, 0);
+    for (final s in weekSessions) {
+      final idx = s.date.weekday - 1; // 1=Mon -> 0
+      dayVolumes[idx] += s.totalVolume.toDouble();
+    }
+    final maxVol = dayVolumes.reduce((a, b) => a > b ? a : b).clamp(1.0, double.infinity);
+
+    // Stats
+    final weekWorkouts = weekSessions.length;
+    final weekSets = weekSessions.fold(0, (v, s) => v + s.doneSets);
+    final weekVolume = weekSessions.fold(0, (v, s) => v + s.totalVolume);
+
+    // Streak: consecutive days going back from today
+    int streak = 0;
+    for (int d = 0; d < 365; d++) {
+      final check = DateTime(today.year, today.month, today.day).subtract(Duration(days: d));
+      final hasWorkout = sessions.any((s) =>
+          s.date.year == check.year && s.date.month == check.month && s.date.day == check.day);
+      if (hasWorkout) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    // Best exercise this week
+    final exVolumes = <String, ({String emoji, int volume})>{};
+    for (final s in weekSessions) {
+      for (final e in s.exercises) {
+        final prev = exVolumes[e.name];
+        final vol = (prev?.volume ?? 0) + e.totalVolume;
+        exVolumes[e.name] = (emoji: e.muscleEmoji, volume: vol);
+      }
+    }
+    String? bestExName;
+    int bestExVol = 0;
+    String bestExEmoji = '';
+    for (final entry in exVolumes.entries) {
+      if (entry.value.volume > bestExVol) {
+        bestExVol = entry.value.volume;
+        bestExName = entry.key;
+        bestExEmoji = entry.value.emoji;
+      }
+    }
+
+    String fmtVol(int v) => v >= 1000 ? '${(v / 1000).toStringAsFixed(1)}k' : '$v';
+
+    final dayLabelsShort = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF12080C),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withAlpha(10)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Header row
+        Row(children: [
+          Text(t('OVERVIEW', 'ОБЗОР'), style: GoogleFonts.jetBrainsMono(
+            fontSize: 10, fontWeight: FontWeight.w700,
+            letterSpacing: 2, color: Colors.white.withAlpha(60))),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => showModalBottomSheet(
+              context: context, isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => _WorkoutReviewSheet(sessions: sessions),
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: _kBordo.withAlpha(25),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _kBordo.withAlpha(60)),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(Icons.analytics_rounded, size: 11, color: _kBordo),
+                const SizedBox(width: 5),
+                Text(t('REVIEW', 'ОБЗОР'), style: GoogleFonts.jetBrainsMono(
+                  fontSize: 9, fontWeight: FontWeight.w800,
+                  letterSpacing: 1, color: _kBordo)),
+              ]),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 14),
+
+        // Bar chart
+        SizedBox(
+          height: 120,
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              maxY: maxVol,
+              barTouchData: BarTouchData(enabled: false),
+              gridData: const FlGridData(show: false),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    getTitlesWidget: (value, meta) {
+                      final idx = value.toInt();
+                      if (idx < 0 || idx > 6) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(dayLabelsShort[idx], style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600,
+                          color: Colors.white.withAlpha(40))),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              barGroups: List.generate(7, (i) => BarChartGroupData(
+                x: i,
+                barRods: [
+                  BarChartRodData(
+                    toY: dayVolumes[i],
+                    color: _kBordo,
+                    width: 14,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                  ),
+                ],
+              )),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Stats row
+        Row(children: [
+          Expanded(child: _WorkoutStatBox(
+            value: '$weekWorkouts',
+            label: t('WORKOUTS', 'ТРЕНИРОВКИ'),
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: _WorkoutStatBox(
+            value: '$weekSets',
+            label: t('SETS', 'ПОДХОДЫ'),
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: _WorkoutStatBox(
+            value: fmtVol(weekVolume),
+            label: t('VOLUME', 'ОБЪЁМ'),
+          )),
+          const SizedBox(width: 8),
+          Expanded(child: _WorkoutStatBox(
+            value: '$streak',
+            label: t('STREAK', 'СЕРИЯ'),
+          )),
+        ]),
+
+        // Best exercise
+        if (bestExName != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withAlpha(10)),
+            ),
+            child: Row(children: [
+              Text(bestExEmoji, style: const TextStyle(fontSize: 16)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(bestExName, style: GoogleFonts.inter(
+                fontSize: 12, fontWeight: FontWeight.w600,
+                color: Colors.white.withAlpha(200)))),
+              Text(fmtVol(bestExVol), style: GoogleFonts.jetBrainsMono(
+                fontSize: 12, fontWeight: FontWeight.w700, color: _kBordo)),
+              Text(' ${t('kg', 'кг')}', style: GoogleFonts.jetBrainsMono(
+                fontSize: 9, color: Colors.white.withAlpha(50))),
+            ]),
+          ),
+        ],
+      ]),
+    );
+  }
+}
+
+// ── Workout Stat Box ─────────────────────────────────────────────────────────
+
+class _WorkoutStatBox extends StatelessWidget {
+  final String value;
+  final String label;
+  const _WorkoutStatBox({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withAlpha(8)),
+      ),
+      child: Column(children: [
+        Text(value, style: GoogleFonts.jetBrainsMono(
+          fontSize: 18, fontWeight: FontWeight.w700, color: _kBordo)),
+        const SizedBox(height: 4),
+        Text(label, style: GoogleFonts.jetBrainsMono(
+          fontSize: 8, fontWeight: FontWeight.w600,
+          letterSpacing: 0.5, color: Colors.white.withAlpha(50)),
+          textAlign: TextAlign.center),
+      ]),
+    );
+  }
+}
+
+// ── Workout Review Sheet ─────────────────────────────────────────────────────
+
+class _WorkoutReviewSheet extends StatelessWidget {
+  final List<WorkoutSession> sessions;
+  const _WorkoutReviewSheet({required this.sessions});
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final mondayStart = DateTime(monday.year, monday.month, monday.day);
+
+    // This week sessions
+    final weekSessions = sessions.where((s) {
+      final sd = DateTime(s.date.year, s.date.month, s.date.day);
+      return !sd.isBefore(mondayStart) && sd.isBefore(mondayStart.add(const Duration(days: 7)));
+    }).toList();
+
+    // Last week sessions
+    final lastMondayStart = mondayStart.subtract(const Duration(days: 7));
+    final lastWeekSessions = sessions.where((s) {
+      final sd = DateTime(s.date.year, s.date.month, s.date.day);
+      return !sd.isBefore(lastMondayStart) && sd.isBefore(mondayStart);
+    }).toList();
+
+    final weekVolume = weekSessions.fold(0, (v, s) => v + s.totalVolume);
+    final lastWeekVolume = lastWeekSessions.fold(0, (v, s) => v + s.totalVolume);
+    final weekXp = weekSessions.fold(0, (v, s) => v + s.xp);
+    final weekWorkouts = weekSessions.length;
+
+    // Volume change percentage
+    double volumeChange = 0;
+    if (lastWeekVolume > 0) {
+      volumeChange = ((weekVolume - lastWeekVolume) / lastWeekVolume) * 100;
+    }
+
+    // Streak
+    int streak = 0;
+    for (int d = 0; d < 365; d++) {
+      final check = DateTime(today.year, today.month, today.day).subtract(Duration(days: d));
+      final hasWorkout = sessions.any((s) =>
+          s.date.year == check.year && s.date.month == check.month && s.date.day == check.day);
+      if (hasWorkout) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    // Exercise breakdown this week
+    final exBreakdown = <String, ({String emoji, int sets, int volume})>{};
+    for (final s in weekSessions) {
+      for (final e in s.exercises) {
+        final prev = exBreakdown[e.name];
+        exBreakdown[e.name] = (
+          emoji: e.muscleEmoji,
+          sets: (prev?.sets ?? 0) + e.doneSets,
+          volume: (prev?.volume ?? 0) + e.totalVolume,
+        );
+      }
+    }
+    final exList = exBreakdown.entries.toList()
+      ..sort((a, b) => b.value.volume.compareTo(a.value.volume));
+
+    // Top muscle group
+    final groupVolumes = <String, ({String emoji, int volume})>{};
+    for (final s in weekSessions) {
+      for (final e in s.exercises) {
+        final gid = e.muscleGroupId;
+        final prev = groupVolumes[gid];
+        // Find emoji for this group
+        String gEmoji = e.muscleEmoji;
+        for (final g in kMuscleGroups) {
+          if (g.id == gid) { gEmoji = g.emoji; break; }
+        }
+        groupVolumes[gid] = (
+          emoji: gEmoji,
+          volume: (prev?.volume ?? 0) + e.totalVolume,
+        );
+      }
+    }
+    String topGroupEmoji = '🏋️';
+    if (groupVolumes.isNotEmpty) {
+      final topEntry = groupVolumes.entries.reduce((a, b) => a.value.volume > b.value.volume ? a : b);
+      topGroupEmoji = topEntry.value.emoji;
+    }
+
+    String fmtVol(int v) => v >= 1000 ? '${(v / 1000).toStringAsFixed(1)}k' : '$v';
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+      decoration: const BoxDecoration(
+        color: Color(0xFF10080C),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+        child: Column(children: [
+          // Handle bar
+          Container(width: 40, height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(30),
+              borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 20),
+
+          // Title
+          Text(t('WEEKLY REVIEW', 'ОБЗОР НЕДЕЛИ'), style: GoogleFonts.playfairDisplay(
+            fontSize: 18, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
+            letterSpacing: 2, color: const Color(0xFFE0C4C4))),
+          const SizedBox(height: 20),
+
+          // Hero stat card
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_kBordo.withAlpha(80), _kBordo.withAlpha(30)],
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: _kBordo.withAlpha(60)),
+            ),
+            child: Column(children: [
+              Text(t('TOTAL VOLUME', 'ОБЩИЙ ОБЪЁМ'), style: GoogleFonts.jetBrainsMono(
+                fontSize: 9, fontWeight: FontWeight.w700,
+                letterSpacing: 2, color: Colors.white.withAlpha(120))),
+              const SizedBox(height: 8),
+              Text(fmtVol(weekVolume), style: GoogleFonts.jetBrainsMono(
+                fontSize: 36, fontWeight: FontWeight.w700, color: Colors.white)),
+              Text(t('kg this week', 'кг за неделю'), style: GoogleFonts.inter(
+                fontSize: 12, color: Colors.white.withAlpha(100))),
+            ]),
+          ),
+          const SizedBox(height: 12),
+
+          // Volume change
+          if (lastWeekVolume > 0)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withAlpha(10)),
+              ),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(
+                  volumeChange >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                  size: 16,
+                  color: volumeChange >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444)),
+                const SizedBox(width: 8),
+                Text(
+                  '${volumeChange >= 0 ? '+' : ''}${volumeChange.toStringAsFixed(0)}% ${t('vs last week', 'к прошлой неделе')}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 11, fontWeight: FontWeight.w700,
+                    color: volumeChange >= 0 ? const Color(0xFF22C55E) : const Color(0xFFEF4444)),
+                ),
+              ]),
+            ),
+          const SizedBox(height: 16),
+
+          // Exercise breakdown
+          if (exList.isNotEmpty) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(t('EXERCISES', 'УПРАЖНЕНИЯ'), style: GoogleFonts.jetBrainsMono(
+                fontSize: 9, fontWeight: FontWeight.w700,
+                letterSpacing: 2, color: Colors.white.withAlpha(50))),
+            ),
+            const SizedBox(height: 8),
+            ...exList.map((entry) => Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(6),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withAlpha(8)),
+              ),
+              child: Row(children: [
+                Text(entry.value.emoji, style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 10),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(entry.key, style: GoogleFonts.inter(
+                      fontSize: 12, fontWeight: FontWeight.w600,
+                      color: Colors.white.withAlpha(200))),
+                    const SizedBox(height: 2),
+                    Text('${entry.value.sets} ${t('sets', 'подх.')}', style: GoogleFonts.jetBrainsMono(
+                      fontSize: 9, color: Colors.white.withAlpha(50))),
+                  ],
+                )),
+                Text(fmtVol(entry.value.volume), style: GoogleFonts.jetBrainsMono(
+                  fontSize: 13, fontWeight: FontWeight.w700, color: _kBordo)),
+                Text(' ${t('kg', 'кг')}', style: GoogleFonts.jetBrainsMono(
+                  fontSize: 9, color: Colors.white.withAlpha(50))),
+              ]),
+            )),
+            const SizedBox(height: 12),
+          ],
+
+          // Stats 2x2 grid
+          Row(children: [
+            Expanded(child: _WorkoutReviewStat(
+              value: '$weekWorkouts', label: t('WORKOUTS', 'ТРЕНИРОВКИ'))),
+            const SizedBox(width: 8),
+            Expanded(child: _WorkoutReviewStat(
+              value: '+$weekXp XP', label: t('XP EARNED', 'ОПЫТ'))),
+          ]),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(child: _WorkoutReviewStat(
+              value: topGroupEmoji, label: t('TOP GROUP', 'ТОП ГРУППА'))),
+            const SizedBox(width: 8),
+            Expanded(child: _WorkoutReviewStat(
+              value: '$streak', label: t('STREAK', 'СЕРИЯ'))),
+          ]),
+        ]),
+      ),
+    );
+  }
+}
+
+// ── Workout Review Stat ──────────────────────────────────────────────────────
+
+class _WorkoutReviewStat extends StatelessWidget {
+  final String value;
+  final String label;
+  const _WorkoutReviewStat({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withAlpha(8)),
+      ),
+      child: Column(children: [
+        Text(value, style: GoogleFonts.jetBrainsMono(
+          fontSize: 18, fontWeight: FontWeight.w700, color: _kBordo)),
+        const SizedBox(height: 4),
+        Text(label, style: GoogleFonts.jetBrainsMono(
+          fontSize: 8, fontWeight: FontWeight.w600,
+          letterSpacing: 0.5, color: Colors.white.withAlpha(50)),
+          textAlign: TextAlign.center),
+      ]),
+    );
   }
 }
