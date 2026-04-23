@@ -20,7 +20,7 @@ class TasksMenuScreen extends StatelessWidget {
         .withAlpha(170);
 
     return SwipeToPop(child: Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0E1011),
       body: Stack(
         children: [
 
@@ -131,24 +131,17 @@ class _CategoryCardState extends State<_CategoryCard> {
   void _open() {
     HapticFeedback.mediumImpact();
     Navigator.push(context, PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 450),
+      transitionDuration: const Duration(milliseconds: 400),
       reverseTransitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (ctx, a, b) => TasksScreen(category: widget.category),
-      transitionsBuilder: (ctx, a, b, child) {
-        final curve = CurvedAnimation(parent: a, curve: Curves.easeOutCubic);
+      pageBuilder: (ctx, anim, sec) => TasksScreen(category: widget.category),
+      transitionsBuilder: (ctx, anim, sec, child) {
+        final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
         return FadeTransition(
           opacity: Tween(begin: 0.0, end: 1.0).animate(
-            CurvedAnimation(parent: a,
-                curve: const Interval(0.0, 0.5, curve: Curves.easeOut))),
-          child: ScaleTransition(
-            scale: Tween(begin: 0.92, end: 1.0).animate(curve),
-            child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.06),
-                end: Offset.zero,
-              ).animate(curve),
-              child: child,
-            ),
+            CurvedAnimation(parent: anim, curve: const Interval(0.0, 0.5, curve: Curves.easeOut))),
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0, 0.04), end: Offset.zero).animate(curve),
+            child: child,
           ),
         );
       },

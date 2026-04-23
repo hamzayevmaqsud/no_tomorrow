@@ -22,7 +22,7 @@ void _confirmSignOut(BuildContext context) async {
     builder: (ctx) => AlertDialog(
       backgroundColor: const Color(0xFF1C1C27),
       title: Text(t('Sign out?', 'Выйти?'),
-        style: GoogleFonts.inter(
+        style: GoogleFonts.outfit(
           fontSize: 16, fontWeight: FontWeight.w700,
           color: Colors.white)),
       content: Text(t('You can sign back in anytime — your data stays in the cloud.', 'Вы можете войти снова в любое время — данные сохраняются в облаке.'),
@@ -38,7 +38,7 @@ void _confirmSignOut(BuildContext context) async {
           child: Text(t('Sign out', 'Выйти'),
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w700,
-              color: const Color(0xFFDC2626)))),
+              color: AppColors.danger))),
       ],
     ),
   );
@@ -205,14 +205,14 @@ class ProfileScreen extends StatelessWidget {
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    width: 36, height: 36,
+                    width: 44, height: 44,
                     decoration: BoxDecoration(
                       color: Colors.white.withAlpha(18),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.white.withAlpha(40)),
                     ),
                     child: Icon(Icons.chevron_left_rounded,
-                        size: 22, color: Colors.white.withAlpha(200)),
+                        size: 24, color: Colors.white.withAlpha(200)),
                   ),
                 ),
                 const Spacer(),
@@ -245,12 +245,12 @@ class ProfileScreen extends StatelessWidget {
                   child: Container(
                     width: 36, height: 36,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDC2626).withAlpha(20),
+                      color: AppColors.danger.withAlpha(20),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFDC2626).withAlpha(50)),
+                      border: Border.all(color: AppColors.danger.withAlpha(50)),
                     ),
-                    child: const Icon(Icons.logout_rounded,
-                        size: 16, color: Color(0xFFDC2626)),
+                    child: Icon(Icons.logout_rounded,
+                        size: 16, color: AppColors.danger),
                   ),
                 ),
               ]),

@@ -128,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen>
       duration: const Duration(milliseconds: 480),
     );
     // expo-like ease-out: fast start, silky deceleration
-    const snapCurve = Cubic(0.16, 1.0, 0.3, 1.0);
+    const snapCurve = Curves.easeOutCubic;
     _snapCtrl.addListener(() {
       _angle = _snapFrom + (_snapTo - _snapFrom) *
           snapCurve.transform(_snapCtrl.value);
@@ -164,6 +164,7 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _goTo(int index) {
+    HapticFeedback.selectionClick();
     _snapFrom = _angle;
     _snapTo = -(index + 0.5) * _sectionAngle;
     if (_currentIndex != index) {
@@ -188,21 +189,10 @@ class _HomeScreenState extends State<HomeScreen>
       case 'profile':  page = const ProfileScreen(); break;
       default:         page = SectionScreen(section: section); break;
     }
-    // Per-section unique transition
-    final Offset slideBegin;
-    final double scaleBegin;
-    switch (section.id) {
-      case 'tasks':    slideBegin = const Offset(-0.08, 0); scaleBegin = 0.92; break;
-      case 'habits':   slideBegin = const Offset(0, 0.08);  scaleBegin = 0.92; break;
-      case 'workouts': slideBegin = const Offset(0.08, 0);  scaleBegin = 0.90; break;
-      case 'profile':  slideBegin = const Offset(0, 0);     scaleBegin = 0.80; break;
-      case 'collect':  slideBegin = const Offset(0, -0.06); scaleBegin = 0.92; break;
-      default:         slideBegin = const Offset(0, 0.04);  scaleBegin = 0.92; break;
-    }
     Navigator.push(
       context,
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
+        transitionDuration: const Duration(milliseconds: 400),
         reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (ctx, anim, sec) => page,
         transitionsBuilder: (ctx, anim, sec, child) {
@@ -210,13 +200,10 @@ class _HomeScreenState extends State<HomeScreen>
           return FadeTransition(
             opacity: Tween(begin: 0.0, end: 1.0).animate(
               CurvedAnimation(parent: anim,
-                  curve: const Interval(0.0, 0.4, curve: Curves.easeOut))),
+                  curve: const Interval(0.0, 0.5, curve: Curves.easeOut))),
             child: SlideTransition(
-              position: Tween(begin: slideBegin, end: Offset.zero).animate(curve),
-              child: ScaleTransition(
-                scale: Tween<double>(begin: scaleBegin, end: 1.0).animate(curve),
-                child: child,
-              ),
+              position: Tween(begin: const Offset(0, 0.04), end: Offset.zero).animate(curve),
+              child: child,
             ),
           );
         },
@@ -228,19 +215,18 @@ class _HomeScreenState extends State<HomeScreen>
     Navigator.push(
       context,
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (ctx, anim, sec) => SettingsScreen(
           onToggleTheme: widget.onToggleTheme,
         ),
         transitionsBuilder: (ctx, anim, sec, child) {
-          final c = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+          final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
           return FadeTransition(
-            opacity: c,
+            opacity: Tween(begin: 0.0, end: 1.0).animate(
+              CurvedAnimation(parent: anim, curve: const Interval(0.0, 0.5, curve: Curves.easeOut))),
             child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.06),
-                end: Offset.zero,
-              ).animate(c),
+              position: Tween(begin: const Offset(0, 0.04), end: Offset.zero).animate(curve),
               child: child,
             ),
           );
@@ -257,13 +243,13 @@ class _HomeScreenState extends State<HomeScreen>
     return TweenAnimationBuilder<double>(
       tween: _launchTween,
       duration: const Duration(milliseconds: 700),
-      curve: const Cubic(0.16, 1.0, 0.3, 1.0),
+      curve: Curves.easeOutCubic,
       builder: (context, v, child) => Transform.translate(
         offset: Offset(0, (1 - v) * 80),
         child: Opacity(opacity: v.clamp(0.0, 1.0), child: child),
       ),
       child: Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF0E1011),
       body: Stack(
         children: [
           // ── Floating embers ──────────────────────────────────────────────
@@ -325,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.black.withAlpha(200), Colors.transparent],
+                  colors: [Colors.black.withAlpha(210), Colors.transparent],
                 ),
               ),
             )),
@@ -340,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen>
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Colors.black.withAlpha(220), Colors.transparent],
+                  colors: [Colors.black.withAlpha(210), Colors.transparent],
                 ),
               ),
             )),
@@ -431,7 +417,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   boxShadow: [
                                     BoxShadow(
                                       color: AppColors.action.withAlpha(60),
-                                      blurRadius: 10, spreadRadius: 1,
+                                      blurRadius: 10, spreadRadius: 0,
                                     ),
                                   ],
                                 ),
@@ -505,9 +491,9 @@ class _HomeScreenState extends State<HomeScreen>
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(18),
+                          color: Colors.white.withAlpha(20),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.white.withAlpha(35)),
+                          border: Border.all(color: Colors.white.withAlpha(40)),
                         ),
                         child: const Icon(Icons.settings_rounded,
                             size: 16, color: Colors.white),
@@ -616,8 +602,8 @@ class _HomeScreenState extends State<HomeScreen>
                                 height: 30,
                                 decoration: BoxDecoration(
                                   boxShadow: [BoxShadow(
-                                    color: Colors.black.withAlpha(100),
-                                    blurRadius: 30, spreadRadius: 10,
+                                    color: section.color.withAlpha(60),
+                                    blurRadius: 20, spreadRadius: 0,
                                   )],
                                 ),
                               ),
@@ -642,12 +628,7 @@ class _HomeScreenState extends State<HomeScreen>
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, anim) => FadeTransition(
                   opacity: anim,
-                  child: ScaleTransition(
-                    scale: Tween<double>(begin: 0.92, end: 1.0).animate(
-                      CurvedAnimation(parent: anim, curve: Curves.easeOutCubic),
-                    ),
-                    child: child,
-                  ),
+                  child: child,
                 ),
                 child: GestureDetector(
                   key: ValueKey(_currentIndex),
@@ -660,9 +641,9 @@ class _HomeScreenState extends State<HomeScreen>
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: section.color.withAlpha(120),
-                          blurRadius: 24,
-                          spreadRadius: 2,
+                          color: section.color.withAlpha(70),
+                          blurRadius: 16,
+                          spreadRadius: 0,
                           offset: const Offset(0, 4),
                         ),
                       ],
@@ -1334,7 +1315,7 @@ class _DailyQuestPopupState extends State<_DailyQuestPopup>
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.gold.withAlpha(20),
-                      blurRadius: 20, spreadRadius: 2),
+                      blurRadius: 14, spreadRadius: 0),
                   ],
                 ),
                 child: Row(

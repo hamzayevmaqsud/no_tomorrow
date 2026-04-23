@@ -70,11 +70,16 @@ class _AbstainScreenState extends State<AbstainScreen> {
         onAdd: (a) { setState(() => AbstainStore.items.insert(0, a)); Navigator.of(ctx).pop(); },
         nextId: '${AbstainStore.nextId++}',
       ),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
-            .animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-        child: child,
-      ),
+      transitionBuilder: (_, anim, __, child) {
+        final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
+          child: SlideTransition(
+            position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(curve),
+            child: child,
+          ),
+        );
+      },
     );
   }
 
@@ -97,11 +102,11 @@ class _AbstainScreenState extends State<AbstainScreen> {
           Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Row(children: [
               GestureDetector(onTap: () => Navigator.pop(context),
-                child: Container(width: 36, height: 36,
+                child: Container(width: 44, height: 44,
                   decoration: BoxDecoration(color: Colors.white.withAlpha(18),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white.withAlpha(40))),
-                  child: Icon(Icons.chevron_left_rounded, size: 22, color: Colors.white.withAlpha(200)))),
+                  child: Icon(Icons.chevron_left_rounded, size: 24, color: Colors.white.withAlpha(200)))),
               const Spacer(),
               Text(t('ABSTAIN', 'ВОЗДЕРЖАНИЕ'), style: GoogleFonts.playfairDisplay(
                 fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,

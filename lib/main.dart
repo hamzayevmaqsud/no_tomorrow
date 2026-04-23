@@ -12,6 +12,7 @@ import 'services/sync_service.dart';
 import 'services/local_session.dart';
 import 'models/game_state.dart';
 import 'widgets/phone_frame.dart';
+import 'widgets/jelly_button.dart';
 import 'firebase_options.dart';
 import 'l10n/app_locale.dart';
 
@@ -186,7 +187,7 @@ Widget _loadingScaffold() => const Scaffold(
   backgroundColor: Color(0xFF0A0A0F),
   body: Center(
     child: CircularProgressIndicator(
-      strokeWidth: 2, color: Color(0xFFFF6B35))),
+      strokeWidth: 2, color: Color(0xFFE8693A))),
 );
 
 /// After auth, load the Firestore bag. If missing → UsernameScreen to set it
@@ -263,7 +264,7 @@ class _SplashGateState extends State<_SplashGate>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2200));
+        vsync: this, duration: const Duration(milliseconds: 1500));
 
     _fadeIn = Tween(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _ctrl,
@@ -329,7 +330,7 @@ class _SplashGateState extends State<_SplashGate>
                     fontSize: 52, fontWeight: FontWeight.w900,
                     fontStyle: FontStyle.italic,
                     letterSpacing: 8,
-                    color: const Color(0xFFFF6B35),
+                    color: const Color(0xFFE8693A),
                     height: 1,
                   )),
                 const SizedBox(height: 16),
@@ -370,12 +371,12 @@ class _LanguagePicker extends StatelessWidget {
                 width: 80, height: 80,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFFF6B35).withAlpha(18),
+                  color: const Color(0xFFE8693A).withAlpha(18),
                   border: Border.all(
-                      color: const Color(0xFFFF6B35).withAlpha(60), width: 2),
+                      color: const Color(0xFFE8693A).withAlpha(60), width: 2),
                 ),
                 child: const Icon(Icons.language_rounded, size: 36,
-                    color: Color(0xFFFF6B35)),
+                    color: Color(0xFFE8693A)),
               ),
               const SizedBox(height: 24),
               Text('CHOOSE  LANGUAGE',
@@ -418,8 +419,9 @@ class _LanguagePicker extends StatelessWidget {
     required String flag,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return JellyButton(
       onTap: onTap,
+      pressScale: 0.97,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
@@ -503,12 +505,12 @@ class __OnboardingState extends State<_Onboarding> {
                 width: 90, height: 90,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFFF6B35).withAlpha(18),
+                  color: const Color(0xFFE8693A).withAlpha(18),
                   border: Border.all(
-                      color: const Color(0xFFFF6B35).withAlpha(60), width: 2),
+                      color: const Color(0xFFE8693A).withAlpha(60), width: 2),
                 ),
                 child: Icon(step.icon, size: 40,
-                    color: const Color(0xFFFF6B35)),
+                    color: const Color(0xFFE8693A)),
               ),
               const SizedBox(height: 32),
               // Title
@@ -531,13 +533,13 @@ class __OnboardingState extends State<_Onboarding> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(3, (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
+                  duration: const Duration(milliseconds: 260),
                   width: i == _page ? 24 : 8,
                   height: 8,
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   decoration: BoxDecoration(
                     color: i == _page
-                        ? const Color(0xFFFF6B35)
+                        ? const Color(0xFFE8693A)
                         : Colors.white.withAlpha(40),
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -557,10 +559,10 @@ class __OnboardingState extends State<_Onboarding> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B35),
+                    color: const Color(0xFFE8693A),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [BoxShadow(
-                      color: const Color(0xFFFF6B35).withAlpha(80),
+                      color: const Color(0xFFE8693A).withAlpha(80),
                       blurRadius: 20, offset: const Offset(0, 6),
                     )],
                   ),

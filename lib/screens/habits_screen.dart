@@ -67,8 +67,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
   void _openTimer(Habit habit) {
     Navigator.push(context, PageRouteBuilder(
       opaque: false,
-      transitionDuration: const Duration(milliseconds: 300),
-      reverseTransitionDuration: const Duration(milliseconds: 200),
+      transitionDuration: const Duration(milliseconds: 400),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (ctx, _, __) => _HabitTimerScreen(
         habit: habit,
         onComplete: () {
@@ -84,9 +84,17 @@ class _HabitsScreenState extends State<HabitsScreen> {
           }
         },
       ),
-      transitionsBuilder: (ctx, anim, _, child) => FadeTransition(
-        opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
-        child: child),
+      transitionsBuilder: (ctx, anim, _, child) {
+        final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: Tween(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(parent: anim, curve: const Interval(0.0, 0.5, curve: Curves.easeOut))),
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0, 0.04), end: Offset.zero).animate(curve),
+            child: child,
+          ),
+        );
+      },
     ));
   }
 
@@ -142,16 +150,22 @@ class _HabitsScreenState extends State<HabitsScreen> {
     Navigator.push(context, PageRouteBuilder(
       opaque: false,
       transitionDuration: const Duration(milliseconds: 400),
-      reverseTransitionDuration: const Duration(milliseconds: 250),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (ctx, _, __) => _HabitDetailView(
         habit: habit,
         onToggle: () { _toggle(habit); },
       ),
-      transitionsBuilder: (ctx, anim, _, child) => FadeTransition(
-        opacity: Tween(begin: 0.0, end: 1.0).animate(
-          CurvedAnimation(parent: anim, curve: Curves.easeOut)),
-        child: child,
-      ),
+      transitionsBuilder: (ctx, anim, _, child) {
+        final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: Tween(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(parent: anim, curve: const Interval(0.0, 0.5, curve: Curves.easeOut))),
+          child: SlideTransition(
+            position: Tween(begin: const Offset(0, 0.04), end: Offset.zero).animate(curve),
+            child: child,
+          ),
+        );
+      },
     ));
   }
 
@@ -171,7 +185,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
       ),
       transitionBuilder: (_, anim, __, child) => SlideTransition(
         position: Tween<Offset>(
-          begin: const Offset(-1, 0),
+          begin: const Offset(-0.3, 0),
           end: Offset.zero,
         ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
         child: child,
@@ -228,14 +242,14 @@ class _HabitsScreenState extends State<HabitsScreen> {
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
-                          width: 36, height: 36,
+                          width: 44, height: 44,
                           decoration: BoxDecoration(
                             color: Colors.white.withAlpha(18),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.white.withAlpha(40)),
                           ),
                           child: Icon(Icons.chevron_left_rounded,
-                              size: 22, color: Colors.white.withAlpha(200)),
+                              size: 24, color: Colors.white.withAlpha(200)),
                         ),
                       ),
                       const Spacer(),
@@ -329,7 +343,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                           color: Colors.white.withAlpha(15),
                           borderRadius: BorderRadius.circular(3))),
                         AnimatedFractionallySizedBox(
-                          duration: const Duration(milliseconds: 400),
+                          duration: const Duration(milliseconds: 260),
                           curve: Curves.easeOutCubic,
                           widthFactor: total == 0 ? 0 : doneToday / total,
                           child: Container(height: 6, decoration: BoxDecoration(
@@ -340,8 +354,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
                             boxShadow: [BoxShadow(
                               color: (doneToday == total
                                   ? AppColors.success
-                                  : AppColors.habits).withAlpha(80),
-                              blurRadius: 8)]))),
+                                  : AppColors.habits).withAlpha(50),
+                              blurRadius: 6)]))),
                       ]),
                       const SizedBox(height: 4),
                       Text(doneToday == total && total > 0
@@ -424,8 +438,8 @@ class _HabitsScreenState extends State<HabitsScreen> {
                               color: AppColors.habits,
                               shape: BoxShape.circle,
                               boxShadow: [BoxShadow(
-                                color: AppColors.habits.withAlpha(100),
-                                blurRadius: 12, spreadRadius: 1,
+                                color: AppColors.habits.withAlpha(60),
+                                blurRadius: 8, spreadRadius: 0,
                               )],
                             ),
                             child: const Icon(Icons.add_rounded,
@@ -464,7 +478,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
   }
 
   Widget _staggered(int index, Widget child) {
-    final delay = (index * 50).clamp(0, 400);
+    final delay = (index * 50).clamp(0, 300);
     return TweenAnimationBuilder<double>(
       key: ValueKey('hs_$index'),
       tween: Tween(begin: 0.0, end: 1.0),
@@ -785,7 +799,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                                 color: const Color(0xFF8A8070))),
                             const SizedBox(height: 2),
                             AnimatedContainer(
-                              duration: const Duration(milliseconds: 400),
+                              duration: const Duration(milliseconds: 280),
                               height: (barPct * 30).clamp(3.0, 30.0),
                               decoration: BoxDecoration(
                                 color: barPct >= 1.0
@@ -1556,8 +1570,8 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                 color: _kSheetBg,
                 borderRadius: BorderRadius.circular(36),
                 boxShadow: [BoxShadow(
-                  color: Colors.black.withAlpha(80),
-                  blurRadius: 40, offset: const Offset(6, 8),
+                  color: Colors.black.withAlpha(50),
+                  blurRadius: 28, offset: const Offset(6, 8),
                 )],
               ),
               child: SingleChildScrollView(
@@ -1740,7 +1754,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                       boxShadow: active
                                           ? [BoxShadow(
                                               color: color.withAlpha(60),
-                                              blurRadius: 8, spreadRadius: 1)]
+                                              blurRadius: 6, spreadRadius: 0)]
                                           : [],
                                     ),
                                     child: Row(
@@ -2006,7 +2020,7 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
         backgroundColor: _kSheetBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(t('Delete habit?', 'Удалить привычку?'),
-          style: GoogleFonts.inter(
+          style: GoogleFonts.outfit(
             fontSize: 16, fontWeight: FontWeight.w700, color: _kCocoa)),
         content: Text(t('All check-ins and notes will be lost.',
             'Все отметки и заметки будут удалены.'),
@@ -2063,8 +2077,8 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
               decoration: BoxDecoration(
                 color: _kSheetBg,
                 borderRadius: BorderRadius.circular(28),
-                boxShadow: [BoxShadow(color: Colors.black.withAlpha(90),
-                  blurRadius: 40, offset: const Offset(6, 8))],
+                boxShadow: [BoxShadow(color: Colors.black.withAlpha(55),
+                  blurRadius: 28, offset: const Offset(6, 8))],
               ),
               child: SingleChildScrollView(
                 child: Column(
@@ -2350,8 +2364,8 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
                                 color: AppColors.habits,
                                 borderRadius: BorderRadius.circular(14),
                                 boxShadow: [BoxShadow(
-                                  color: AppColors.habits.withAlpha(90),
-                                  blurRadius: 12, offset: const Offset(0, 4))]),
+                                  color: AppColors.habits.withAlpha(55),
+                                  blurRadius: 8, offset: const Offset(0, 4))]),
                               child: Center(
                                 child: Text(t('SAVE', 'СОХРАНИТЬ'),
                                   style: GoogleFonts.inter(
@@ -3174,8 +3188,8 @@ class _HabitTimerScreenState extends State<_HabitTimerScreen>
                     color: AppColors.success,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [BoxShadow(
-                      color: AppColors.success.withAlpha(80),
-                      blurRadius: 20, offset: const Offset(0, 6))]),
+                      color: AppColors.success.withAlpha(50),
+                      blurRadius: 14, offset: const Offset(0, 6))]),
                   child: Center(child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -3207,8 +3221,8 @@ class _HabitTimerScreenState extends State<_HabitTimerScreen>
                         color: color,
                         shape: BoxShape.circle,
                         boxShadow: [BoxShadow(
-                          color: color.withAlpha(80),
-                          blurRadius: 16, spreadRadius: 2)]),
+                          color: color.withAlpha(50),
+                          blurRadius: 11, spreadRadius: 0)]),
                       child: Icon(
                         _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
                         size: 32, color: Colors.white),

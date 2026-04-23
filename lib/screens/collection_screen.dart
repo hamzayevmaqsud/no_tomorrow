@@ -47,9 +47,12 @@ class CollectionScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
                         child: Container(
-                          width: 34, height: 34,
+                          width: 44, height: 44,
                           decoration: BoxDecoration(
                             border: Border.all(
                               color: isDark ? AppColors.darkBorder : const Color(0xFFB8BACD),
@@ -57,7 +60,7 @@ class CollectionScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(Icons.arrow_back_rounded,
-                              size: 15,
+                              size: 24,
                               color: isDark ? AppColors.darkText : AppColors.lightText),
                         ),
                       ),
@@ -137,17 +140,16 @@ class _AlbumListCard extends StatelessWidget {
       onTap: () {
         HapticFeedback.mediumImpact();
         Navigator.push(context, PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 280),
-          pageBuilder: (ctx, a, b) => _AlbumDetailScreen(album: album),
-          transitionsBuilder: (ctx, a, b, child) {
-            final c2 = CurvedAnimation(parent: a, curve: Curves.easeOutCubic);
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (ctx, anim, sec) => _AlbumDetailScreen(album: album),
+          transitionsBuilder: (ctx, anim, sec, child) {
+            final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
             return FadeTransition(
-              opacity: c2,
+              opacity: Tween(begin: 0.0, end: 1.0).animate(
+                CurvedAnimation(parent: anim, curve: const Interval(0.0, 0.5, curve: Curves.easeOut))),
               child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.04, 0),
-                  end: Offset.zero,
-                ).animate(c2),
+                position: Tween(begin: const Offset(0, 0.04), end: Offset.zero).animate(curve),
                 child: child,
               ),
             );
@@ -332,9 +334,12 @@ class _AlbumDetailScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
                         child: Container(
-                          width: 34, height: 34,
+                          width: 44, height: 44,
                           decoration: BoxDecoration(
                             border: Border.all(
                               color: isDark ? AppColors.darkBorder : const Color(0xFFB8BACD),
@@ -342,7 +347,7 @@ class _AlbumDetailScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(Icons.arrow_back_rounded,
-                              size: 15,
+                              size: 24,
                               color: isDark ? AppColors.darkText : AppColors.lightText),
                         ),
                       ),
@@ -738,7 +743,7 @@ class _FullscreenViewState extends State<_FullscreenView> {
     return GestureDetector(
       onTap: () => Navigator.pop(context),
       child: Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: const Color(0xFF0E1011),
         body: Stack(
           fit: StackFit.expand,
           children: [

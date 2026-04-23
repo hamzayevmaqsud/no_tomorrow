@@ -503,7 +503,7 @@ class _TasksScreenState extends State<TasksScreen> {
       PageRouteBuilder(
         opaque: false,
         transitionDuration: const Duration(milliseconds: 400),
-        reverseTransitionDuration: const Duration(milliseconds: 250),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (ctx, _, _) => _TaskDetailOverlay(
           task: task,
           onComplete: () {
@@ -521,7 +521,7 @@ class _TasksScreenState extends State<TasksScreen> {
             opacity: Tween(
               begin: 0.0,
               end: 1.0,
-            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+            ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
             child: child,
           );
         },
@@ -566,18 +566,21 @@ class _TasksScreenState extends State<TasksScreen> {
         preselectedDate: _selectedDate,
         isWork: widget.category == TaskCategory.work,
       ),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(-1, 0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-        child: child,
-      ),
+      transitionBuilder: (_, anim, __, child) {
+        final curve = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: anim, curve: const Interval(0.0, 0.5, curve: Curves.easeOut)),
+          child: SlideTransition(
+            position: Tween<Offset>(begin: const Offset(-0.3, 0), end: Offset.zero).animate(curve),
+            child: child,
+          ),
+        );
+      },
     );
   }
 
   Widget _staggered(int index, Widget child) {
-    final delay = (index * 50).clamp(0, 400);
+    final delay = (index * 50).clamp(0, 300);
     return TweenAnimationBuilder<double>(
       key: ValueKey('stagger_$index'),
       tween: Tween(begin: 0.0, end: 1.0),
@@ -735,13 +738,13 @@ class _TasksScreenState extends State<TasksScreen> {
                         GestureDetector(
                           onTap: () => Navigator.pop(context),
                           child: Container(
-                            width: 36, height: 36,
+                            width: 44, height: 44,
                             decoration: BoxDecoration(
                               color: Colors.white.withAlpha(18),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.white.withAlpha(40))),
                             child: Icon(Icons.chevron_left_rounded,
-                                size: 22, color: Colors.white.withAlpha(200)),
+                                size: 24, color: Colors.white.withAlpha(200)),
                           ),
                         ),
                         const Spacer(),
@@ -847,7 +850,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       Container(height: 1, color: _divider(isDark)),
                       if (total > 0)
                         AnimatedFractionallySizedBox(
-                          duration: const Duration(milliseconds: 400),
+                          duration: const Duration(milliseconds: 300),
                           curve: Curves.easeOutCubic,
                           widthFactor: done / total,
                           child: Container(height: 1, color: vivid),
@@ -857,8 +860,11 @@ class _TasksScreenState extends State<TasksScreen> {
 
                   const SizedBox(height: 10),
 
-                  // ── Search + Sort ──────────────────────────────────
-                  Padding(
+                  // ── Search ──────────────────────────────────────────
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(children: [
                       // Search toggle
@@ -912,51 +918,7 @@ class _TasksScreenState extends State<TasksScreen> {
                         ),
                       ],
                       if (!_showSearch) ...[
-                        const SizedBox(width: 8),
-                        // Inline filter tabs (ALL / TODAY / PRIORITY)
-                        Expanded(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: _TaskFilter.values.map((f) {
-                                final active = _filter == f;
-                                final label = switch (f) {
-                                  _TaskFilter.all => t('ALL', 'ВСЕ'),
-                                  _TaskFilter.today => t('TODAY', 'СЕГОДНЯ'),
-                                  _TaskFilter.priority => t('PRIORITY', 'ПРИОРИТЕТ'),
-                                };
-                                return Padding(
-                                  padding: const EdgeInsets.only(right: 6),
-                                  child: JellyButton(
-                                    onTap: () => setState(() => _filter = f),
-                                    pressScale: 0.92,
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: active
-                                          ? vivid.withAlpha(40)
-                                          : Colors.white.withAlpha(14),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: active
-                                            ? vivid.withAlpha(180)
-                                            : Colors.white.withAlpha(40),
-                                          width: 1)),
-                                      child: Text(label,
-                                        style: GoogleFonts.jetBrainsMono(
-                                          fontSize: 9, fontWeight: FontWeight.w700,
-                                          letterSpacing: 1,
-                                          color: active
-                                            ? vivid : Colors.white.withAlpha(180))),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
+                        const Spacer(),
                       ],
                       const SizedBox(width: 8),
                       // Sort button
@@ -990,6 +952,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       ),
                     ]),
                   ),
+                  ),
 
                   const SizedBox(height: 12),
 
@@ -1016,10 +979,60 @@ class _TasksScreenState extends State<TasksScreen> {
                     duration: const Duration(milliseconds: 260),
                     curve: Curves.easeOutCubic,
                     child: _showDashboard
-                        ? _DashboardPanel(
-                            tasks: _tasks,
-                            isDark: isDark,
-                            accentColor: vivid,
+                        ? Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // ── Filter tabs (moved here from header) ──
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: _TaskFilter.values.map((f) {
+                                      final active = _filter == f;
+                                      final label = switch (f) {
+                                        _TaskFilter.all => t('ALL', 'ВСЕ'),
+                                        _TaskFilter.today => t('TODAY', 'СЕГОДНЯ'),
+                                        _TaskFilter.priority => t('PRIORITY', 'ПРИОРИТЕТ'),
+                                      };
+                                      return Padding(
+                                        padding: const EdgeInsets.only(right: 6),
+                                        child: JellyButton(
+                                          onTap: () => setState(() => _filter = f),
+                                          pressScale: 0.92,
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 200),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: active
+                                                ? vivid.withAlpha(40)
+                                                : Colors.white.withAlpha(14),
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: active
+                                                  ? vivid.withAlpha(180)
+                                                  : Colors.white.withAlpha(40),
+                                                width: 1)),
+                                            child: Text(label,
+                                              style: GoogleFonts.jetBrainsMono(
+                                                fontSize: 9, fontWeight: FontWeight.w700,
+                                                letterSpacing: 1,
+                                                color: active
+                                                  ? vivid : Colors.white.withAlpha(180))),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ),
+                              _DashboardPanel(
+                                tasks: _tasks,
+                                isDark: isDark,
+                                accentColor: vivid,
+                              ),
+                            ],
                           )
                         : const SizedBox.shrink(),
                   ),
@@ -1131,7 +1144,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
 // ── Calendar strip ────────────────────────────────────────────────────────────
 
-class _CalendarStrip extends StatelessWidget {
+class _CalendarStrip extends StatefulWidget {
   final DateTime? selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final Color accentColor;
@@ -1145,128 +1158,189 @@ class _CalendarStrip extends StatelessWidget {
   });
 
   @override
+  State<_CalendarStrip> createState() => _CalendarStripState();
+}
+
+class _CalendarStripState extends State<_CalendarStrip> {
+  late DateTime _month;
+  bool _expanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _month = DateTime(now.year, now.month);
+  }
+
+  bool _hasTasksOn(DateTime d) {
+    return TaskStore.tasks.any((tk) =>
+      tk.dueDate != null &&
+      tk.dueDate!.day == d.day &&
+      tk.dueDate!.month == d.month &&
+      tk.dueDate!.year == d.year);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final today = DateTime.now();
-    // Always Mon–Sun of the current week
-    final monday = today.subtract(Duration(days: today.weekday - 1));
-    final days = List.generate(7, (i) => monday.add(Duration(days: i)));
-    final dayNames = [t('MON', 'ПН'), t('TUE', 'ВТ'), t('WED', 'СР'), t('THU', 'ЧТ'), t('FRI', 'ПТ'), t('SAT', 'СБ'), t('SUN', 'ВС')];
+    final now = DateTime.now();
     final months = [
-      t('JANUARY', 'ЯНВАРЬ'),
-      t('FEBRUARY', 'ФЕВРАЛЬ'),
-      t('MARCH', 'МАРТ'),
-      t('APRIL', 'АПРЕЛЬ'),
-      t('MAY', 'МАЙ'),
-      t('JUNE', 'ИЮНЬ'),
-      t('JULY', 'ИЮЛЬ'),
-      t('AUGUST', 'АВГУСТ'),
-      t('SEPTEMBER', 'СЕНТЯБРЬ'),
-      t('OCTOBER', 'ОКТЯБРЬ'),
-      t('NOVEMBER', 'НОЯБРЬ'),
-      t('DECEMBER', 'ДЕКАБРЬ'),
+      t('JANUARY','ЯНВАРЬ'),t('FEBRUARY','ФЕВРАЛЬ'),t('MARCH','МАРТ'),
+      t('APRIL','АПРЕЛЬ'),t('MAY','МАЙ'),t('JUNE','ИЮНЬ'),
+      t('JULY','ИЮЛЬ'),t('AUGUST','АВГУСТ'),t('SEPTEMBER','СЕНТЯБРЬ'),
+      t('OCTOBER','ОКТЯБРЬ'),t('NOVEMBER','НОЯБРЬ'),t('DECEMBER','ДЕКАБРЬ'),
     ];
 
-    const kRed = Color(0xFF4E0000); // Pantone Red Inferno
-    const kBeige = Color(0xFFE8E0D0); // soft beige cell bg
-    const kBeigeS = Color(0xFFD4C9B4); // beige selected/today border
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Month label — centered, beige, Outfit
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-          child: Center(
-            child: Text(
-              months[today.month - 1],
-              style: const TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 5,
-                color: Color(0xFFE8E0D0),
-              ),
-            ),
-          ),
+    final firstDay = DateTime(_month.year, _month.month, 1);
+    final startWeekday = firstDay.weekday;
+    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [BoxShadow(
+            color: widget.accentColor.withAlpha(15),
+            blurRadius: 12, offset: const Offset(0, 4))],
         ),
-        // 7-day row — circular cells
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: List.generate(7, (i) {
-              final day = days[i];
-              final isToday = day.day == today.day && day.month == today.month;
-              final isSelected =
-                  selectedDate != null &&
-                  selectedDate!.day == day.day &&
-                  selectedDate!.month == day.month;
+        child: Column(children: [
+          // Month nav
+          Row(children: [
+            GestureDetector(
+              onTap: _expanded
+                ? () => setState(() => _month = DateTime(_month.year, _month.month - 1))
+                : null,
+              child: Icon(Icons.chevron_left_rounded, size: 22,
+                color: _expanded ? textCol : textCol.withAlpha(60))),
+            const Spacer(),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _expanded = !_expanded);
+              },
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('${months[_month.month - 1]}  ${_month.year}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 11, fontWeight: FontWeight.w700,
+                    letterSpacing: 2, color: textCol)),
+                const SizedBox(width: 6),
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 220),
+                  child: Icon(Icons.expand_more_rounded,
+                    size: 18, color: textCol.withAlpha(160)),
+                ),
+              ]),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: _expanded
+                ? () => setState(() => _month = DateTime(_month.year, _month.month + 1))
+                : null,
+              child: Icon(Icons.chevron_right_rounded, size: 22,
+                color: _expanded ? textCol : textCol.withAlpha(60))),
+          ]),
 
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: i < 6 ? 6 : 0),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        onDateSelected(day);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
+          // Collapsible grid
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _expanded
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(children: [
+                    // Day headers
+                    Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
+                      Expanded(child: Center(child: Text(d,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600,
+                          color: textCol.withAlpha(100)))))).toList()),
+                    const SizedBox(height: 8),
+                    // Grid rows
+                    ..._buildWeeks(now, firstDay, startWeekday, daysInMonth, textCol),
+                  ]),
+                )
+              : const SizedBox.shrink(),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  List<Widget> _buildWeeks(DateTime now, DateTime firstDay, int startWeekday, int daysInMonth, Color textCol) {
+    final weeks = <Widget>[];
+    int day = 1 - (startWeekday - 1);
+    while (day <= daysInMonth) {
+      final cells = <Widget>[];
+      for (int w = 0; w < 7; w++) {
+        if (day < 1 || day > daysInMonth) {
+          cells.add(const Expanded(child: SizedBox(height: 36)));
+        } else {
+          final d = DateTime(_month.year, _month.month, day);
+          final isToday = d.day == now.day && d.month == now.month && d.year == now.year;
+          final isSelected = widget.selectedDate != null &&
+              widget.selectedDate!.day == d.day &&
+              widget.selectedDate!.month == d.month &&
+              widget.selectedDate!.year == d.year;
+          final hasTasks = _hasTasksOn(d);
+          final isFuture = d.isAfter(now);
+
+          cells.add(Expanded(
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                widget.onDateSelected(d);
+              },
+              child: Container(
+                height: 36,
+                margin: const EdgeInsets.all(1),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected
+                      ? widget.accentColor
+                      : hasTasks
+                          ? widget.accentColor.withAlpha(20)
+                          : Colors.transparent,
+                  border: isToday && !isSelected
+                      ? Border.all(color: widget.accentColor, width: 1.5)
+                      : null,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('$day',
+                      style: GoogleFonts.jetBrainsMono(
+                        fontSize: 11, fontWeight: FontWeight.w700,
+                        color: isSelected
+                            ? Colors.white
+                            : isFuture
+                                ? textCol.withAlpha(60)
+                                : textCol.withAlpha(180))),
+                    if (hasTasks && !isSelected)
+                      Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        width: 4, height: 4,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: isSelected || isToday
-                              ? kBeige
-                              : kBeige.withAlpha(45),
-                          border: Border.all(
-                            color: isSelected
-                                ? kRed
-                                : isToday
-                                ? kBeigeS
-                                : kBeige.withAlpha(65),
-                            width: isSelected ? 1.8 : 1.2,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          dayNames[i],
-                          style: GoogleFonts.inter(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
-                            color: isSelected || isToday
-                                ? kRed
-                                : kBeige.withAlpha(180),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${day.day}',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            height: 1,
-                            color: isSelected
-                                ? kRed
-                                : isToday
-                                ? kRed.withAlpha(200)
-                                : kBeige.withAlpha(180),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                          color: widget.accentColor)),
+                  ],
                 ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ],
-    );
+              ),
+            ),
+          ));
+        }
+        day++;
+      }
+      weeks.add(Row(children: cells));
+    }
+    return weeks;
   }
 }
 
@@ -1316,7 +1390,7 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
     )..repeat();
     _tapCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 140),
+      duration: const Duration(milliseconds: 160),
     );
     _scale = Tween(
       begin: 1.0,
@@ -1425,7 +1499,7 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: _addBtnColor.withAlpha(200),
+                                            color: _addBtnColor.withAlpha(120),
                                             blurRadius: 5,
                                           ),
                                         ],
@@ -1448,10 +1522,10 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                                 boxShadow: [
                                   BoxShadow(
                                     color: _addBtnColor.withAlpha(
-                                      22 + (55 * p).round(),
+                                      14 + (33 * p).round(),
                                     ),
-                                    blurRadius: 14 + p * 14,
-                                    spreadRadius: p * 2,
+                                    blurRadius: 10 + p * 10,
+                                    spreadRadius: 0,
                                   ),
                                 ],
                               ),
@@ -1476,10 +1550,10 @@ class _BottomBarState extends State<_BottomBar> with TickerProviderStateMixin {
                                   boxShadow: [
                                     BoxShadow(
                                       color: _addBtnColor.withAlpha(
-                                        110 + (65 * p).round(),
+                                        66 + (39 * p).round(),
                                       ),
-                                      blurRadius: 16 + p * 10,
-                                      spreadRadius: 1,
+                                      blurRadius: 11 + p * 7,
+                                      spreadRadius: 0,
                                     ),
                                   ],
                                 ),
@@ -1593,7 +1667,7 @@ class _DashboardPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(20),
+            color: accentColor.withAlpha(20),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1684,7 +1758,7 @@ class _DashboardPanel extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFB85C38).withAlpha(120),
+                        color: const Color(0xFFB85C38).withAlpha(70),
                         blurRadius: 4,
                       ),
                     ],
@@ -1726,8 +1800,8 @@ class _DashboardPanel extends StatelessWidget {
                     borderRadius: BorderRadius.circular(3),
                     boxShadow: [
                       BoxShadow(
-                        color: accentColor.withAlpha(100),
-                        blurRadius: 8,
+                        color: accentColor.withAlpha(60),
+                        blurRadius: 6,
                       ),
                     ],
                   ),
@@ -1939,8 +2013,8 @@ class _WeeklyReviewSheet extends StatelessWidget {
               accentColor.withAlpha(220), accentColor]),
             borderRadius: BorderRadius.circular(22),
             boxShadow: [BoxShadow(
-              color: accentColor.withAlpha(120),
-              blurRadius: 18, offset: const Offset(0, 6))],
+              color: accentColor.withAlpha(70),
+              blurRadius: 12, offset: const Offset(0, 6))],
           ),
           child: Column(children: [
             Text('$weekDone',
@@ -2397,8 +2471,8 @@ class _ComboBadge extends StatelessWidget {
           : [accentColor.withAlpha(200), accentColor.withAlpha(120)]),
         borderRadius: BorderRadius.circular(compact ? 10 : 18),
         boxShadow: [BoxShadow(
-          color: (hot ? const Color(0xFFFF6B35) : accentColor).withAlpha(compact ? 80 : 120),
-          blurRadius: compact ? 6 : 14,
+          color: (hot ? const Color(0xFFFF6B35) : accentColor).withAlpha(compact ? 50 : 70),
+          blurRadius: compact ? 4 : 10,
           offset: Offset(0, compact ? 2 : 4))],
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -2511,294 +2585,85 @@ class _TaskCardState extends State<_TaskCard> {
   @override
   Widget build(BuildContext context) {
     final task = widget.task;
-    final onTap = widget.onTap;
-    final onComplete = widget.onComplete;
     final done = task.isCompleted;
-    final accentBg = done ? const Color(0xFFCCCAC4) : _pCardBg(task.priority);
-    final accentTxt = done
-        ? const Color(0xFF8A8880)
-        : _pCardText(task.priority);
-    final isWork = task.category == TaskCategory.work;
-    final cardBg = isWork
-        ? const Color(0xFFF5F0E8) // warm parchment for WORK
-        : const Color(0xFFEEF5F0); // cool mint for LIVE
-    final textCol = isWork
-        ? const Color(0xFF2A2318) // warm brown
-        : const Color(0xFF1A2A20); // cool dark green
+    final pColor = _pColor(task.priority);
+    const textCol = Color(0xFF2A2318);
     const subCol = Color(0xFF8A8070);
-    final catLabel = isWork ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ');
 
-    return JellyButton(
-      onTap: onTap,
-      pressScale: 0.97,
+    return GestureDetector(
+      onTap: widget.onTap,
       child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 300),
-          opacity: done ? 0.55 : 1.0,
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              color: cardBg,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                // Outer shadow — depth
-                BoxShadow(
-                  color: Colors.black.withAlpha(25),
-                  blurRadius: 12,
-                  offset: const Offset(0, 5),
+        duration: const Duration(milliseconds: 260),
+        opacity: done ? 0.45 : 1.0,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 2),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: Color(0xFFEAE6DC), width: 1)),
+          ),
+          child: Row(children: [
+            // Checkbox circle
+            GestureDetector(
+              onTap: widget.onComplete,
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                curve: Curves.easeOutBack,
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: done ? pColor : Colors.transparent,
+                  border: Border.all(
+                    color: done ? pColor : pColor.withAlpha(100),
+                    width: done ? 0 : 2),
                 ),
-                // Inner highlight — top edge light
-                BoxShadow(
-                  color: Colors.white.withAlpha(180),
-                  blurRadius: 1,
-                  offset: const Offset(0, -0.5),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // ── Left: main content ──────────────────────────────
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Category tag
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: textCol.withAlpha(10),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: textCol.withAlpha(25),
-                                  width: 0.8,
-                                ),
-                              ),
-                              child: Text(
-                                catLabel,
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                  color: textCol.withAlpha(130),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            // Title
-                            Text(
-                              task.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                fontStyle: FontStyle.italic,
-                                height: 1.2,
-                                color: textCol,
-                                decoration: done
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
-                                decorationColor: textCol.withAlpha(100),
-                              ),
-                            ),
-
-                            // Description
-                            if (task.description.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                task.description,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  height: 1.3,
-                                  color: subCol,
-                                ),
-                              ),
-                            ],
-
-                            const SizedBox(height: 10),
-
-                            // Bottom: date/time + XP
-                            Row(
-                              children: [
-                                if (task.dueDate != null) ...[
-                                  Icon(
-                                    Icons.calendar_today_rounded,
-                                    size: 10,
-                                    color: subCol,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    _fmtDate(task.dueDate!),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
-                                      color: subCol,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                                if (task.dueTime != null) ...[
-                                  Icon(
-                                    Icons.access_time_rounded,
-                                    size: 10,
-                                    color: subCol,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    _fmt24(task.dueTime!),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
-                                      color: subCol,
-                                    ),
-                                  ),
-                                ],
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: done
-                                        ? subCol.withAlpha(20)
-                                        : AppColors.gold.withAlpha(20),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    done
-                                        ? '✓ ${_pXp(task.priority)} XP'
-                                        : '+${_pXp(task.priority)} XP',
-                                    style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                      color: done ? subCol : AppColors.gold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                          // Subtask progress
-                          if (task.subtasks.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Row(children: [
-                              Expanded(child: Stack(children: [
-                                Container(height: 3, decoration: BoxDecoration(
-                                  color: textCol.withAlpha(15),
-                                  borderRadius: BorderRadius.circular(2))),
-                                FractionallySizedBox(
-                                  widthFactor: task.subtaskProgress,
-                                  child: Container(height: 3, decoration: BoxDecoration(
-                                    color: AppColors.success,
-                                    borderRadius: BorderRadius.circular(2)))),
-                              ])),
-                              const SizedBox(width: 6),
-                              Text('${task.subtasksDone}/${task.subtasks.length}',
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 8, fontWeight: FontWeight.w600,
-                                  color: subCol)),
-                            ]),
-                          ],
-
-                          // Tags
-                          if (task.tags.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Wrap(spacing: 4, runSpacing: 4,
-                              children: task.tags.map((t) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: textCol.withAlpha(10),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: textCol.withAlpha(20))),
-                                child: Text('#$t', style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 8, fontWeight: FontWeight.w600,
-                                  color: subCol)),
-                              )).toList()),
-                          ],
-
-                          // Recurring indicator
-                          if (task.recurType != RecurType.none) ...[
-                            const SizedBox(height: 6),
-                            Row(children: [
-                              Icon(Icons.repeat_rounded, size: 10, color: subCol),
-                              const SizedBox(width: 4),
-                              Text(task.recurLabel, style: GoogleFonts.jetBrainsMono(
-                                fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
-                            ]),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-
-                    // ── Right: priority accent block (~1/4 width) ───────
-                    Container(
-                      width: 68,
-                      color: accentBg,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Complete button
-                          GestureDetector(
-                            onTap: done ? null : onComplete,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: accentTxt.withAlpha(done ? 50 : 25),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: accentTxt.withAlpha(done ? 110 : 70),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: done
-                                  ? Icon(
-                                      Icons.check_rounded,
-                                      size: 14,
-                                      color: accentTxt.withAlpha(210),
-                                    )
-                                  : null,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          // Priority label rotated
-                          RotatedBox(
-                            quarterTurns: 1,
-                            child: Text(
-                              _pLabel(task.priority).toUpperCase(),
-                              style: GoogleFonts.jetBrainsMono(
-                                fontSize: 8,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.5,
-                                color: accentTxt.withAlpha(150),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                child: done
+                    ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                    : null,
               ),
             ),
-          ),
+            const SizedBox(width: 12),
+            // Title + time
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(task.title,
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14, fontWeight: FontWeight.w600,
+                    color: textCol,
+                    decoration: done ? TextDecoration.lineThrough : null,
+                    decorationColor: textCol.withAlpha(80),
+                  )),
+                if (task.dueTime != null || task.subtasks.isNotEmpty)
+                  const SizedBox(height: 2),
+                if (task.dueTime != null || task.subtasks.isNotEmpty)
+                  Row(children: [
+                    if (task.dueTime != null) ...[
+                      Text(_fmt24(task.dueTime!),
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                      const SizedBox(width: 8),
+                    ],
+                    if (task.subtasks.isNotEmpty)
+                      Text('${task.subtasks.where((s) => s.done).length}/${task.subtasks.length}',
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                  ]),
+              ],
+            )),
+            // Priority dot
+            Container(
+              width: 8, height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: pColor,
+              ),
+            ),
+          ]),
         ),
-      );
+      ),
+    );
   }
 }
 
@@ -2951,7 +2816,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: cardBg, borderRadius: BorderRadius.circular(28),
-                boxShadow: [BoxShadow(color: Colors.black.withAlpha(40), blurRadius: 30, offset: const Offset(0, 10))]),
+                boxShadow: [BoxShadow(color: color.withAlpha(40), blurRadius: 20, offset: const Offset(0, 10))]),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 // Priority + XP + Category (tap to change)
                 Row(children: [
@@ -3139,7 +3004,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20),
-                    boxShadow: [BoxShadow(color: color.withAlpha(100), blurRadius: 20, offset: const Offset(0, 6))]),
+                    boxShadow: [BoxShadow(color: color.withAlpha(60), blurRadius: 14, offset: const Offset(0, 6))]),
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Icon(Icons.check_rounded, size: 20, color: Colors.white),
                     const SizedBox(width: 10),
@@ -3337,8 +3202,8 @@ class _TaskFocusScreenState extends State<_TaskFocusScreen>
                   color: AppColors.success,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [BoxShadow(
-                    color: AppColors.success.withAlpha(80),
-                    blurRadius: 20, offset: const Offset(0, 6))]),
+                    color: AppColors.success.withAlpha(50),
+                    blurRadius: 14, offset: const Offset(0, 6))]),
                 child: Center(child: Row(
                   mainAxisSize: MainAxisSize.min, children: [
                     const Icon(Icons.check_rounded, size: 20, color: Colors.white),
@@ -3359,8 +3224,8 @@ class _TaskFocusScreenState extends State<_TaskFocusScreen>
                   decoration: BoxDecoration(
                     color: color, shape: BoxShape.circle,
                     boxShadow: [BoxShadow(
-                      color: color.withAlpha(100),
-                      blurRadius: 16, spreadRadius: 2)]),
+                      color: color.withAlpha(60),
+                      blurRadius: 11, spreadRadius: 0)]),
                   child: Icon(
                     _running ? Icons.pause_rounded : Icons.play_arrow_rounded,
                     size: 32, color: Colors.white),
@@ -3402,7 +3267,7 @@ class _Empty extends StatelessWidget {
       subtitle: hasDateFilter
           ? t('tap another day or add a task', 'выберите другой день или добавьте задачу')
           : t('tap + below to add one', 'нажмите + чтобы добавить'),
-    ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOut);
+    ).animate().fadeIn(duration: 500.ms, curve: Curves.easeOutCubic);
   }
 }
 
@@ -3491,8 +3356,8 @@ class _TimelineView extends StatelessWidget {
                                 : subCol.withAlpha(30),
                         boxShadow: isCurrent
                             ? [BoxShadow(
-                                color: accentColor.withAlpha(80),
-                                blurRadius: 8)]
+                                color: accentColor.withAlpha(50),
+                                blurRadius: 6)]
                             : [],
                       ),
                     ),
@@ -3649,7 +3514,8 @@ class _TimelineView extends StatelessWidget {
                                                 GestureDetector(
                                                   onTap: done ? null : () => onComplete(tk),
                                                   child: AnimatedContainer(
-                                                    duration: const Duration(milliseconds: 220),
+                                                    duration: const Duration(milliseconds: 260),
+                                                    curve: Curves.easeOutBack,
                                                     width: 26, height: 26,
                                                     decoration: BoxDecoration(
                                                       color: accentTxt.withAlpha(done ? 50 : 25),
@@ -3715,11 +3581,13 @@ class _AddSheetState extends State<_AddSheet> {
   TimeOfDay? _time;
   late DateTime? _date;
   bool _titleError = false;
+  bool _showMore = false;
 
   @override
   void initState() {
     super.initState();
     _date = widget.preselectedDate;
+    _titleCtrl.addListener(() => setState(() {}));
     // Delay focus so slide animation finishes first
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _titleFocus.requestFocus();
@@ -3894,8 +3762,8 @@ class _AddSheetState extends State<_AddSheet> {
                 borderRadius: BorderRadius.circular(36),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha(80),
-                    blurRadius: 40,
+                    color: AppColors.tasks.withAlpha(50),
+                    blurRadius: 28,
                     offset: const Offset(6, 8),
                   ),
                 ],
@@ -4041,6 +3909,25 @@ class _AddSheetState extends State<_AddSheet> {
                       ),
                     ),
 
+                    if (_titleCtrl.text.isEmpty && !_showMore)
+                      GestureDetector(
+                        onTap: () => setState(() => _showMore = true),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 22),
+                          child: Row(children: [
+                            Icon(Icons.tune_rounded, size: 12, color: _kCocoa.withAlpha(100)),
+                            const SizedBox(width: 6),
+                            Text(t('more options', 'больше опций'),
+                              style: GoogleFonts.inter(fontSize: 10, color: _kCocoa.withAlpha(100))),
+                          ]),
+                        ),
+                      ),
+
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutCubic,
+                      child: (_titleCtrl.text.isNotEmpty || _showMore)
+                          ? Column(children: [
                     _tableRow(
                       label: t('NOTES', 'ЗАМЕТКИ'),
                       icon: Icons.sticky_note_2_outlined,
@@ -4094,9 +3981,9 @@ class _AddSheetState extends State<_AddSheet> {
                                   boxShadow: isActive
                                       ? [
                                           BoxShadow(
-                                            color: pBg[p]!.withAlpha(80),
-                                            blurRadius: 10,
-                                            spreadRadius: 1,
+                                            color: pBg[p]!.withAlpha(50),
+                                            blurRadius: 7,
+                                            spreadRadius: 0,
                                           ),
                                         ]
                                       : [],
@@ -4200,6 +4087,9 @@ class _AddSheetState extends State<_AddSheet> {
                           ],
                         ),
                       ),
+                    ),
+                          ])
+                          : const SizedBox.shrink(),
                     ),
 
                     // ── Submit ────────────────────────────────────────
@@ -4496,7 +4386,7 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
             tween: Tween(
               begin: 0.0,
               end: -28.0,
-            ).chain(CurveTween(curve: Curves.easeOut)),
+            ).chain(CurveTween(curve: Curves.easeOutCubic)),
             weight: 60,
           ),
           TweenSequenceItem(
@@ -4588,9 +4478,9 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: widget.color.withAlpha(160),
-                                      blurRadius: 20,
-                                      spreadRadius: 2,
+                                      color: widget.color.withAlpha(96),
+                                      blurRadius: 14,
+                                      spreadRadius: 0,
                                     ),
                                   ],
                                 ),
@@ -4672,9 +4562,9 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: widget.color.withAlpha(200),
-                                        blurRadius: 18,
-                                        spreadRadius: 2,
+                                        color: widget.color.withAlpha(120),
+                                        blurRadius: 12,
+                                        spreadRadius: 0,
                                       ),
                                     ],
                                   ),
@@ -4718,8 +4608,8 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                                   borderRadius: BorderRadius.circular(3),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.white.withAlpha(160),
-                                      blurRadius: 8,
+                                      color: Colors.white.withAlpha(96),
+                                      blurRadius: 6,
                                     ),
                                   ],
                                 ),
@@ -4909,8 +4799,8 @@ class _TimeDrumPickerState extends State<_TimeDrumPicker> {
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.tasks.withAlpha(120),
-                    blurRadius: 22,
+                    color: AppColors.tasks.withAlpha(70),
+                    blurRadius: 15,
                     offset: const Offset(0, 6),
                   ),
                 ],
@@ -5125,10 +5015,10 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                                       boxShadow: [
                                         BoxShadow(
                                           color: _cyan.withAlpha(
-                                            (ring * 160).round(),
+                                            (ring * 96).round(),
                                           ),
-                                          blurRadius: 20 + ring * 28,
-                                          spreadRadius: ring * 5,
+                                          blurRadius: 14 + ring * 20,
+                                          spreadRadius: 0,
                                         ),
                                       ],
                                     ),
@@ -5166,9 +5056,9 @@ class _LevelUpOverlayState extends State<_LevelUpOverlay>
                                   border: Border.all(color: _cyan, width: 2),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _cyan.withAlpha(120),
-                                      blurRadius: 18,
-                                      spreadRadius: 1,
+                                      color: _cyan.withAlpha(70),
+                                      blurRadius: 12,
+                                      spreadRadius: 0,
                                     ),
                                   ],
                                 ),
@@ -5400,7 +5290,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
         .animateTo(
           0.80,
           duration: const Duration(milliseconds: 1800),
-          curve: Curves.easeOut,
+          curve: Curves.easeOutCubic,
         )
         .then((_) {
           if (mounted) setState(() => _waitingForTap = true);
@@ -5472,7 +5362,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Opacity(
-                        opacity: Curves.easeOut.transform(labelT),
+                        opacity: Curves.easeOutCubic.transform(labelT),
                         child: Text(
                           t('NEW  COLLECTIBLE', 'НОВЫЙ  ПРЕДМЕТ'),
                           style: GoogleFonts.jetBrainsMono(
@@ -5488,7 +5378,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                       ),
                       const SizedBox(height: 6),
                       Opacity(
-                        opacity: Curves.easeOut.transform(labelT),
+                        opacity: Curves.easeOutCubic.transform(labelT),
                         child: Text(
                           t('UNLOCKED', 'РАЗБЛОКИРОВАНО'),
                           style: GoogleFonts.playfairDisplay(
@@ -5518,9 +5408,9 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: rc.withAlpha(100),
-                                blurRadius: 30,
-                                spreadRadius: 2,
+                                color: rc.withAlpha(60),
+                                blurRadius: 20,
+                                spreadRadius: 0,
                               ),
                             ],
                           ),
@@ -5567,7 +5457,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                       ),
                       const SizedBox(height: 20),
                       Opacity(
-                        opacity: Curves.easeOut.transform(
+                        opacity: Curves.easeOutCubic.transform(
                           ((v - 0.65) / 0.20).clamp(0.0, 1.0),
                         ),
                         child: Column(

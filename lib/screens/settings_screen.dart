@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../widgets/jelly_button.dart';
 import '../l10n/app_locale.dart';
 import '../theme/app_colors.dart';
 import '../widgets/swipe_to_pop.dart';
@@ -82,11 +84,13 @@ class SettingsScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 12),
-                    GestureDetector(
+                    JellyButton(
                       onTap: () {
+                        HapticFeedback.selectionClick();
                         final next = AppLocale.instance.isRu ? AppLang.en : AppLang.ru;
                         AppLocale.instance.setLang(next);
                       },
+                      pressScale: 0.97,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(

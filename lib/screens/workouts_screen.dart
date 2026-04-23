@@ -12,6 +12,7 @@ import '../widgets/animated_empty.dart';
 import '../l10n/app_locale.dart';
 
 const _kBordo = Color(0xFF8B1A2B); // burgundy/bordeaux accent
+const _kWorkoutText = Color(0xFFE0C4C4);
 
 // ── Models ──────────────────────────────────────────────────────────────────
 
@@ -271,6 +272,22 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
+  Widget _staggered(int index, Widget child) {
+    final delay = (index * 50).clamp(0, 300);
+    return TweenAnimationBuilder<double>(
+      key: ValueKey('ws_$index'),
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: Duration(milliseconds: 400 + delay),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value.clamp(0.0, 1.0),
+        child: Transform.translate(
+          offset: Offset(0, 20 * (1 - value)), child: child),
+      ),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sessions = WorkoutStore.sessions;
@@ -311,7 +328,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
           // Dashboard panel
           AnimatedSize(
-            duration: const Duration(milliseconds: 260),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
             child: _showDashboard
                 ? _WorkoutDashboard(sessions: WorkoutStore.sessions)
@@ -319,10 +336,11 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           ),
 
           // Rest timer banner
-          if (_resting) _RestTimerBanner(
-            remaining: _restRemaining,
-            total: _restTotal,
-            onSkip: _skipRest,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _resting
+                ? _RestTimerBanner(key: const ValueKey('rest'), remaining: _restRemaining, total: _restTotal, onSkip: _skipRest)
+                : const SizedBox.shrink(key: ValueKey('no-rest')),
           ),
 
           // Content
@@ -342,7 +360,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   : ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
                       itemCount: displayedSessions.length,
-                      itemBuilder: (ctx, i) => _SessionCard(
+                      itemBuilder: (ctx, i) => _staggered(i, _SessionCard(
                         session: displayedSessions[i],
                         onCompleteSet: _completeSet,
                         onAddSet: _addSet,
@@ -351,7 +369,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                         onDeleteSession: () => _deleteSession(displayedSessions[i].id),
                         onChangeWeight: _changeWeight,
                         onChangeReps: _changeReps,
-                      ),
+                      )),
                     ),
             );
           }),
@@ -370,7 +388,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   child: Center(child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Container(width: 36, height: 36,
                       decoration: BoxDecoration(color: _kBordo, shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: _kBordo.withAlpha(100), blurRadius: 12)]),
+                        boxShadow: [BoxShadow(color: _kBordo.withAlpha(60), blurRadius: 8)]),
                       child: const Icon(Icons.add_rounded, color: Colors.white, size: 20)),
                     const SizedBox(width: 12),
                     Text(t('NEW  WORKOUT', 'НОВАЯ  ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
@@ -402,16 +420,16 @@ class _Header extends StatelessWidget {
       child: Row(children: [
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: Container(width: 36, height: 36,
+          child: Container(width: 44, height: 44,
             decoration: BoxDecoration(color: Colors.white.withAlpha(18),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.white.withAlpha(40))),
-            child: Icon(Icons.chevron_left_rounded, size: 22,
+            child: Icon(Icons.chevron_left_rounded, size: 24,
               color: Colors.white.withAlpha(200)))),
         const Spacer(),
         Text(t('WORKOUT', 'ТРЕНИРОВКА'), style: GoogleFonts.playfairDisplay(
           fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-          letterSpacing: 2, color: const Color(0xFFE0C4C4))),
+          letterSpacing: 2, color: _kWorkoutText)),
         const Spacer(),
         GestureDetector(
           onTap: onToggleDashboard,
@@ -524,7 +542,7 @@ class _WeekCalendar extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _kBordo,
-                  boxShadow: [BoxShadow(color: _kBordo.withAlpha(120), blurRadius: 4)],
+                  boxShadow: [BoxShadow(color: _kBordo.withAlpha(70), blurRadius: 4)],
                 ))
             else
               const SizedBox(height: 4),
@@ -540,7 +558,7 @@ class _WeekCalendar extends StatelessWidget {
 class _RestTimerBanner extends StatelessWidget {
   final int remaining, total;
   final VoidCallback onSkip;
-  const _RestTimerBanner({required this.remaining, required this.total, required this.onSkip});
+  const _RestTimerBanner({super.key, required this.remaining, required this.total, required this.onSkip});
 
   @override
   Widget build(BuildContext context) {
@@ -548,55 +566,71 @@ class _RestTimerBanner extends StatelessWidget {
     final mins = remaining ~/ 60;
     final secs = remaining % 60;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: _kBordo.withAlpha(20),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBordo.withAlpha(60)),
-      ),
-      child: Row(children: [
-        // Circular timer
-        SizedBox(width: 44, height: 44,
-          child: Stack(alignment: Alignment.center, children: [
-            SizedBox(width: 44, height: 44,
-              child: CircularProgressIndicator(
-                value: progress,
-                strokeWidth: 3,
-                backgroundColor: Colors.white.withAlpha(15),
-                valueColor: AlwaysStoppedAnimation(_kBordo),
-              )),
-            Text('$mins:${secs.toString().padLeft(2, '0')}',
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
-          ])),
-        const SizedBox(width: 14),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
-              fontSize: 10, fontWeight: FontWeight.w700,
-              letterSpacing: 2, color: _kBordo)),
-            const SizedBox(height: 2),
-            Text(t('Next set in $remaining s', 'Следующий подход через $remaining с'),
-              style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withAlpha(140))),
-          ],
-        )),
-        GestureDetector(
-          onTap: onSkip,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(12),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white.withAlpha(30)),
-            ),
-            child: Text(t('SKIP', 'ПРОПУСТИТЬ'), style: GoogleFonts.jetBrainsMono(
-              fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white.withAlpha(180))),
-          ),
+    return Center(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.fromLTRB(60, 8, 60, 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1018),
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: _kBordo.withAlpha(50)),
+          boxShadow: [BoxShadow(
+            color: _kBordo.withAlpha(30),
+            blurRadius: 14, spreadRadius: 0,
+          )],
         ),
-      ]),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          // Mini circular progress
+          SizedBox(width: 28, height: 28,
+            child: Stack(alignment: Alignment.center, children: [
+              SizedBox(width: 28, height: 28,
+                child: CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 2.5,
+                  backgroundColor: Colors.white.withAlpha(10),
+                  valueColor: AlwaysStoppedAnimation(_kBordo),
+                )),
+              Text('$mins:${secs.toString().padLeft(2, '0')}',
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white)),
+            ])),
+          const SizedBox(width: 10),
+          // REST label
+          Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
+            fontSize: 9, fontWeight: FontWeight.w700,
+            letterSpacing: 1.5, color: _kBordo)),
+          const SizedBox(width: 10),
+          // Linear progress
+          Expanded(child: Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(8),
+              borderRadius: BorderRadius.circular(2)),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: progress,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _kBordo,
+                  borderRadius: BorderRadius.circular(2))),
+            ),
+          )),
+          const SizedBox(width: 10),
+          // Skip X button
+          GestureDetector(
+            onTap: onSkip,
+            child: Container(
+              width: 24, height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withAlpha(10)),
+              child: Icon(Icons.close_rounded, size: 14, color: Colors.white.withAlpha(100)),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
@@ -751,7 +785,7 @@ class _ExerciseCard extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(child: Text(exercise.name, style: GoogleFonts.playfairDisplay(
             fontSize: 15, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-            color: const Color(0xFFE0C4C4)))),
+            color: _kWorkoutText))),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
@@ -962,7 +996,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
             const SizedBox(width: 8),
             Expanded(child: Text(_pickedName!, style: GoogleFonts.playfairDisplay(
               fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-              color: const Color(0xFFE0C4C4)))),
+              color: _kWorkoutText))),
           ]),
           const SizedBox(height: 20),
 
@@ -1033,7 +1067,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
 
           Text(t('CHOOSE EXERCISE', 'ВЫБЕРИ УПРАЖНЕНИЕ'), style: GoogleFonts.playfairDisplay(
             fontSize: 16, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-            letterSpacing: 1, color: const Color(0xFFE0C4C4))),
+            letterSpacing: 1, color: _kWorkoutText)),
           const SizedBox(height: 12),
 
           // Custom name field
@@ -1361,11 +1395,9 @@ class _WorkoutStatBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withAlpha(8)),
+        border: Border(top: BorderSide(color: Colors.white.withAlpha(15), width: 1)),
       ),
       child: Column(children: [
         Text(value, style: GoogleFonts.jetBrainsMono(
@@ -1488,7 +1520,7 @@ class _WorkoutReviewSheet extends StatelessWidget {
           // Title
           Text(t('WEEKLY REVIEW', 'ОБЗОР НЕДЕЛИ'), style: GoogleFonts.playfairDisplay(
             fontSize: 18, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic,
-            letterSpacing: 2, color: const Color(0xFFE0C4C4))),
+            letterSpacing: 2, color: _kWorkoutText)),
           const SizedBox(height: 20),
 
           // Hero stat card
