@@ -11,6 +11,15 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v4.1',
+      date: '2026-04-23',
+      title: t('Tasks Restored', 'Откат задач'),
+      items: [
+        t('Reverted the v4.0 task redesign — task cards are back to their pre-polish layout (right accent block, big title, full-width swipe actions). Other v4.0 changes (off-black backgrounds, desaturated accent, tinted shadows, dynamic-island timer, staggered list reveals, Outfit headers, etc.) stay in place',
+          'Откат редизайна задач из v4.0 — карточки задач вернулись к своему виду до полировки (правый акцентный блок, крупный заголовок, swipe на всю ширину). Остальные изменения v4.0 (off-black фоны, приглушённый акцент, тинтированные тени, dynamic-island таймер, каскадные списки, Outfit-заголовки и т.д.) остаются'),
+      ],
+    ),
+    _PatchNote(
       version: 'v4.0',
       date: '2026-04-23',
       title: t('Design Polish Pass', 'Дизайн-полировка'),
