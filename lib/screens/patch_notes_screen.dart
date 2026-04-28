@@ -11,6 +11,17 @@ class PatchNotesScreen extends StatelessWidget {
 
   static List<_PatchNote> get _notes => [
     _PatchNote(
+      version: 'v4.2',
+      date: '2026-04-28',
+      title: t('Tasks Match Habits', 'Задачи как привычки'),
+      items: [
+        t('CALENDAR: Tasks calendar now matches the Habits one — beige card, collapsible monthly grid, square cells with category-stacked stripes (garnet for Work, green for Live). Tap month label to expand or collapse. Today and selected day get an accent border.',
+          'КАЛЕНДАРЬ: Календарь задач теперь как у привычек — бежевая карточка, раскрывающаяся месячная сетка, квадратные ячейки с цветными полосами по категориям (гранатовый Work, зелёный Live). Нажми на месяц чтобы раскрыть/свернуть. У сегодня и выбранного дня — акцентная рамка.'),
+        t('CARD SIZE: Task cards now match Habits — 48px right accent block (was 68), 20px radius (was 24), 26px check circle (was 30), tighter padding. Single beige card background, no more parchment/mint split. Category dot on the left of the title instead of the WORK/LIVE tag.',
+          'РАЗМЕР КАРТОЧЕК: Карточки задач теперь как у привычек — правый акцентный блок 48px (было 68), скругление 20px (было 24), кружок-чек 26px (было 30), компактнее отступы. Единый бежевый фон, больше нет разделения parchment/mint. Точка категории слева от заголовка вместо тега WORK/LIVE.'),
+      ],
+    ),
+    _PatchNote(
       version: 'v4.1',
       date: '2026-04-23',
       title: t('Tasks Restored', 'Откат задач'),

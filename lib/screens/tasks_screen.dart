@@ -995,6 +995,7 @@ class _TasksScreenState extends State<TasksScreen> {
 
                   // ── Calendar strip ───────────────────────────────────────
                   _CalendarStrip(
+                    tasks: _tasks,
                     selectedDate: _selectedDate,
                     onDateSelected: (d) => setState(() {
                       _selectedDate =
@@ -1006,7 +1007,6 @@ class _TasksScreenState extends State<TasksScreen> {
                           : d;
                     }),
                     accentColor: vivid,
-                    isDark: isDark,
                   ),
 
                   const SizedBox(height: 12),
@@ -1131,142 +1131,258 @@ class _TasksScreenState extends State<TasksScreen> {
 
 // ── Calendar strip ────────────────────────────────────────────────────────────
 
-class _CalendarStrip extends StatelessWidget {
+/// Tasks calendar bar — same shape as _HabitCalendarBar in habits_screen.dart.
+/// Collapsible monthly grid in a beige card. Each cell shows category-stacked
+/// fill: width proportional to how many WORK / LIVE tasks were due on that day,
+/// with completion state mapped to the colored portion. Tap month label to
+/// expand; tap a day to filter the list to that day.
+class _CalendarStrip extends StatefulWidget {
+  final List<Task> tasks;
   final DateTime? selectedDate;
   final ValueChanged<DateTime> onDateSelected;
   final Color accentColor;
-  final bool isDark;
 
   const _CalendarStrip({
+    required this.tasks,
     required this.selectedDate,
     required this.onDateSelected,
     required this.accentColor,
-    required this.isDark,
+  });
+
+  @override
+  State<_CalendarStrip> createState() => _CalendarStripState();
+}
+
+class _CalendarStripState extends State<_CalendarStrip> {
+  late DateTime _month;
+  bool _expanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _month = DateTime(now.year, now.month);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final months = [
+      t('JANUARY', 'ЯНВАРЬ'), t('FEBRUARY', 'ФЕВРАЛЬ'), t('MARCH', 'МАРТ'),
+      t('APRIL', 'АПРЕЛЬ'), t('MAY', 'МАЙ'), t('JUNE', 'ИЮНЬ'),
+      t('JULY', 'ИЮЛЬ'), t('AUGUST', 'АВГУСТ'), t('SEPTEMBER', 'СЕНТЯБРЬ'),
+      t('OCTOBER', 'ОКТЯБРЬ'), t('NOVEMBER', 'НОЯБРЬ'), t('DECEMBER', 'ДЕКАБРЬ'),
+    ];
+
+    final firstDay = DateTime(_month.year, _month.month, 1);
+    final startWeekday = firstDay.weekday;
+    final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
+
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
+    const subCol = Color(0xFF8A8070);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withAlpha(15),
+              blurRadius: 16, offset: const Offset(0, 6)),
+            BoxShadow(color: Colors.white.withAlpha(200),
+              blurRadius: 1, offset: const Offset(0, -1)),
+          ],
+        ),
+        child: Column(children: [
+          // Month nav (tap center to expand/collapse)
+          Row(children: [
+            GestureDetector(
+              onTap: _expanded
+                ? () => setState(() => _month = DateTime(_month.year, _month.month - 1))
+                : null,
+              child: Icon(Icons.chevron_left_rounded, size: 22,
+                color: _expanded ? textCol : textCol.withAlpha(60))),
+            const Spacer(),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _expanded = !_expanded);
+              },
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('${months[_month.month - 1]}  ${_month.year}',
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 11, fontWeight: FontWeight.w700,
+                    letterSpacing: 2, color: textCol)),
+                const SizedBox(width: 6),
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 220),
+                  child: Icon(Icons.expand_more_rounded,
+                    size: 18, color: textCol.withAlpha(160)),
+                ),
+              ]),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: _expanded
+                ? () => setState(() => _month = DateTime(_month.year, _month.month + 1))
+                : null,
+              child: Icon(Icons.chevron_right_rounded, size: 22,
+                color: _expanded ? textCol : textCol.withAlpha(60))),
+          ]),
+
+          // Collapsible body — day headers + square category grid
+          AnimatedSize(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _expanded
+              ? Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(children: [
+                    Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
+                      Expanded(child: Center(child: Text(d,
+                        style: GoogleFonts.jetBrainsMono(
+                          fontSize: 8, fontWeight: FontWeight.w600,
+                          color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
+                    const SizedBox(height: 8),
+                    ..._buildGrid(now, subCol, textCol,
+                      firstDay: firstDay, startWeekday: startWeekday, daysInMonth: daysInMonth),
+                  ]),
+                )
+              : const SizedBox.shrink(),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  List<Widget> _buildGrid(DateTime now, Color subCol, Color textCol,
+      {required DateTime firstDay, required int startWeekday, required int daysInMonth}) {
+    return List.generate(6, (week) {
+      return Row(
+        children: List.generate(7, (dayOfWeek) {
+          final dayIndex = week * 7 + dayOfWeek - (startWeekday - 1);
+          if (dayIndex < 0 || dayIndex >= daysInMonth) {
+            return const Expanded(child: SizedBox(height: 38));
+          }
+          final day = dayIndex + 1;
+          final date = DateTime(_month.year, _month.month, day);
+          final isToday = date.day == now.day &&
+              date.month == now.month && date.year == now.year;
+          final isSelected = widget.selectedDate != null &&
+              widget.selectedDate!.day == day &&
+              widget.selectedDate!.month == _month.month &&
+              widget.selectedDate!.year == _month.year;
+
+          // Per-category counts of tasks due on this day
+          int total = 0;
+          int dayDone = 0;
+          int workDone = 0;
+          int liveDone = 0;
+          for (final tk in widget.tasks) {
+            if (tk.dueDate == null) continue;
+            if (tk.dueDate!.year != date.year ||
+                tk.dueDate!.month != date.month ||
+                tk.dueDate!.day != date.day) continue;
+            total++;
+            if (tk.isCompleted) {
+              dayDone++;
+              if (tk.category == TaskCategory.work) {
+                workDone++;
+              } else {
+                liveDone++;
+              }
+            }
+          }
+
+          return Expanded(child: Padding(
+            padding: const EdgeInsets.all(2),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  widget.onDateSelected(date);
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(7),
+                      child: total == 0
+                        ? Container(color: textCol.withAlpha(6))
+                        : _TaskCategoryFill(
+                            workDone: workDone, liveDone: liveDone, total: total),
+                    ),
+                    if (isSelected)
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(7),
+                          border: Border.all(
+                            color: widget.accentColor, width: 1.8))),
+                    if (isToday && !isSelected)
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(7),
+                          border: Border.all(
+                            color: widget.accentColor, width: 1.6))),
+                    Center(child: Text('$day',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+                        color: dayDone > 0
+                          ? Colors.white
+                          : subCol,
+                        shadows: dayDone > 0
+                          ? [const Shadow(color: Colors.black45, blurRadius: 2)]
+                          : null))),
+                  ],
+                ),
+              ),
+            ),
+          ));
+        }),
+      );
+    });
+  }
+}
+
+/// Stacked vertical stripes for tasks calendar cell. WORK uses the work
+/// category color, LIVE uses the live category color. Width proportional
+/// to count of completed tasks per category vs. day total.
+class _TaskCategoryFill extends StatelessWidget {
+  final int workDone;
+  final int liveDone;
+  final int total;
+  const _TaskCategoryFill({
+    required this.workDone,
+    required this.liveDone,
+    required this.total,
   });
 
   @override
   Widget build(BuildContext context) {
-    final today = DateTime.now();
-    // Always Mon–Sun of the current week
-    final monday = today.subtract(Duration(days: today.weekday - 1));
-    final days = List.generate(7, (i) => monday.add(Duration(days: i)));
-    final dayNames = [t('MON', 'ПН'), t('TUE', 'ВТ'), t('WED', 'СР'), t('THU', 'ЧТ'), t('FRI', 'ПТ'), t('SAT', 'СБ'), t('SUN', 'ВС')];
-    final months = [
-      t('JANUARY', 'ЯНВАРЬ'),
-      t('FEBRUARY', 'ФЕВРАЛЬ'),
-      t('MARCH', 'МАРТ'),
-      t('APRIL', 'АПРЕЛЬ'),
-      t('MAY', 'МАЙ'),
-      t('JUNE', 'ИЮНЬ'),
-      t('JULY', 'ИЮЛЬ'),
-      t('AUGUST', 'АВГУСТ'),
-      t('SEPTEMBER', 'СЕНТЯБРЬ'),
-      t('OCTOBER', 'ОКТЯБРЬ'),
-      t('NOVEMBER', 'НОЯБРЬ'),
-      t('DECEMBER', 'ДЕКАБРЬ'),
-    ];
-
-    const kRed = Color(0xFF4E0000); // Pantone Red Inferno
-    const kBeige = Color(0xFFE8E0D0); // soft beige cell bg
-    const kBeigeS = Color(0xFFD4C9B4); // beige selected/today border
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Month label — centered, beige, Outfit
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-          child: Center(
-            child: Text(
-              months[today.month - 1],
-              style: const TextStyle(
-                fontFamily: 'Outfit',
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 5,
-                color: Color(0xFFE8E0D0),
-              ),
-            ),
-          ),
-        ),
-        // 7-day row — circular cells
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: List.generate(7, (i) {
-              final day = days[i];
-              final isToday = day.day == today.day && day.month == today.month;
-              final isSelected =
-                  selectedDate != null &&
-                  selectedDate!.day == day.day &&
-                  selectedDate!.month == day.month;
-
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(right: i < 6 ? 6 : 0),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        onDateSelected(day);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isSelected || isToday
-                              ? kBeige
-                              : kBeige.withAlpha(45),
-                          border: Border.all(
-                            color: isSelected
-                                ? kRed
-                                : isToday
-                                ? kBeigeS
-                                : kBeige.withAlpha(65),
-                            width: isSelected ? 1.8 : 1.2,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          dayNames[i],
-                          style: GoogleFonts.inter(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
-                            color: isSelected || isToday
-                                ? kRed
-                                : kBeige.withAlpha(180),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${day.day}',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            height: 1,
-                            color: isSelected
-                                ? kRed
-                                : isToday
-                                ? kRed.withAlpha(200)
-                                : kBeige.withAlpha(180),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ],
-    );
+    if (total == 0) return const SizedBox.shrink();
+    final neutral = total - workDone - liveDone;
+    final children = <Widget>[];
+    if (workDone > 0) {
+      children.add(Expanded(flex: workDone,
+        child: Container(color: const Color(0xFF792E29)))); // garnet (work)
+    }
+    if (liveDone > 0) {
+      children.add(Expanded(flex: liveDone,
+        child: Container(color: const Color(0xFF00E676)))); // bright green (live)
+    }
+    if (neutral > 0) {
+      children.add(Expanded(flex: neutral,
+        child: Container(color: const Color(0xFF2A2318).withAlpha(18))));
+    }
+    return Row(children: children);
   }
 }
 
@@ -2519,14 +2635,14 @@ class _TaskCardState extends State<_TaskCard> {
         ? const Color(0xFF8A8880)
         : _pCardText(task.priority);
     final isWork = task.category == TaskCategory.work;
-    final cardBg = isWork
-        ? const Color(0xFFF5F0E8) // warm parchment for WORK
-        : const Color(0xFFEEF5F0); // cool mint for LIVE
-    final textCol = isWork
-        ? const Color(0xFF2A2318) // warm brown
-        : const Color(0xFF1A2A20); // cool dark green
+    final catColor = isWork
+        ? const Color(0xFF792E29) // garnet — work
+        : const Color(0xFF00E676); // bright green — live
+
+    // Habits-style palette: single beige card + warm brown text.
+    const cardBg = Color(0xFFF5F2EB);
+    const textCol = Color(0xFF2A2318);
     const subCol = Color(0xFF8A8070);
-    final catLabel = isWork ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ');
 
     return JellyButton(
       onTap: onTap,
@@ -2535,18 +2651,16 @@ class _TaskCardState extends State<_TaskCard> {
           duration: const Duration(milliseconds: 300),
           opacity: done ? 0.55 : 1.0,
           child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
+            margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
               color: cardBg,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                // Outer shadow — depth
                 BoxShadow(
                   color: Colors.black.withAlpha(25),
                   blurRadius: 12,
                   offset: const Offset(0, 5),
                 ),
-                // Inner highlight — top edge light
                 BoxShadow(
                   color: Colors.white.withAlpha(180),
                   blurRadius: 1,
@@ -2555,7 +2669,7 @@ class _TaskCardState extends State<_TaskCard> {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(20),
               child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -2563,54 +2677,40 @@ class _TaskCardState extends State<_TaskCard> {
                     // ── Left: main content ──────────────────────────────
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                        padding: const EdgeInsets.fromLTRB(14, 10, 12, 10),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Category tag
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 9,
-                                vertical: 4,
+                            // Title row — category dot + title (habits-style)
+                            Row(children: [
+                              Container(
+                                width: 16, height: 16,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: catColor.withAlpha(25),
+                                  border: Border.all(
+                                    color: catColor.withAlpha(70), width: 1)),
                               ),
-                              decoration: BoxDecoration(
-                                color: textCol.withAlpha(10),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: textCol.withAlpha(25),
-                                  width: 0.8,
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  task.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.playfairDisplay(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    fontStyle: FontStyle.italic,
+                                    height: 1.15,
+                                    color: textCol,
+                                    decoration: done
+                                        ? TextDecoration.lineThrough
+                                        : TextDecoration.none,
+                                    decorationColor: textCol.withAlpha(100),
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                catLabel,
-                                style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1,
-                                  color: textCol.withAlpha(130),
-                                ),
-                              ),
-                            ),
-
-                            const SizedBox(height: 10),
-
-                            // Title
-                            Text(
-                              task.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                fontStyle: FontStyle.italic,
-                                height: 1.2,
-                                color: textCol,
-                                decoration: done
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
-                                decorationColor: textCol.withAlpha(100),
-                              ),
-                            ),
+                            ]),
 
                             // Description
                             if (task.description.isNotEmpty) ...[
@@ -2744,9 +2844,9 @@ class _TaskCardState extends State<_TaskCard> {
                     ),
                   ),
 
-                    // ── Right: priority accent block (~1/4 width) ───────
+                    // ── Right: priority accent block (habits-style 48px) ─
                     Container(
-                      width: 68,
+                      width: 48,
                       color: accentBg,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -2756,14 +2856,14 @@ class _TaskCardState extends State<_TaskCard> {
                             onTap: done ? null : onComplete,
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 220),
-                              width: 30,
-                              height: 30,
+                              width: 26,
+                              height: 26,
                               decoration: BoxDecoration(
                                 color: accentTxt.withAlpha(done ? 50 : 25),
                                 shape: BoxShape.circle,
                                 border: Border.all(
                                   color: accentTxt.withAlpha(done ? 110 : 70),
-                                  width: 1.5,
+                                  width: 1.3,
                                 ),
                               ),
                               child: done
@@ -2775,14 +2875,14 @@ class _TaskCardState extends State<_TaskCard> {
                                   : null,
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 6),
                           // Priority label rotated
                           RotatedBox(
                             quarterTurns: 1,
                             child: Text(
                               _pLabel(task.priority).toUpperCase(),
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 8,
+                                fontSize: 7,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.5,
                                 color: accentTxt.withAlpha(150),
