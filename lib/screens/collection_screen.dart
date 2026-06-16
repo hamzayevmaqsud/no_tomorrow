@@ -76,7 +76,7 @@ class CollectionScreen extends StatelessWidget {
                               )),
                             Text('$unlocked / $total ${t('unlocked', 'открыто')}',
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9,
+                                fontSize: 11,
                                 color: isDark ? AppColors.darkTextSub : AppColors.lightTextSub,
                               )),
                           ],
@@ -240,7 +240,7 @@ class _AlbumListCard extends StatelessWidget {
                       ),
                       child: Text(album.tag,
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 9, fontWeight: FontWeight.w700,
+                          fontSize: 11, fontWeight: FontWeight.w700,
                           letterSpacing: 2,
                           color: complete ? c : Colors.white.withAlpha(120),
                         )),
@@ -267,7 +267,7 @@ class _AlbumListCard extends StatelessWidget {
                               ? t('COMPLETE', 'ЗАВЕРШЕНО')
                               : '$unlocked / $total ${t('cards', 'карт')}',
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9, fontWeight: FontWeight.w700,
+                            fontSize: 11, fontWeight: FontWeight.w700,
                             letterSpacing: 1.5,
                             color: complete
                                 ? c
@@ -363,7 +363,7 @@ class _AlbumDetailScreen extends StatelessWidget {
                               )),
                             Text('$unlocked / ${items.length} ${t('cards', 'карт')}',
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9,
+                                fontSize: 11,
                                 color: isDark ? AppColors.darkTextSub : AppColors.lightTextSub,
                               )),
                           ],
@@ -379,7 +379,7 @@ class _AlbumDetailScreen extends StatelessWidget {
                           ),
                           child: Text(t('COMPLETE', 'ЗАВЕРШЕНО'),
                             style: GoogleFonts.jetBrainsMono(
-                              fontSize: 9, fontWeight: FontWeight.w700,
+                              fontSize: 11, fontWeight: FontWeight.w700,
                               letterSpacing: 1, color: c,
                             )),
                         ),
@@ -615,7 +615,7 @@ class _CollectibleCardState extends State<_CollectibleCard>
                             color: const Color(0xFF0A0A14),
                             child: Center(child: Text(e.toString(),
                               style: const TextStyle(
-                                  color: Color(0xFFFF5252), fontSize: 8),
+                                  color: Color(0xFFFF5252), fontSize: 11),
                               textAlign: TextAlign.center)),
                           )),
                   ] else
@@ -633,7 +633,7 @@ class _CollectibleCardState extends State<_CollectibleCard>
                         ),
                         child: Text(widget.item.rarity.label[0], // E / R / U
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 7, fontWeight: FontWeight.w700,
+                            fontSize: 11, fontWeight: FontWeight.w700,
                             color: rarityColor,
                           )),
                       ),
@@ -652,7 +652,7 @@ class _CollectibleCardState extends State<_CollectibleCard>
                       ),
                       child: Text(widget.item.name,
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 9, fontWeight: FontWeight.w700,
+                          fontSize: 11, fontWeight: FontWeight.w700,
                           letterSpacing: 2,
                           color: unlocked ? albumColor : Colors.white.withAlpha(50),
                         )),
@@ -686,7 +686,7 @@ class _LockedPlaceholder extends StatelessWidget {
           const SizedBox(height: 8),
           Text(_translateRarity(item.rarity.label),
             style: GoogleFonts.jetBrainsMono(
-              fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2,
+              fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2,
               color: Color(item.rarity.color).withAlpha(60),
             )),
           const SizedBox(height: 4),
@@ -767,7 +767,7 @@ class _FullscreenViewState extends State<_FullscreenView> {
                 const SizedBox(height: 4),
                 Text('${_translateRarity(widget.item.rarity.label)}  ·  ${widget.item.album.title}',
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9, letterSpacing: 2,
+                    fontSize: 11, letterSpacing: 2,
                     color: rarityColor.withAlpha(160),
                   )),
               ]),
@@ -776,7 +776,7 @@ class _FullscreenViewState extends State<_FullscreenView> {
               bottom: 20, left: 0, right: 0,
               child: Center(child: Text(t('tap to close', 'нажмите чтобы закрыть'),
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9, letterSpacing: 2,
+                  fontSize: 11, letterSpacing: 2,
                   color: Colors.white.withAlpha(50)))),
             ),
           ],

@@ -362,7 +362,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
                           ? t('ALL DONE TODAY!', 'ВСЁ СДЕЛАНО СЕГОДНЯ!')
                           : '$doneToday ${t('of', 'из')} $total ${t('completed', 'выполнено')}',
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 8, fontWeight: FontWeight.w600,
+                          fontSize: 11, fontWeight: FontWeight.w600,
                           color: doneToday == total && total > 0
                               ? AppColors.success
                               : Colors.white.withAlpha(100))),
@@ -665,7 +665,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                                 )),
                               Text(allDone ? t('DONE', 'ГОТОВО') : t('TODAY', 'СЕГОДНЯ'),
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 7, fontWeight: FontWeight.w600,
+                                  fontSize: 11, fontWeight: FontWeight.w600,
                                   letterSpacing: 1.5,
                                   color: allDone
                                       ? AppColors.success
@@ -748,7 +748,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
               child: Text(_motivationMsg,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9, fontWeight: FontWeight.w700,
+                  fontSize: 11, fontWeight: FontWeight.w700,
                   letterSpacing: 1.5,
                   color: allDone
                       ? AppColors.success
@@ -762,7 +762,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
               Row(
                 children: [
                   Text(t('THIS WEEK', 'ЭТА НЕДЕЛЯ'), style: GoogleFonts.jetBrainsMono(
-                    fontSize: 8, fontWeight: FontWeight.w700,
+                    fontSize: 11, fontWeight: FontWeight.w700,
                     letterSpacing: 1.5, color: const Color(0xFF8A8070))),
                 ],
               ),
@@ -795,7 +795,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                           children: [
                             if (dayDone > 0)
                               Text('$dayDone', style: GoogleFonts.jetBrainsMono(
-                                fontSize: 7, fontWeight: FontWeight.w600,
+                                fontSize: 11, fontWeight: FontWeight.w600,
                                 color: const Color(0xFF8A8070))),
                             const SizedBox(height: 2),
                             AnimatedContainer(
@@ -815,7 +815,7 @@ class _MotivationDashboardState extends State<_MotivationDashboard>
                             ),
                             const SizedBox(height: 4),
                             Text(dayNames[i], style: GoogleFonts.jetBrainsMono(
-                              fontSize: 7, fontWeight: FontWeight.w600,
+                              fontSize: 11, fontWeight: FontWeight.w600,
                               color: isToday
                                   ? AppColors.habits
                                   : const Color(0xFF8A8070).withAlpha(140))),
@@ -864,7 +864,7 @@ class _MiniStat extends StatelessWidget {
                 )),
               Text(label,
                 style: GoogleFonts.inter(
-                  fontSize: 7, fontWeight: FontWeight.w600,
+                  fontSize: 11, fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                   color: const Color(0xFF8A8070),
                 )),
@@ -982,7 +982,7 @@ class _HabitCalendarBarState extends State<_HabitCalendarBar> {
                     Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
                       Expanded(child: Center(child: Text(d,
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 8, fontWeight: FontWeight.w600,
+                          fontSize: 11, fontWeight: FontWeight.w600,
                           color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
                     const SizedBox(height: 8),
                     ..._buildGrid(now, habits, total, subCol, textCol,
@@ -1126,7 +1126,7 @@ class _InlineStat extends StatelessWidget {
           Text(value, style: GoogleFonts.jetBrainsMono(
             fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
           Text(label, style: GoogleFonts.jetBrainsMono(
-            fontSize: 7, fontWeight: FontWeight.w600,
+            fontSize: 11, fontWeight: FontWeight.w600,
             letterSpacing: 1, color: Colors.white.withAlpha(80))),
         ]),
       ),
@@ -1149,7 +1149,7 @@ class _RoutineHeader extends StatelessWidget {
         Icon(icon, size: 14, color: Colors.white.withAlpha(120)),
         const SizedBox(width: 6),
         Text(label, style: GoogleFonts.jetBrainsMono(
-          fontSize: 9, fontWeight: FontWeight.w700,
+          fontSize: 11, fontWeight: FontWeight.w700,
           letterSpacing: 2, color: Colors.white.withAlpha(120))),
         const SizedBox(width: 10),
         Expanded(child: Container(height: 1, color: Colors.white.withAlpha(20))),
@@ -1186,7 +1186,7 @@ class _DoneDivider extends StatelessWidget {
                 const SizedBox(width: 5),
                 Text('${t('DONE', 'ГОТОВО')}  $count',
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9, fontWeight: FontWeight.w700,
+                    fontSize: 11, fontWeight: FontWeight.w700,
                     letterSpacing: 1, color: AppColors.success,
                   )),
               ],
@@ -1294,7 +1294,7 @@ class _HabitCard extends StatelessWidget {
                               const SizedBox(width: 2),
                               Text('${habit.timerMinutes}m',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 8, fontWeight: FontWeight.w700,
+                                  fontSize: 11, fontWeight: FontWeight.w700,
                                   color: color.withAlpha(170))),
                             ],
                           ]),
@@ -1337,7 +1337,7 @@ class _HabitCard extends StatelessWidget {
                                       const SizedBox(height: 2),
                                       Text(letters[d.weekday - 1],
                                         style: GoogleFonts.jetBrainsMono(
-                                          fontSize: 6.5,
+                                          fontSize: 11,
                                           fontWeight: scheduled
                                               ? FontWeight.w700
                                               : FontWeight.w500,
@@ -1351,7 +1351,7 @@ class _HabitCard extends StatelessWidget {
                               const SizedBox(width: 6),
                               Text('$weeklyDone/$weeklyTotal',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  fontSize: 11, fontWeight: FontWeight.w600,
                                   color: subCol)),
                               if (streak >= 2) ...[
                                 const SizedBox(width: 8),
@@ -1363,7 +1363,7 @@ class _HabitCard extends StatelessWidget {
                                 const SizedBox(width: 1),
                                 Text('$streak',
                                   style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 9, fontWeight: FontWeight.w700,
+                                    fontSize: 11, fontWeight: FontWeight.w700,
                                     color: streak >= 7
                                       ? AppColors.action
                                       : const Color(0xFFF59E0B))),
@@ -1385,7 +1385,7 @@ class _HabitCard extends StatelessWidget {
                                     ? t('note', 'заметка')
                                     : t('add note', '+ заметка'),
                                   style: GoogleFonts.inter(
-                                    fontSize: 9, fontWeight: FontWeight.w500,
+                                    fontSize: 11, fontWeight: FontWeight.w500,
                                     color: subCol.withAlpha(120))),
                               ]),
                             ),
@@ -1428,7 +1428,7 @@ class _HabitCard extends StatelessWidget {
                         Text(
                           done ? '✓' : '+${habit.xpPerCheck}',
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 8, fontWeight: FontWeight.w700,
+                            fontSize: 11, fontWeight: FontWeight.w700,
                             color: done ? subCol : AppColors.gold)),
                       ],
                     ),
@@ -1609,7 +1609,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                 )),
                               Text('+${Habit(id: '', title: '', createdAt: DateTime.now()).xpPerCheck} ${t('XP / day', 'XP / день')}',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  fontSize: 11, fontWeight: FontWeight.w600,
                                   color: _kCocoa.withAlpha(140),
                                 )),
                             ],
@@ -1717,7 +1717,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                               const SizedBox(width: 6),
                               Text(t('CATEGORY', 'КАТЕГОРИЯ'),
                                 style: GoogleFonts.inter(
-                                  fontSize: 9, fontWeight: FontWeight.w700,
+                                  fontSize: 11, fontWeight: FontWeight.w700,
                                   letterSpacing: 1.2,
                                   color: _kCocoa.withAlpha(140),
                                 )),
@@ -1767,7 +1767,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                         const SizedBox(width: 5),
                                         Text(habitCatLabel(c),
                                           style: GoogleFonts.jetBrainsMono(
-                                            fontSize: 9,
+                                            fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                             letterSpacing: 0.5,
                                             color: active
@@ -1793,7 +1793,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                         Icon(Icons.timer_rounded, size: 12, color: _kCocoa.withAlpha(130)),
                         const SizedBox(width: 6),
                         Text(t('TIMER', 'ТАЙМЕР'), style: GoogleFonts.inter(
-                          fontSize: 9, fontWeight: FontWeight.w700,
+                          fontSize: 11, fontWeight: FontWeight.w700,
                           letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                         const Spacer(),
                         ...([0, 5, 10, 15, 30].map((m) {
@@ -1812,7 +1812,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                     color: active ? AppColors.habits.withAlpha(120) : _kDivider)),
                                 child: Text(m == 0 ? t('OFF', 'ВЫКЛ') : '${m}${t('m', 'м')}',
                                   style: GoogleFonts.jetBrainsMono(
-                                    fontSize: 9, fontWeight: FontWeight.w700,
+                                    fontSize: 11, fontWeight: FontWeight.w700,
                                     color: active ? AppColors.habits : _kCocoa.withAlpha(100))),
                               ),
                             ),
@@ -1833,12 +1833,12 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                 color: _kCocoa.withAlpha(130)),
                             const SizedBox(width: 6),
                             Text(t('REPEAT', 'ПОВТОР'), style: GoogleFonts.inter(
-                              fontSize: 9, fontWeight: FontWeight.w700,
+                              fontSize: 11, fontWeight: FontWeight.w700,
                               letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                             const Spacer(),
                             Text(_days.isEmpty ? t('Every day', 'Каждый день') : '${_days.length} ${t('days', 'дн.')}',
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9, fontWeight: FontWeight.w600,
+                                fontSize: 11, fontWeight: FontWeight.w600,
                                 color: _kCocoa.withAlpha(100))),
                           ]),
                           const SizedBox(height: 10),
@@ -1895,7 +1895,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                                 color: _kCocoa.withAlpha(130)),
                             const SizedBox(width: 6),
                             Text(t('ROUTINE', 'РАСПОРЯДОК'), style: GoogleFonts.inter(
-                              fontSize: 9, fontWeight: FontWeight.w700,
+                              fontSize: 11, fontWeight: FontWeight.w700,
                               letterSpacing: 1.2, color: _kCocoa.withAlpha(140))),
                           ]),
                           const SizedBox(height: 10),
@@ -1943,7 +1943,7 @@ class _AddHabitSheetState extends State<_AddHabitSheet> {
                               const SizedBox(width: 8),
                               Text('+15 XP',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9, fontWeight: FontWeight.w600,
+                                  fontSize: 11, fontWeight: FontWeight.w600,
                                   color: Colors.white.withAlpha(200),
                                 )),
                             ],
@@ -2168,7 +2168,7 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
                                     const SizedBox(height: 3),
                                     Text(habitCatLabel(c),
                                       style: GoogleFonts.jetBrainsMono(
-                                        fontSize: 7.5, fontWeight: FontWeight.w700,
+                                        fontSize: 11, fontWeight: FontWeight.w700,
                                         color: active ? col : _kCocoa.withAlpha(140))),
                                   ]),
                                 ),
@@ -2192,7 +2192,7 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
                               ? t('Every day', 'Каждый день')
                               : '${_days.length} ${t('days', 'дн.')}',
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9, fontWeight: FontWeight.w600,
+                                fontSize: 11, fontWeight: FontWeight.w600,
                                 color: _kCocoa.withAlpha(150))),
                           ]),
                           const SizedBox(height: 6),
@@ -2298,7 +2298,7 @@ class _EditHabitSheetState extends State<_EditHabitSheet> {
                               ? t('No timer', 'Без таймера')
                               : '$_timer ${t('min', 'мин')}',
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9, fontWeight: FontWeight.w600,
+                                fontSize: 11, fontWeight: FontWeight.w600,
                                 color: _kCocoa.withAlpha(150))),
                           ]),
                           const SizedBox(height: 6),
@@ -2524,7 +2524,7 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                   Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
                     Expanded(child: Center(child: Text(d,
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 8, fontWeight: FontWeight.w600,
+                        fontSize: 11, fontWeight: FontWeight.w600,
                         color: subCol.withAlpha(140)))))).toList()),
                   const SizedBox(height: 8),
                     ...List.generate(6, (week) {
@@ -2599,11 +2599,11 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                     Icon(habitCatIcon(h.category), size: 14, color: color),
                     const SizedBox(width: 6),
                     Text(habitCatLabel(h.category), style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w700,
+                      fontSize: 11, fontWeight: FontWeight.w700,
                       letterSpacing: 1, color: color)),
                     const Spacer(),
                     Text(h.scheduleLabel, style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                      fontSize: 11, fontWeight: FontWeight.w600, color: subCol)),
                   ]),
                   if (h.routineSlot.isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -2615,7 +2615,7 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                         const SizedBox(width: 4),
                         Text('${s != null ? t(s.labelEn, s.labelRu) : ''} ${t('ROUTINE', 'РАСПОРЯДОК')}',
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                            fontSize: 11, fontWeight: FontWeight.w600, color: subCol)),
                       ]);
                     }),
                   ],
@@ -2627,7 +2627,7 @@ class _HabitDetailViewState extends State<_HabitDetailView> {
                       borderRadius: BorderRadius.circular(8)),
                     child: Text('+${h.xpPerCheck} ${t('XP per check-in', 'XP за отметку')}',
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.gold)),
+                        fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gold)),
                   ),
                 ]),
               ),
@@ -2706,7 +2706,7 @@ class _WaffleBar extends StatelessWidget {
             child: Center(
               child: Text('$day',
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9,
+                  fontSize: 11,
                   fontWeight: ratio > 0.5 || isToday
                     ? FontWeight.w800 : FontWeight.w500,
                   color: ratio > 0.5
@@ -2784,7 +2784,7 @@ class _Waffle extends StatelessWidget {
               child: Center(
                 child: Text('$day',
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: isToday || done ? FontWeight.w800 : FontWeight.w500,
                     color: done
                       ? Colors.white
@@ -2816,7 +2816,7 @@ class _DetailStat extends StatelessWidget {
         fontSize: 16, fontWeight: FontWeight.w700,
         color: const Color(0xFF2A2318))),
       Text(label, style: GoogleFonts.jetBrainsMono(
-        fontSize: 7, fontWeight: FontWeight.w600,
+        fontSize: 11, fontWeight: FontWeight.w600,
         letterSpacing: 1.5, color: const Color(0xFF8A8070))),
     ]));
   }
@@ -3133,7 +3133,7 @@ class _HabitTimerScreenState extends State<_HabitTimerScreen>
                 border: Border.all(color: color.withAlpha(60))),
               child: Text(habitCatLabel(widget.habit.category),
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 8, fontWeight: FontWeight.w700,
+                  fontSize: 11, fontWeight: FontWeight.w700,
                   letterSpacing: 1, color: color)),
             ),
 
@@ -3166,7 +3166,7 @@ class _HabitTimerScreenState extends State<_HabitTimerScreen>
                       if (!_finished)
                         Text(t('REMAINING', 'ОСТАЛОСЬ'),
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9, fontWeight: FontWeight.w600,
+                            fontSize: 11, fontWeight: FontWeight.w600,
                             letterSpacing: 2,
                             color: Colors.white.withAlpha(80))),
                     ],

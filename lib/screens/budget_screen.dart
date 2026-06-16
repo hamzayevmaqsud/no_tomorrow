@@ -198,7 +198,7 @@ class _BudgetDashboard extends StatelessWidget {
                   color: (overBudget ? AppColors.danger : AppColors.success).withAlpha(12),
                   borderRadius: BorderRadius.circular(10)),
                 child: Text(overBudget ? t('OVER BUDGET', 'ПЕРЕРАСХОД') : t('ON TRACK', 'В НОРМЕ'), style: GoogleFonts.jetBrainsMono(
-                  fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1.5,
+                  fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5,
                   color: overBudget ? AppColors.danger : AppColors.success))),
             ])),
           ]),
@@ -244,7 +244,7 @@ class _ExpenseCard extends StatelessWidget {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(expense.title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: textCol)),
           const SizedBox(height: 2),
-          Text(_catLabel(expense.category), style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600,
+          Text(_catLabel(expense.category), style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600,
             letterSpacing: 0.5, color: subCol)),
         ])),
         Text('\$${expense.amount.toStringAsFixed(0)}', style: GoogleFonts.jetBrainsMono(

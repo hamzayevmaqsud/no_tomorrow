@@ -158,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   child: Text(t('OR', 'ИЛИ'),
                     style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w700,
+                      fontSize: 11, fontWeight: FontWeight.w700,
                       letterSpacing: 2,
                       color: Colors.white.withAlpha(80))),
                 ),

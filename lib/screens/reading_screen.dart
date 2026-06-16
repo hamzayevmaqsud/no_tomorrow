@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/game_state.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
 import '../widgets/swipe_to_pop.dart';
 import '../widgets/jelly_button.dart';
 import '../widgets/animated_empty.dart';
@@ -123,7 +125,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
                     if (finished.isNotEmpty) ...[
                       Padding(padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Center(child: Text('${t('FINISHED', 'ЗАВЕРШЕНО')}  ${finished.length}', style: GoogleFonts.jetBrainsMono(
-                          fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.success)))),
+                          fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.success)))),
                       ...finished.map((b) => _BookCard(book: b, onAddPages: (_) {}, onDelete: () => _delete(b.id))),
                     ],
                   ]),
@@ -164,15 +166,15 @@ class _BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cardBg = Color(0xFFF5F2EB);
-    const textCol = Color(0xFF2A2318);
-    const subCol = Color(0xFF8A8070);
+    const cardBg = AppColors.paperCard;
+    const textCol = AppColors.paperText;
+    const subCol = AppColors.paperTextSub;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(24),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      decoration: BoxDecoration(color: cardBg, borderRadius: AppRadius.xl,
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(25), blurRadius: 12, offset: const Offset(0, 5))]),
-      child: ClipRRect(borderRadius: BorderRadius.circular(24),
+      child: ClipRRect(borderRadius: AppRadius.xl,
         child: IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Expanded(child: Padding(padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -196,12 +198,12 @@ class _BookCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(children: [
                 Text('${book.pagesRead}/${book.totalPages} ${t('pages', 'стр.')}', style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                  fontSize: 11, fontWeight: FontWeight.w600, color: subCol)),
                 const Spacer(),
                 Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(color: AppColors.gold.withAlpha(20), borderRadius: BorderRadius.circular(8)),
                   child: Text('+${book.xp} XP', style: GoogleFonts.jetBrainsMono(
-                    fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold))),
+                    fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gold))),
               ]),
               if (!book.isFinished) ...[
                 const SizedBox(height: 10),
@@ -238,13 +240,13 @@ class _PageBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           color: AppColors.reading.withAlpha(15),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: AppRadius.sm,
           border: Border.all(color: AppColors.reading.withAlpha(50))),
         child: Text(label, style: GoogleFonts.jetBrainsMono(
-          fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.reading)),
+          fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.reading)),
       ));
   }
 }
@@ -276,7 +278,7 @@ class _AddBookSheetState extends State<_AddBookSheet> {
   Widget build(BuildContext context) {
     final sw = MediaQuery.of(context).size.width;
     final kb = MediaQuery.of(context).viewInsets.bottom;
-    const bg = Color(0xFFF5F1E8); const cocoa = Color(0xFF594536); const divider = Color(0xFFDDD8CB);
+    const bg = AppColors.paperBg; const cocoa = AppColors.paperTextDeep; const divider = AppColors.paperBorder;
 
     return Align(alignment: Alignment.centerLeft,
       child: Padding(padding: EdgeInsets.fromLTRB(12, 48, 40, kb > 0 ? kb + 12 : 48),
@@ -320,7 +322,7 @@ class _AddBookSheetState extends State<_AddBookSheet> {
                 Divider(height: 1, thickness: 1, color: divider),
                 Padding(padding: const EdgeInsets.all(18),
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Text(t('PAGES:', 'СТРАНИЦ:'), style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w700,
+                    Text(t('PAGES:', 'СТРАНИЦ:'), style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w700,
                       letterSpacing: 1.5, color: cocoa.withAlpha(140))),
                     const SizedBox(width: 12),
                     GestureDetector(onTap: _pages > 50 ? () => setState(() => _pages -= 50) : null,

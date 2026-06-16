@@ -362,7 +362,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text('${gs.unlockedBadges.length} / ${GameState.badgeInfo.length} ${t('unlocked', 'открыто')}',
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9, fontWeight: FontWeight.w500,
+                  fontSize: 11, fontWeight: FontWeight.w500,
                   color: Colors.white.withAlpha(100))),
               const SizedBox(height: 12),
               Wrap(
@@ -469,7 +469,7 @@ class _StatCard extends StatelessWidget {
                     color: const Color(0xFF2A2318))),
               ),
               Text(label, style: GoogleFonts.inter(
-                fontSize: 8, fontWeight: FontWeight.w600,
+                fontSize: 11, fontWeight: FontWeight.w600,
                 letterSpacing: 0.5, color: const Color(0xFF8A8070))),
             ],
           )),
@@ -531,7 +531,7 @@ class _BadgeCard extends StatelessWidget {
           )),
           const SizedBox(height: 2),
           Text(desc, style: GoogleFonts.inter(
-            fontSize: 9,
+            fontSize: 11,
             color: unlocked
                 ? const Color(0xFF8A8070)
                 : Colors.white.withAlpha(30),
@@ -577,7 +577,7 @@ class _WeeklyActivity extends StatelessWidget {
 
           return Expanded(child: Column(children: [
             Text(dayNames[i], style: GoogleFonts.jetBrainsMono(
-              fontSize: 7, fontWeight: FontWeight.w600,
+              fontSize: 11, fontWeight: FontWeight.w600,
               color: const Color(0xFF8A8070).withAlpha(140))),
             const SizedBox(height: 6),
             Container(
@@ -595,13 +595,13 @@ class _WeeklyActivity extends StatelessWidget {
               ),
               child: count > 0
                   ? Center(child: Text('$count', style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w700,
+                      fontSize: 11, fontWeight: FontWeight.w700,
                       color: intensity > 0.5 ? Colors.white : const Color(0xFF2A2318))))
                   : null,
             ),
             const SizedBox(height: 4),
             Text('${day.day}', style: GoogleFonts.inter(
-              fontSize: 8, fontWeight: FontWeight.w500,
+              fontSize: 11, fontWeight: FontWeight.w500,
               color: isToday ? AppColors.action : const Color(0xFF8A8070))),
           ]));
         }),
@@ -707,7 +707,7 @@ class _LevelRewardsPreview extends StatelessWidget {
                 ),
                 child: Text(unlocked ? '✓ ${t('LVL', 'УР')} $lvl' : '${t('LVL', 'УР')} $lvl',
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9, fontWeight: FontWeight.w700,
+                    fontSize: 11, fontWeight: FontWeight.w700,
                     color: unlocked
                         ? AppColors.gold
                         : isNext
@@ -777,7 +777,7 @@ class _MilestoneRow extends StatelessWidget {
         done
             ? Icon(Icons.check_circle_rounded, size: 18, color: AppColors.gold)
             : Text('$current/$target', style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w600,
+                fontSize: 11, fontWeight: FontWeight.w600,
                 color: Colors.white.withAlpha(100))),
       ]),
     );

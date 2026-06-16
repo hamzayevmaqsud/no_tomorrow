@@ -39,4 +39,15 @@ class AppColors {
   static const food        = Color(0xFFFF4081); // vivid pink
   static const collection  = Color(0xFF00E5FF); // vivid cyan
   static const profile     = Color(0xFF7C4DFF); // vivid violet
+
+  // ── Paper / parchment palette ──────────────────────────────────────────────
+  // Warm "paper" surfaces used for cards, sheets and reading-style content.
+  // Previously hard-coded across 8 screens; consolidated here as named tokens.
+  static const paperBg       = Color(0xFFF5F1E8); // sheet / page background
+  static const paperCard     = Color(0xFFF5F2EB); // card surface
+  static const paperRow      = Color(0xFFEFEBE0); // row / list-item surface
+  static const paperBorder   = Color(0xFFDDD8CB); // warm divider / border
+  static const paperText     = Color(0xFF2A2318); // primary ink (dark brown)
+  static const paperTextDeep = Color(0xFF594536); // cocoa / strong accent text
+  static const paperTextSub  = Color(0xFF8A8070); // muted warm gray (secondary)
 }

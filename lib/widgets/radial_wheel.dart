@@ -149,12 +149,17 @@ class _WheelIcons extends StatelessWidget {
                       : sections[i].label,
                   style: TextStyle(
                     color: Colors.white.withAlpha(isSelected ? 230 : 110),
-                    fontSize: 7,
+                    // Floor at AppType.minReadable (11) — navigation labels
+                    // must stay legible; was 7px.
+                    fontSize: 11,
                     fontWeight:
                         isSelected ? FontWeight.w800 : FontWeight.w500,
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.2,
+                    height: 1.0,
                   ),
                   textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.visible,
                 ),
               ],
             ),

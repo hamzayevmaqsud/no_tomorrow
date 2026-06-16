@@ -465,7 +465,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   color: AppColors.action,
                                   child: Text('LVL ${GameState.instance.level}',
                                     style: GoogleFonts.outfit(
-                                      fontSize: 8, fontWeight: FontWeight.w900,
+                                      fontSize: 11, fontWeight: FontWeight.w900,
                                       letterSpacing: 1, color: Colors.white,
                                     )),
                                 ),
@@ -474,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen>
                             const SizedBox(height: 4),
                             Text('${GameState.instance.xpInLevel} / ${GameState.instance.xpForNextLevel} XP',
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9, fontWeight: FontWeight.w600,
+                                fontSize: 11, fontWeight: FontWeight.w600,
                                 letterSpacing: 0.5,
                                 color: Colors.white.withAlpha(120),
                               )),
@@ -1242,7 +1242,7 @@ class _RecapStat extends StatelessWidget {
         fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
       const SizedBox(height: 2),
       Text(label, style: GoogleFonts.inter(
-        fontSize: 7, fontWeight: FontWeight.w600,
+        fontSize: 11, fontWeight: FontWeight.w600,
         letterSpacing: 1, color: Colors.white.withAlpha(100))),
     ]));
   }
@@ -1338,7 +1338,7 @@ class _DailyQuestPopupState extends State<_DailyQuestPopup>
                         children: [
                           Text(t('DAILY QUEST', 'ЕЖЕДНЕВНЫЙ КВЕСТ'),
                             style: GoogleFonts.jetBrainsMono(
-                              fontSize: 8, fontWeight: FontWeight.w700,
+                              fontSize: 11, fontWeight: FontWeight.w700,
                               letterSpacing: 1.5, color: AppColors.gold)),
                           const SizedBox(height: 2),
                           Text(GameState.instance.dailyQuest,
@@ -1358,7 +1358,7 @@ class _DailyQuestPopupState extends State<_DailyQuestPopup>
                       ),
                       child: Text('+${GameState.instance.dailyQuestXp} XP',
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 9, fontWeight: FontWeight.w700,
+                          fontSize: 11, fontWeight: FontWeight.w700,
                           color: AppColors.gold)),
                     ),
                   ],
