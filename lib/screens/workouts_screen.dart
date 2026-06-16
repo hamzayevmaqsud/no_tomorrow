@@ -498,7 +498,7 @@ class _WeekCalendar extends StatelessWidget {
         // Month label
         Text(months[today.month - 1],
           style: GoogleFonts.jetBrainsMono(
-            fontSize: 9, fontWeight: FontWeight.w700,
+            fontSize: 11, fontWeight: FontWeight.w700,
             letterSpacing: 2, color: Colors.white.withAlpha(40))),
         const SizedBox(height: 8),
         // Days row
@@ -513,7 +513,7 @@ class _WeekCalendar extends StatelessWidget {
             onTap: () => onDateSelected(days[i]),
             child: Column(children: [
             Text(dayLabels[i], style: GoogleFonts.jetBrainsMono(
-              fontSize: 8, fontWeight: FontWeight.w600,
+              fontSize: 11, fontWeight: FontWeight.w600,
               color: Colors.white.withAlpha(isToday ? 100 : 35))),
             const SizedBox(height: 4),
             Container(
@@ -594,12 +594,12 @@ class _RestTimerBanner extends StatelessWidget {
                 )),
               Text('$mins:${secs.toString().padLeft(2, '0')}',
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white)),
+                  fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
             ])),
           const SizedBox(width: 10),
           // REST label
           Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
-            fontSize: 9, fontWeight: FontWeight.w700,
+            fontSize: 11, fontWeight: FontWeight.w700,
             letterSpacing: 1.5, color: _kBordo)),
           const SizedBox(width: 10),
           // Linear progress
@@ -684,7 +684,7 @@ class _SessionCard extends StatelessWidget {
                 color: AppColors.gold.withAlpha(15),
                 borderRadius: BorderRadius.circular(6)),
               child: Text('+${session.xp} XP', style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold)),
+                fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gold)),
             ),
             const Spacer(),
             // Progress
@@ -698,7 +698,7 @@ class _SessionCard extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation(session.isCompleted ? const Color(0xFF22C55E) : _kBordo),
                   )),
                 Text('${session.doneSets}/${session.totalSets}',
-                  style: GoogleFonts.jetBrainsMono(fontSize: 7, fontWeight: FontWeight.w700, color: Colors.white)),
+                  style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
               ])),
             const SizedBox(width: 10),
             GestureDetector(
@@ -793,7 +793,7 @@ class _ExerciseCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6)),
             child: Text('${exercise.restSeconds}s ${t('rest', 'отд.')}',
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(80))),
+                fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white.withAlpha(80))),
           ),
           const SizedBox(width: 6),
           GestureDetector(onTap: onDelete,
@@ -845,7 +845,7 @@ class _ExerciseCard extends StatelessWidget {
                   if (_prevForSet(exercise.name, i) != null)
                     Text('${_prevForSet(exercise.name, i)!.weight}',
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 9, color: Colors.white.withAlpha(30))),
+                        fontSize: 11, color: Colors.white.withAlpha(30))),
                 ]))),
               Expanded(child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -863,7 +863,7 @@ class _ExerciseCard extends StatelessWidget {
                   if (_prevForSet(exercise.name, i) != null)
                     Text('${_prevForSet(exercise.name, i)!.reps}',
                       style: GoogleFonts.jetBrainsMono(
-                        fontSize: 9, color: Colors.white.withAlpha(30))),
+                        fontSize: 11, color: Colors.white.withAlpha(30))),
                 ]))),
               SizedBox(width: 44,
                 child: GestureDetector(
@@ -920,7 +920,7 @@ class _ExerciseCard extends StatelessWidget {
   }
 
   TextStyle _headerStyle() => GoogleFonts.jetBrainsMono(
-    fontSize: 8, fontWeight: FontWeight.w700,
+    fontSize: 11, fontWeight: FontWeight.w700,
     letterSpacing: 1.5, color: Colors.white.withAlpha(50));
 }
 
@@ -1017,7 +1017,7 @@ class _AddExerciseSheetState extends State<_AddExerciseSheet> {
           SingleChildScrollView(scrollDirection: Axis.horizontal,
             child: Row(children: [
               Text(t('REST', 'ОТДЫХ'), style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w700,
+                fontSize: 11, fontWeight: FontWeight.w700,
                 letterSpacing: 1.5, color: Colors.white.withAlpha(60))),
               const SizedBox(width: 10),
               ...(_restOptions.map((sec) => Padding(
@@ -1157,7 +1157,7 @@ class _MiniCounter extends StatelessWidget {
       ),
       child: Column(children: [
         Text(label, style: GoogleFonts.jetBrainsMono(
-          fontSize: 8, fontWeight: FontWeight.w700,
+          fontSize: 11, fontWeight: FontWeight.w700,
           letterSpacing: 1.5, color: Colors.white.withAlpha(50))),
         const SizedBox(height: 6),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -1279,7 +1279,7 @@ class _WorkoutDashboard extends StatelessWidget {
                 Icon(Icons.analytics_rounded, size: 11, color: _kBordo),
                 const SizedBox(width: 5),
                 Text(t('REVIEW', 'ОБЗОР'), style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9, fontWeight: FontWeight.w800,
+                  fontSize: 11, fontWeight: FontWeight.w800,
                   letterSpacing: 1, color: _kBordo)),
               ]),
             ),
@@ -1310,7 +1310,7 @@ class _WorkoutDashboard extends StatelessWidget {
                       return Padding(
                         padding: const EdgeInsets.only(top: 6),
                         child: Text(dayLabelsShort[idx], style: GoogleFonts.jetBrainsMono(
-                          fontSize: 8, fontWeight: FontWeight.w600,
+                          fontSize: 11, fontWeight: FontWeight.w600,
                           color: Colors.white.withAlpha(40))),
                       );
                     },
@@ -1376,7 +1376,7 @@ class _WorkoutDashboard extends StatelessWidget {
               Text(fmtVol(bestExVol), style: GoogleFonts.jetBrainsMono(
                 fontSize: 12, fontWeight: FontWeight.w700, color: _kBordo)),
               Text(' ${t('kg', 'кг')}', style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, color: Colors.white.withAlpha(50))),
+                fontSize: 11, color: Colors.white.withAlpha(50))),
             ]),
           ),
         ],
@@ -1404,7 +1404,7 @@ class _WorkoutStatBox extends StatelessWidget {
           fontSize: 18, fontWeight: FontWeight.w700, color: _kBordo)),
         const SizedBox(height: 4),
         Text(label, style: GoogleFonts.jetBrainsMono(
-          fontSize: 8, fontWeight: FontWeight.w600,
+          fontSize: 11, fontWeight: FontWeight.w600,
           letterSpacing: 0.5, color: Colors.white.withAlpha(50)),
           textAlign: TextAlign.center),
       ]),
@@ -1537,7 +1537,7 @@ class _WorkoutReviewSheet extends StatelessWidget {
             ),
             child: Column(children: [
               Text(t('TOTAL VOLUME', 'ОБЩИЙ ОБЪЁМ'), style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w700,
+                fontSize: 11, fontWeight: FontWeight.w700,
                 letterSpacing: 2, color: Colors.white.withAlpha(120))),
               const SizedBox(height: 8),
               Text(fmtVol(weekVolume), style: GoogleFonts.jetBrainsMono(
@@ -1579,7 +1579,7 @@ class _WorkoutReviewSheet extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(t('EXERCISES', 'УПРАЖНЕНИЯ'), style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w700,
+                fontSize: 11, fontWeight: FontWeight.w700,
                 letterSpacing: 2, color: Colors.white.withAlpha(50))),
             ),
             const SizedBox(height: 8),
@@ -1602,13 +1602,13 @@ class _WorkoutReviewSheet extends StatelessWidget {
                       color: Colors.white.withAlpha(200))),
                     const SizedBox(height: 2),
                     Text('${entry.value.sets} ${t('sets', 'подх.')}', style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, color: Colors.white.withAlpha(50))),
+                      fontSize: 11, color: Colors.white.withAlpha(50))),
                   ],
                 )),
                 Text(fmtVol(entry.value.volume), style: GoogleFonts.jetBrainsMono(
                   fontSize: 13, fontWeight: FontWeight.w700, color: _kBordo)),
                 Text(' ${t('kg', 'кг')}', style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9, color: Colors.white.withAlpha(50))),
+                  fontSize: 11, color: Colors.white.withAlpha(50))),
               ]),
             )),
             const SizedBox(height: 12),
@@ -1657,7 +1657,7 @@ class _WorkoutReviewStat extends StatelessWidget {
           fontSize: 18, fontWeight: FontWeight.w700, color: _kBordo)),
         const SizedBox(height: 4),
         Text(label, style: GoogleFonts.jetBrainsMono(
-          fontSize: 8, fontWeight: FontWeight.w600,
+          fontSize: 11, fontWeight: FontWeight.w600,
           letterSpacing: 0.5, color: Colors.white.withAlpha(50)),
           textAlign: TextAlign.center),
       ]),

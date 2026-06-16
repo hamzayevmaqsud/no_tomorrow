@@ -386,7 +386,7 @@ class PatchNotesScreen extends StatelessWidget {
                               const SizedBox(width: 8),
                               Text(note.date,
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9, fontWeight: FontWeight.w500,
+                                  fontSize: 11, fontWeight: FontWeight.w500,
                                   color: subColor,
                                 )),
                             ],

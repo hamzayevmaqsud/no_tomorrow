@@ -175,7 +175,7 @@ class _FoodDashboard extends StatelessWidget {
               Text('$todayCals', style: GoogleFonts.jetBrainsMono(
                 fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF2A2318))),
               Text(t('KCAL', 'ККАЛ'), style: GoogleFonts.jetBrainsMono(
-                fontSize: 7, fontWeight: FontWeight.w600, letterSpacing: 1.5, color: const Color(0xFF8A8070))),
+                fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 1.5, color: const Color(0xFF8A8070))),
             ]),
           ])),
           const SizedBox(width: 16),
@@ -199,7 +199,7 @@ class _FoodDashboard extends StatelessWidget {
                 color: (over ? AppColors.danger : AppColors.success).withAlpha(12),
                 borderRadius: BorderRadius.circular(10)),
               child: Text(over ? t('OVER LIMIT', 'ПРЕВЫШЕНИЕ') : t('ON TRACK', 'В НОРМЕ'), style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1.5,
+                fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5,
                 color: over ? AppColors.danger : AppColors.success))),
           ])),
         ]),
@@ -242,12 +242,12 @@ class _MealCard extends StatelessWidget {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(meal.title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: textCol)),
           const SizedBox(height: 2),
-          Text(_translateMealType(meal.type), style: GoogleFonts.jetBrainsMono(fontSize: 9, fontWeight: FontWeight.w600,
+          Text(_translateMealType(meal.type), style: GoogleFonts.jetBrainsMono(fontSize: 11, fontWeight: FontWeight.w600,
             letterSpacing: 0.5, color: subCol)),
         ])),
         Text('${meal.calories}', style: GoogleFonts.jetBrainsMono(
           fontSize: 16, fontWeight: FontWeight.w700, color: textCol)),
-        Text(' ${t('kcal', 'ккал')}', style: GoogleFonts.inter(fontSize: 9, color: subCol)),
+        Text(' ${t('kcal', 'ккал')}', style: GoogleFonts.inter(fontSize: 11, color: subCol)),
         const SizedBox(width: 8),
         GestureDetector(onTap: onDelete,
           child: Icon(Icons.close_rounded, size: 14, color: subCol.withAlpha(100))),

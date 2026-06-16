@@ -162,7 +162,7 @@ class _XpBarChart extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Text('${v}', style: GoogleFonts.jetBrainsMono(
-                          fontSize: 7, fontWeight: FontWeight.w600,
+                          fontSize: 11, fontWeight: FontWeight.w600,
                           color: const Color(0xFF8A8070))),
                         const SizedBox(height: 4),
                         AnimatedContainer(
@@ -177,7 +177,7 @@ class _XpBarChart extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text('L${i + 1}', style: GoogleFonts.jetBrainsMono(
-                          fontSize: 7, fontWeight: FontWeight.w600,
+                          fontSize: 11, fontWeight: FontWeight.w600,
                           color: filled ? AppColors.action : const Color(0xFF8A8070).withAlpha(100))),
                       ],
                     ),
@@ -269,7 +269,7 @@ class _StreakCard extends StatelessWidget {
             fontSize: 28, fontWeight: FontWeight.w700,
             color: const Color(0xFF2A2318))),
           Text('CURRENT', style: GoogleFonts.jetBrainsMono(
-            fontSize: 8, fontWeight: FontWeight.w700,
+            fontSize: 11, fontWeight: FontWeight.w700,
             letterSpacing: 1.5, color: const Color(0xFF8A8070))),
         ])),
         Container(width: 1, height: 60, color: const Color(0xFF2A2318).withAlpha(15)),
@@ -281,7 +281,7 @@ class _StreakCard extends StatelessWidget {
             fontSize: 28, fontWeight: FontWeight.w700,
             color: const Color(0xFF2A2318))),
           Text('BEST', style: GoogleFonts.jetBrainsMono(
-            fontSize: 8, fontWeight: FontWeight.w700,
+            fontSize: 11, fontWeight: FontWeight.w700,
             letterSpacing: 1.5, color: const Color(0xFF8A8070))),
         ])),
       ]),
@@ -344,7 +344,7 @@ class _ActivityHeatmap extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text('${day.day}', style: GoogleFonts.jetBrainsMono(
-                    fontSize: 6, fontWeight: FontWeight.w500,
+                    fontSize: 11, fontWeight: FontWeight.w500,
                     color: isToday
                         ? AppColors.action
                         : const Color(0xFF8A8070).withAlpha(100))),
@@ -383,7 +383,7 @@ class _QuickStat extends StatelessWidget {
           Text(value, style: GoogleFonts.jetBrainsMono(
             fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
           Text(label, style: GoogleFonts.inter(
-            fontSize: 7, fontWeight: FontWeight.w600,
+            fontSize: 11, fontWeight: FontWeight.w600,
             letterSpacing: 0.5, color: Colors.white.withAlpha(100))),
         ]),
       ]),

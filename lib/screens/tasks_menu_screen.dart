@@ -211,7 +211,7 @@ class _CategoryCardState extends State<_CategoryCard> {
                               ? t('no tasks', 'нет задач')
                               : '$done / $total ${t('done', 'готово')}',
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9, fontWeight: FontWeight.w600,
+                            fontSize: 11, fontWeight: FontWeight.w600,
                             letterSpacing: 1.5,
                             color: Colors.white.withAlpha(140),
                           )),

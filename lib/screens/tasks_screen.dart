@@ -946,7 +946,7 @@ class _TasksScreenState extends State<TasksScreen> {
                                           width: 1)),
                                       child: Text(label,
                                         style: GoogleFonts.jetBrainsMono(
-                                          fontSize: 9, fontWeight: FontWeight.w700,
+                                          fontSize: 11, fontWeight: FontWeight.w700,
                                           letterSpacing: 1,
                                           color: active
                                             ? vivid : Colors.white.withAlpha(180))),
@@ -1247,7 +1247,7 @@ class _CalendarStripState extends State<_CalendarStrip> {
                     Row(children: [t('Mon','Пн'),t('Tue','Вт'),t('Wed','Ср'),t('Thu','Чт'),t('Fri','Пт'),t('Sat','Сб'),t('Sun','Вс')].map((d) =>
                       Expanded(child: Center(child: Text(d,
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 8, fontWeight: FontWeight.w600,
+                          fontSize: 11, fontWeight: FontWeight.w600,
                           color: const Color(0xFF4C1D95).withAlpha(120)))))).toList()),
                     const SizedBox(height: 8),
                     ..._buildGrid(now, subCol, textCol,
@@ -1744,7 +1744,7 @@ class _DashboardPanel extends StatelessWidget {
                 child: Text(
                   '${t('LVL', 'УР')} ${GameState.instance.level}',
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
                     color: accentColor,
@@ -1855,7 +1855,7 @@ class _DashboardPanel extends StatelessWidget {
           Text(
             '${(progress * 100).round()}% ${t('complete', 'выполнено')}',
             style: GoogleFonts.jetBrainsMono(
-              fontSize: 9,
+              fontSize: 11,
               fontWeight: FontWeight.w500,
               color: subCol,
             ),
@@ -1867,7 +1867,7 @@ class _DashboardPanel extends StatelessWidget {
           Row(children: [
             Text(t('LAST 30 DAYS', 'ПОСЛЕДНИЕ 30 ДНЕЙ'),
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w700,
+                fontSize: 11, fontWeight: FontWeight.w700,
                 letterSpacing: 1.5, color: subCol)),
             const Spacer(),
             JellyButton(
@@ -1884,7 +1884,7 @@ class _DashboardPanel extends StatelessWidget {
                   const SizedBox(width: 5),
                   Text(t('REVIEW', 'ОБЗОР'),
                     style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w800,
+                      fontSize: 11, fontWeight: FontWeight.w800,
                       letterSpacing: 1, color: accentColor)),
                 ]),
               ),
@@ -2097,7 +2097,7 @@ class _WeeklyReviewSheet extends StatelessWidget {
             Row(children: [
               Text(t('BREAKDOWN', 'РАЗБИВКА'),
                 style: GoogleFonts.jetBrainsMono(
-                  fontSize: 9, fontWeight: FontWeight.w800,
+                  fontSize: 11, fontWeight: FontWeight.w800,
                   letterSpacing: 1.5,
                   color: const Color(0xFF2A2318).withAlpha(140))),
             ]),
@@ -2140,7 +2140,7 @@ class _WeeklyReviewSheet extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(labels[i],
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 8, fontWeight: FontWeight.w600,
+                    fontSize: 11, fontWeight: FontWeight.w600,
                     color: const Color(0xFF2A2318).withAlpha(130))),
               ]),
             ),
@@ -2168,7 +2168,7 @@ class _ReviewStat extends StatelessWidget {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label,
           style: GoogleFonts.jetBrainsMono(
-            fontSize: 8, fontWeight: FontWeight.w800,
+            fontSize: 11, fontWeight: FontWeight.w800,
             letterSpacing: 1.5,
             color: const Color(0xFF2A2318).withAlpha(140))),
         const SizedBox(height: 4),
@@ -2258,7 +2258,7 @@ class _PrioDonutState extends State<_PrioDonut> {
                 color: const Color(0xFF2A2318))),
             Text(t('TASKS', 'ЗАДАЧ'),
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 8, fontWeight: FontWeight.w700,
+                fontSize: 11, fontWeight: FontWeight.w700,
                 letterSpacing: 2,
                 color: const Color(0xFF2A2318).withAlpha(130))),
           ]),
@@ -2291,7 +2291,7 @@ class _DonutLegend extends StatelessWidget {
       const SizedBox(width: 5),
       Text('$label',
         style: GoogleFonts.jetBrainsMono(
-          fontSize: 9, fontWeight: FontWeight.w700,
+          fontSize: 11, fontWeight: FontWeight.w700,
           letterSpacing: 0.8, color: color)),
       const SizedBox(width: 4),
       Text('$count',
@@ -2344,7 +2344,7 @@ class _StatBox extends StatelessWidget {
             Text(
               label,
               style: GoogleFonts.inter(
-                fontSize: 8,
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.8,
                 color: color.withAlpha(200),
@@ -2534,7 +2534,7 @@ class _ComboBadge extends StatelessWidget {
             child: Text(
               '${mult.toStringAsFixed(mult == mult.roundToDouble() ? 0 : 1)}×XP',
               style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w800,
+                fontSize: 11, fontWeight: FontWeight.w800,
                 letterSpacing: 1, color: Colors.white)),
           ),
         ],
@@ -2587,7 +2587,7 @@ class _DoneDivider extends StatelessWidget {
                 Text(
                   '${t('COMPLETED', 'ВЫПОЛНЕНО')}  $count',
                   style: GoogleFonts.jetBrainsMono(
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
                     color: AppColors.success,
@@ -2782,7 +2782,7 @@ class _TaskCardState extends State<_TaskCard> {
                                         ? '✓ ${_pXp(task.priority)} XP'
                                         : '+${_pXp(task.priority)} XP',
                                     style: GoogleFonts.jetBrainsMono(
-                                      fontSize: 9,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w700,
                                       color: done ? subCol : AppColors.gold,
                                     ),
@@ -2808,7 +2808,7 @@ class _TaskCardState extends State<_TaskCard> {
                               const SizedBox(width: 6),
                               Text('${task.subtasksDone}/${task.subtasks.length}',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 8, fontWeight: FontWeight.w600,
+                                  fontSize: 11, fontWeight: FontWeight.w600,
                                   color: subCol)),
                             ]),
                           ],
@@ -2824,7 +2824,7 @@ class _TaskCardState extends State<_TaskCard> {
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: textCol.withAlpha(20))),
                                 child: Text('#$t', style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 8, fontWeight: FontWeight.w600,
+                                  fontSize: 11, fontWeight: FontWeight.w600,
                                   color: subCol)),
                               )).toList()),
                           ],
@@ -2836,7 +2836,7 @@ class _TaskCardState extends State<_TaskCard> {
                               Icon(Icons.repeat_rounded, size: 10, color: subCol),
                               const SizedBox(width: 4),
                               Text(task.recurLabel, style: GoogleFonts.jetBrainsMono(
-                                fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                                fontSize: 11, fontWeight: FontWeight.w600, color: subCol)),
                             ]),
                           ],
                         ],
@@ -2882,7 +2882,7 @@ class _TaskCardState extends State<_TaskCard> {
                             child: Text(
                               _pLabel(task.priority).toUpperCase(),
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 7,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.5,
                                 color: accentTxt.withAlpha(150),
@@ -3071,7 +3071,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                         Icon(Icons.flag_rounded, size: 11, color: color),
                         const SizedBox(width: 4),
                         Text(_pLabel(tk.priority), style: GoogleFonts.jetBrainsMono(
-                          fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1, color: color)),
+                          fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1, color: color)),
                       ])),
                   ),
                   const SizedBox(width: 6),
@@ -3079,7 +3079,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                     decoration: BoxDecoration(color: AppColors.gold.withAlpha(20),
                       borderRadius: BorderRadius.circular(8)),
                     child: Text('+${_pXp(tk.priority)} XP', style: GoogleFonts.jetBrainsMono(
-                      fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold))),
+                      fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gold))),
                   const Spacer(),
                   GestureDetector(
                     onTap: () {
@@ -3096,7 +3096,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                         borderRadius: BorderRadius.circular(10)),
                       child: Text(tk.category == TaskCategory.work ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ'),
                         style: GoogleFonts.jetBrainsMono(
-                          fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
+                          fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
                     ),
                   ),
                 ]),
@@ -3173,7 +3173,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                   const SizedBox(height: 16),
                   Row(children: [
                     Text(t('SUBTASKS', 'ПОДЗАДАЧИ'), style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
+                      fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5, color: subCol)),
                     const Spacer(),
                     if (_editing) GestureDetector(onTap: _addSubtask,
                       child: Icon(Icons.add_circle_outline_rounded, size: 18, color: AppColors.action)),
@@ -3214,7 +3214,7 @@ class _TaskDetailOverlayState extends State<_TaskDetailOverlay> {
                         color: textCol.withAlpha(8), borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: textCol.withAlpha(15))),
                       child: Text('#$tag', style: GoogleFonts.jetBrainsMono(
-                        fontSize: 9, fontWeight: FontWeight.w600, color: subCol)),
+                        fontSize: 11, fontWeight: FontWeight.w600, color: subCol)),
                     )).toList()),
                 ],
 
@@ -3390,7 +3390,7 @@ class _TaskFocusScreenState extends State<_TaskFocusScreen>
                 if (!_finished)
                   Text(t('REMAINING', 'ОСТАЛОСЬ'),
                     style: GoogleFonts.jetBrainsMono(
-                      fontSize: 9, fontWeight: FontWeight.w600,
+                      fontSize: 11, fontWeight: FontWeight.w600,
                       letterSpacing: 2, color: Colors.white.withAlpha(80))),
               ]),
             ]),
@@ -3670,7 +3670,7 @@ class _TimelineView extends StatelessWidget {
                                                     child: Text(
                                                       tk.category == TaskCategory.work ? t('WORK', 'РАБОТА') : t('LIVE', 'ЖИЗНЬ'),
                                                       style: GoogleFonts.jetBrainsMono(
-                                                        fontSize: 8, fontWeight: FontWeight.w700,
+                                                        fontSize: 11, fontWeight: FontWeight.w700,
                                                         letterSpacing: 1, color: textCol.withAlpha(130))),
                                                   ),
                                                   const SizedBox(height: 8),
@@ -3714,7 +3714,7 @@ class _TimelineView extends StatelessWidget {
                                                       child: Text(
                                                         done ? '✓ ${_pXp(tk.priority)} XP' : '+${_pXp(tk.priority)} XP',
                                                         style: GoogleFonts.jetBrainsMono(
-                                                          fontSize: 8, fontWeight: FontWeight.w700,
+                                                          fontSize: 11, fontWeight: FontWeight.w700,
                                                           color: done ? subCol : AppColors.gold)),
                                                     ),
                                                   ]),
@@ -3732,7 +3732,7 @@ class _TimelineView extends StatelessWidget {
                                                       const SizedBox(width: 6),
                                                       Text('${tk.subtasksDone}/${tk.subtasks.length}',
                                                         style: GoogleFonts.jetBrainsMono(
-                                                          fontSize: 8, fontWeight: FontWeight.w600, color: subCol)),
+                                                          fontSize: 11, fontWeight: FontWeight.w600, color: subCol)),
                                                     ]),
                                                   ],
                                                 ],
@@ -3765,7 +3765,7 @@ class _TimelineView extends StatelessWidget {
                                                 RotatedBox(quarterTurns: 1,
                                                   child: Text(_pLabel(tk.priority).toUpperCase(),
                                                     style: GoogleFonts.jetBrainsMono(
-                                                      fontSize: 7, fontWeight: FontWeight.w700,
+                                                      fontSize: 11, fontWeight: FontWeight.w700,
                                                       letterSpacing: 1.5, color: accentTxt.withAlpha(150)))),
                                               ],
                                             ),
@@ -3944,7 +3944,7 @@ class _AddSheetState extends State<_AddSheet> {
                       label,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
-                        fontSize: 9,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.2,
                         color: _kCocoa.withAlpha(150),
@@ -4049,7 +4049,7 @@ class _AddSheetState extends State<_AddSheet> {
                               Text(
                                 '+${_pXp(_priority)} XP',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: _kCocoa.withAlpha(140),
                                 ),
@@ -4345,7 +4345,7 @@ class _AddSheetState extends State<_AddSheet> {
                               Text(
                                 '+${_pXp(_priority)} XP',
                                 style: GoogleFonts.jetBrainsMono(
-                                  fontSize: 9,
+                                  fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: _kPastelYellow.withAlpha(210),
                                 ),
@@ -4720,7 +4720,7 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                         Text(
                           t('EXPERIENCE', 'ОПЫТ'),
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2,
                             color: Colors.white.withAlpha(120),
@@ -4729,7 +4729,7 @@ class _XpBarOverlayState extends State<_XpBarOverlay>
                         Text(
                           '${t('LVL', 'УР')} ${widget.level}',
                           style: GoogleFonts.jetBrainsMono(
-                            fontSize: 9,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1,
                             color: Colors.white.withAlpha(120),
@@ -5646,7 +5646,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                                                 e.toString(),
                                                 style: const TextStyle(
                                                   color: Color(0xFFFF5252),
-                                                  fontSize: 9,
+                                                  fontSize: 11,
                                                 ),
                                                 textAlign: TextAlign.center,
                                               ),
@@ -5691,7 +5691,7 @@ class _CollectibleDropOverlayState extends State<_CollectibleDropOverlay>
                             Text(
                               widget.item.rarity.label,
                               style: GoogleFonts.jetBrainsMono(
-                                fontSize: 9,
+                                fontSize: 11,
                                 letterSpacing: 3,
                                 color: rc.withAlpha(160),
                               ),

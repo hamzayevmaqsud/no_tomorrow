@@ -190,7 +190,7 @@ class _AbstainCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: item.milestoneColor.withAlpha(60))),
                   child: Text(item.milestone, style: GoogleFonts.jetBrainsMono(
-                    fontSize: 8, fontWeight: FontWeight.w700, letterSpacing: 1, color: item.milestoneColor))),
+                    fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1, color: item.milestoneColor))),
                 const Spacer(),
                 GestureDetector(onTap: onDelete,
                   child: Icon(Icons.close_rounded, size: 14, color: subCol.withAlpha(100))),
@@ -209,7 +209,7 @@ class _AbstainCard extends StatelessWidget {
                 Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(color: AppColors.gold.withAlpha(20), borderRadius: BorderRadius.circular(8)),
                   child: Text('+${item.xp} XP', style: GoogleFonts.jetBrainsMono(
-                    fontSize: 8, fontWeight: FontWeight.w700, color: AppColors.gold))),
+                    fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.gold))),
               ]),
             ]))),
           // Right — day counter
@@ -218,7 +218,7 @@ class _AbstainCard extends StatelessWidget {
               Text('${item.daysClean}', style: GoogleFonts.jetBrainsMono(
                 fontSize: 28, fontWeight: FontWeight.w700, color: textCol)),
               Text(t('DAYS', 'ДНЕЙ'), style: GoogleFonts.jetBrainsMono(
-                fontSize: 9, fontWeight: FontWeight.w700, letterSpacing: 2, color: subCol)),
+                fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2, color: subCol)),
             ])),
         ]))),
     );
